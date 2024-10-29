@@ -1065,9 +1065,8 @@ middle"
   (setq treesit-auto-install t)
   (global-treesit-auto-mode))
 
-(use-package treesit
-  :config
-  (setq treesit-font-lock-level 4))
+(use-package transpose-frame
+  :ensure t)
 
 (provide 'init)
 ;;; init.el ends here
