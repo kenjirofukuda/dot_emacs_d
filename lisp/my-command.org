@@ -47,7 +47,7 @@ se-buffer は 引数として、バッファオブジェクトまたはバッフ
 コマンド内で、複数のカレントの切り替えが行われると予期せぬ副作用が発生
 します。
 これらのトラブルを回避するために、バッファを操作するコードを
-*save-current-buffer* で囲みます。
+=save-current-buffer= で囲みます。
 
 #+begin_src elisp
   (progn
@@ -57,7 +57,7 @@ se-buffer は 引数として、バッファオブジェクトまたはバッフ
     (current-buffer))
 #+end_src
 
-より単純な手段として *with-current-buffer* がマクロが利用可能です。
+より単純な手段として =with-current-buffer= がマクロが利用可能です。
 
 #+begin_src elisp
   (progn
@@ -68,14 +68,14 @@ se-buffer は 引数として、バッファオブジェクトまたはバッフ
 
 * ファイルバッファの操作
 Emacs にて大抵はファイル内のテキストをバッファにて操作することです。
-*find-file* のような関数に依って作成されたバッファは *buffer-file-name* で
+=find-file= のような関数に依って作成されたバッファは =buffer-file-name= で
 バッファに結びついたファイルのフルパス名を取得できます。
 
 #+begin_src elisp
   (buffer-file-name)
 #+end_src
 
-*get-file-buffer* 関数でファイル名またはファイルパス名を渡せば目的のバッ
+=get-file-buffer= 関数でファイル名またはファイルパス名を渡せば目的のバッ
 ファを取得することができます。
 
 #+begin_src elisp
@@ -89,7 +89,7 @@ Emacs にて大抵はファイル内のテキストをバッファにて操作�
   (get-file-buffer "~/.emacs.d/lisp/my-command.org")
 #+end_src
 *NOTE:* この関数は検索する前に一旦絶対パス名に変換します。
-*default-directory* 変数を用いて パス名を展開します。
+=default-directory= 変数を用いて パス名を展開します。
 
 #+begin_src elisp
   default-directory
@@ -99,7 +99,7 @@ C-h C-v にて変数を確認してみましょう。
 
 * バッファにファイルを読み込む
 ファイルを表示することなしにバッファに読み込む関数
-*find-file-noselect* を提供しています。
+=find-file-noselect= を提供しています。
 
 #+begin_src elisp
   (find-file-noselect "GNUmakefile2")

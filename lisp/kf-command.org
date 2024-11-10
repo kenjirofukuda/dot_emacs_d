@@ -9,7 +9,14 @@
 
 * ファイルの生成方法
 #+BEGIN_SRC :tangle no
+;; org-babel-tangle
 C-c C-v C-t
+#+END_SRC
+
+* 式の評価結果を出力する
+#+BEGIN_SRC :tangle no
+;; org-babel-execute-maybe
+C-c C-v C-e
 #+END_SRC
 
 * シェルコマンドの挿入
@@ -27,6 +34,11 @@ C-c C-v C-t
 #+END_SRC
 
 * カーソル行のファイルを開く
+
+#+begin_src 
+C-c <f3>
+#+end_src
+
 #+BEGIN_SRC elisp :tangle yes
   (defun kf:open-file-thing ()
     "カーソル行のファイルを開く"
@@ -44,9 +56,104 @@ C-c C-v C-t
   (global-set-key (kbd "\C-c <f3>") 'kf:open-file-thing)
 #+END_SRC
 
+* ウィンドウのバッファを固定する
+#+begin_src elisp :tangle yes
+  ;; ウィンドウのバッファを固定する
+  ;; Similar to: http://stackoverflow.com/questions/43765/pin-emacs-buffers-to-windows-for-cscope/65992#65992
+
+  (defun kf:pin-buffer ()
+    "Pin buffer to current window."
+    (interactive)
+    (message
+     (if (let (window (get-buffer-window (current-buffer)))
+           (set-window-dedicated-p window (not (window-dedicated-p window))))
+         "pinned buffer" "un-pinned buffer")))
+#+end_src
+
+* ファイルが適切なソースコードか?
+#+begin_src elisp :tangle yes
+  ;; ファイルが適切なソースコードか?
+  (defun kf:valid-project-file (path)
+    "ファイルが適切なソースコードか?"
+    (not (or (string-match-p ".*/\\.ccls-cache/.*" path)
+	     (string-match-p ".*/\\.git/.*" path))))
+#+end_src
+
+
+* 試し
+#+begin_src bash :results both
+  echo "hage"
+#+end_src
+
+#+RESULTS:
+: hage
+
+#+begin_src elisp :results both
+  (+ 1 2)
+#+end_src
+
+#+RESULTS:
+: 3
+
+** 利用可能な shell 名
+#+begin_src elisp :results both
+  org-babel-shell-names
+#+end_src
+
+#+RESULTS:
+| sh | bash | zsh | fish | csh | ash | dash | ksh | mksh | posh |
+
+
+** 具体例
+プロジェクトディレクトリの中で、望まないファイルの除外を行う
+#+begin_src elisp :results list
+(directory-files-recursively
+   "~/Documents/github/kenjirofukuda/gdsfeel-gnustep/" "\\.[mhc]$"
+   nil
+   'kf:valid-project-file)
+#+end_src
+
+#+RESULTS:
+- ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsFeelCore/GdsArchiver.h
+- ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsFeelCore/GdsArchiver.m
+- ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsFeelCore/GdsBase.h
+- ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsFeelCore/GdsElement+XML.h
+- ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsFeelCore/GdsElement+XML.m
+- ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsFeelCore/GdsElement.h
+- ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsFeelCore/GdsElement.m
+- ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsFeelCore/GdsInform.h
+- ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsFeelCore/GdsInform.m
+- ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsFeelCore/GdsLayer.h
+- ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsFeelCore/GdsLayer.m
+- ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsFeelCore/GdsLibrary.h
+- ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsFeelCore/GdsLibrary.m
+- ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsFeelCore/GdsStructure.h
+- ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsFeelCore/GdsStructure.m
+- ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsFeelCore/GdsViewport.h
+- ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsFeelCore/GdsViewport.m
+- ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsFeelCore/GdsZipedLibrary.h
+- ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsFeelCore/GdsZipedLibrary.m
+- ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsFeelCore/GdsZipedStructure.h
+- ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsFeelCore/GdsZipedStructure.m
+- ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsFeelCore/NSArray+Elements.h
+- ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsFeelCore/NSArray+Elements.m
+- ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsFeelCore/NSArray+Points.h
+- ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsFeelCore/NSArray+Points.m
+- ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsFeelCore/osxportability.h
+- ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsFeelTool/source.m
+- ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/AppDelegate.h
+- ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/AppDelegate.m
+- ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsElementDrawer.h
+- ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsElementDrawer.m
+- ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsLibraryDocument.h
+- ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsLibraryDocument.m
+- ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsStructureView.h
+- ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsStructureView.m
+- ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/main.m
 
 * フッタ
 #+BEGIN_SRC elisp :tangle yes
   (message "kf-command loaded...")
   (provide 'kf-command)
 #+END_SRC
+

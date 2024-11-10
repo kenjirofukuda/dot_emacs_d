@@ -1171,15 +1171,7 @@ middle"
                                             (+dap-running-session-mode 1))))
 
 
-;; Similar to: http://stackoverflow.com/questions/43765/pin-emacs-buffers-to-windows-for-cscope/65992#65992
-(defun pin-buffer ()
-  "Pin buffer to current window."
-  (interactive)
-  (message
-   (if (let (window (get-buffer-window (current-buffer)))
-         (set-window-dedicated-p window (not (window-dedicated-p window))))
-       "pinned buffer" "un-pinned buffer")
-   ))
+(require 'kf-command)
 
 (provide 'init)
 ;;; init.el ends here

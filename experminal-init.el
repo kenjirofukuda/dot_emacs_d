@@ -158,6 +158,16 @@
      (define-key paredit-mode-map (kbd "RET") nil)
      (define-key paredit-mode-map (kbd "C-j") 'paredit-newline)))
 
+;; <s <tab> でブロック文のテンプレートを挿入
+(require 'org-tempo)
+
+;; デフォルトのbabelではシェルは禁止されているの使えるようにする
+(org-babel-do-load-languages
+ 'org-babel-load-languages
+ '(
+   (shell . t)
+   ))
+
 ;; カスタムコマンドのロード
 (require 'kf-command)
 (recentf-open-files)

@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2024-11-08 Fri 17:28 -->
+<!-- 2024-11-10 Sun 16:37 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>emacs lisp 学習</title>
@@ -201,36 +201,45 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents" role="doc-toc">
 <ul>
-<li><a href="#org68314fa">おさらい</a></li>
-<li><a href="#org29af34c">カレントバッファ</a>
+<li><a href="#orgb0e63f8">おさらい</a></li>
+<li><a href="#orgdbe6687">カレントバッファ</a>
 <ul>
-<li><a href="#org888016b">バッファの取得</a></li>
-<li><a href="#orgcb802e7">バッファの取得、存在しない場合作成</a></li>
+<li><a href="#orga162bf1">バッファの取得</a></li>
+<li><a href="#orgfea675b">バッファの取得、存在しない場合作成</a></li>
 </ul>
 </li>
-<li><a href="#org95cfee7">カレントバッファの変更</a></li>
-<li><a href="#orgd96e9f0">安全なカレントバッファの変更</a></li>
-<li><a href="#org570c785">ファイルバッファの操作</a></li>
-<li><a href="#orgce96c47">バッファにファイルを読み込む</a></li>
-<li><a href="#org9ab21a3">point とは</a></li>
-<li><a href="#orgfbea0d6">point の移動</a></li>
-<li><a href="#orgd039dbb">point の保護</a></li>
-<li><a href="#orgff2ca65">バッファテキストの取得</a></li>
-<li><a href="#orgfb23097">Thing</a></li>
-<li><a href="#orgeb09c94">検索</a>
+<li><a href="#org964b124">カレントバッファの変更</a></li>
+<li><a href="#org1f27657">安全なカレントバッファの変更</a></li>
+<li><a href="#org73c759c">ファイルバッファの操作</a></li>
+<li><a href="#orgc25cb8c">バッファにファイルを読み込む</a></li>
+<li><a href="#org060b4f7">point とは</a></li>
+<li><a href="#org0dd5076">point の移動</a></li>
+<li><a href="#org2df820c">point の保護</a></li>
+<li><a href="#org4a2286b">バッファテキストの取得</a></li>
+<li><a href="#org6d9383c">Thing</a></li>
+<li><a href="#org87bf8dc">検索</a>
 <ul>
-<li><a href="#orgb5b578a">検索の例</a></li>
+<li><a href="#orgd0c811b">検索の例</a></li>
 </ul>
 </li>
-<li><a href="#org56aff20">パス名</a></li>
-<li><a href="#org5aa650a">パスの解決</a></li>
+<li><a href="#orga9855a4">パス名</a></li>
+<li><a href="#org6ecd5d3">パスの解決</a></li>
+<li><a href="#org9ceed81">ディレクトリの作成</a></li>
+<li><a href="#org9d1890b">ディレクトリ内のファイルの取得</a></li>
+<li><a href="#org2d0c1dc">コピー、名称変更/移動、削除</a>
+<ul>
+<li><a href="#orgc7f1682">コピー</a></li>
+<li><a href="#orgbeb1b91">名称変更/移動</a></li>
+<li><a href="#orgdae51cf">削除</a></li>
+</ul>
+</li>
 </ul>
 </div>
 </div>
 
-<div id="outline-container-org68314fa" class="outline-2">
-<h2 id="org68314fa">おさらい</h2>
-<div class="outline-text-2" id="text-org68314fa">
+<div id="outline-container-orgb0e63f8" class="outline-2">
+<h2 id="orgb0e63f8">おさらい</h2>
+<div class="outline-text-2" id="text-orgb0e63f8">
 <p>
 評価は、式の末尾にカーソルを移動し、C-x C-e
 ソース引用は C-c C-, s
@@ -241,57 +250,57 @@ System Craft 様の Youtube チュートリアルを見ながら勧めていき�
 </p>
 </div>
 </div>
-<div id="outline-container-org29af34c" class="outline-2">
-<h2 id="org29af34c">カレントバッファ</h2>
-<div class="outline-text-2" id="text-org29af34c">
+<div id="outline-container-orgdbe6687" class="outline-2">
+<h2 id="orgdbe6687">カレントバッファ</h2>
+<div class="outline-text-2" id="text-orgdbe6687">
 </div>
-<div id="outline-container-org888016b" class="outline-3">
-<h3 id="org888016b">バッファの取得</h3>
-<div class="outline-text-3" id="text-org888016b">
+<div id="outline-container-orga162bf1" class="outline-3">
+<h3 id="orga162bf1">バッファの取得</h3>
+<div class="outline-text-3" id="text-orga162bf1">
 <div class="org-src-container">
-<pre class="src src-elisp"><span style="color: #8c8c8c;">(</span>current-buffer<span style="color: #8c8c8c;">)</span>
+<pre class="src src-elisp"><span style="color: #707183;">(</span>current-buffer<span style="color: #707183;">)</span>
 </pre>
 </div>
 <div class="org-src-container">
-<pre class="src src-elisp"><span style="color: #8c8c8c;">(</span>get-buffer <span style="color: #e67128;">"*scratch*"</span><span style="color: #8c8c8c;">)</span>
+<pre class="src src-elisp"><span style="color: #707183;">(</span>get-buffer <span style="color: #8b2252;">"*scratch*"</span><span style="color: #707183;">)</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orgcb802e7" class="outline-3">
-<h3 id="orgcb802e7">バッファの取得、存在しない場合作成</h3>
-<div class="outline-text-3" id="text-orgcb802e7">
+<div id="outline-container-orgfea675b" class="outline-3">
+<h3 id="orgfea675b">バッファの取得、存在しない場合作成</h3>
+<div class="outline-text-3" id="text-orgfea675b">
 <div class="org-src-container">
-<pre class="src src-elisp"><span style="color: #8c8c8c;">(</span>get-buffer-create <span style="color: #e67128;">"kenjirofukuda"</span><span style="color: #8c8c8c;">)</span>
+<pre class="src src-elisp"><span style="color: #707183;">(</span>get-buffer-create <span style="color: #8b2252;">"kenjirofukuda"</span><span style="color: #707183;">)</span>
 </pre>
 </div>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org95cfee7" class="outline-2">
-<h2 id="org95cfee7">カレントバッファの変更</h2>
-<div class="outline-text-2" id="text-org95cfee7">
+<div id="outline-container-org964b124" class="outline-2">
+<h2 id="org964b124">カレントバッファの変更</h2>
+<div class="outline-text-2" id="text-org964b124">
 <p>
 se-buffer は 引数として、バッファオブジェクトまたはバッファ名を取るこ
 とができる。よって次の２つは同義である。
 </p>
 
 <div class="org-src-container">
-<pre class="src src-elisp"><span style="color: #8c8c8c;">(</span><span style="color: #ffad29; font-weight: bold;">progn</span>
-  <span style="color: #93a8c6;">(</span>set-buffer <span style="color: #b0b1a3;">(</span>get-buffer <span style="color: #e67128;">"kenjirofukuda"</span><span style="color: #b0b1a3;">)</span><span style="color: #93a8c6;">)</span>
-  <span style="color: #93a8c6;">(</span>current-buffer<span style="color: #93a8c6;">)</span><span style="color: #8c8c8c;">)</span>
+<pre class="src src-elisp"><span style="color: #707183;">(</span><span style="color: #a020f0;">progn</span>
+  <span style="color: #7388d6;">(</span>set-buffer <span style="color: #909183;">(</span>get-buffer <span style="color: #8b2252;">"kenjirofukuda"</span><span style="color: #909183;">)</span><span style="color: #7388d6;">)</span>
+  <span style="color: #7388d6;">(</span>current-buffer<span style="color: #7388d6;">)</span><span style="color: #707183;">)</span>
 
-<span style="color: #8c8c8c;">(</span><span style="color: #ffad29; font-weight: bold;">progn</span>
-  <span style="color: #93a8c6;">(</span>set-buffer <span style="color: #e67128;">"kenjirofukuda"</span><span style="color: #93a8c6;">)</span>
-  <span style="color: #93a8c6;">(</span>current-buffer<span style="color: #93a8c6;">)</span><span style="color: #8c8c8c;">)</span>
+<span style="color: #707183;">(</span><span style="color: #a020f0;">progn</span>
+  <span style="color: #7388d6;">(</span>set-buffer <span style="color: #8b2252;">"kenjirofukuda"</span><span style="color: #7388d6;">)</span>
+  <span style="color: #7388d6;">(</span>current-buffer<span style="color: #7388d6;">)</span><span style="color: #707183;">)</span>
 
-<span style="color: #74af68;">;; </span><span style="color: #74af68;">&#24847;&#22259;&#30340;&#12394;&#21103;&#20316;&#29992;&#20309;&#12364;&#36215;&#12371;&#12427;&#12363;</span>
-<span style="color: #8c8c8c;">(</span><span style="color: #ffad29; font-weight: bold;">progn</span>
-  <span style="color: #93a8c6;">(</span>set-buffer <span style="color: #e67128;">"kenjirofukuda"</span><span style="color: #93a8c6;">)</span>
-  <span style="color: #93a8c6;">(</span>insert <span style="color: #e67128;">"Hello World!"</span><span style="color: #93a8c6;">)</span>
-  <span style="color: #93a8c6;">(</span>current-buffer<span style="color: #93a8c6;">)</span><span style="color: #8c8c8c;">)</span>
+<span style="color: #b22222;">;; </span><span style="color: #b22222;">&#24847;&#22259;&#30340;&#12394;&#21103;&#20316;&#29992;&#20309;&#12364;&#36215;&#12371;&#12427;&#12363;</span>
+<span style="color: #707183;">(</span><span style="color: #a020f0;">progn</span>
+  <span style="color: #7388d6;">(</span>set-buffer <span style="color: #8b2252;">"kenjirofukuda"</span><span style="color: #7388d6;">)</span>
+  <span style="color: #7388d6;">(</span>insert <span style="color: #8b2252;">"Hello World!"</span><span style="color: #7388d6;">)</span>
+  <span style="color: #7388d6;">(</span>current-buffer<span style="color: #7388d6;">)</span><span style="color: #707183;">)</span>
 </pre>
 </div>
 <p>
@@ -301,9 +310,9 @@ se-buffer は 引数として、バッファオブジェクトまたはバッフ
 </div>
 </div>
 
-<div id="outline-container-orgd96e9f0" class="outline-2">
-<h2 id="orgd96e9f0">安全なカレントバッファの変更</h2>
-<div class="outline-text-2" id="text-orgd96e9f0">
+<div id="outline-container-org1f27657" class="outline-2">
+<h2 id="org1f27657">安全なカレントバッファの変更</h2>
+<div class="outline-text-2" id="text-org1f27657">
 <p>
 コマンド内で、複数のカレントの切り替えが行われると予期せぬ副作用が発生
 します。
@@ -312,11 +321,11 @@ se-buffer は 引数として、バッファオブジェクトまたはバッフ
 </p>
 
 <div class="org-src-container">
-<pre class="src src-elisp"><span style="color: #8c8c8c;">(</span><span style="color: #ffad29; font-weight: bold;">progn</span>
-  <span style="color: #93a8c6;">(</span><span style="color: #ffad29; font-weight: bold;">save-current-buffer</span>
-    <span style="color: #b0b1a3;">(</span>set-buffer <span style="color: #e67128;">"kenjirofukuda"</span><span style="color: #b0b1a3;">)</span>
-    <span style="color: #b0b1a3;">(</span>message <span style="color: #e67128;">"Curernt buffer: %s"</span> <span style="color: #97b098;">(</span>current-buffer<span style="color: #97b098;">)</span><span style="color: #b0b1a3;">)</span><span style="color: #93a8c6;">)</span>
-  <span style="color: #93a8c6;">(</span>current-buffer<span style="color: #93a8c6;">)</span><span style="color: #8c8c8c;">)</span>
+<pre class="src src-elisp"><span style="color: #707183;">(</span><span style="color: #a020f0;">progn</span>
+  <span style="color: #7388d6;">(</span><span style="color: #a020f0;">save-current-buffer</span>
+    <span style="color: #909183;">(</span>set-buffer <span style="color: #8b2252;">"kenjirofukuda"</span><span style="color: #909183;">)</span>
+    <span style="color: #909183;">(</span>message <span style="color: #8b2252;">"Curernt buffer: %s"</span> <span style="color: #709870;">(</span>current-buffer<span style="color: #709870;">)</span><span style="color: #909183;">)</span><span style="color: #7388d6;">)</span>
+  <span style="color: #7388d6;">(</span>current-buffer<span style="color: #7388d6;">)</span><span style="color: #707183;">)</span>
 </pre>
 </div>
 
@@ -325,18 +334,18 @@ se-buffer は 引数として、バッファオブジェクトまたはバッフ
 </p>
 
 <div class="org-src-container">
-<pre class="src src-elisp"><span style="color: #8c8c8c;">(</span><span style="color: #ffad29; font-weight: bold;">progn</span>
-  <span style="color: #93a8c6;">(</span><span style="color: #ffad29; font-weight: bold;">with-current-buffer</span> <span style="color: #e67128;">"kenjirofukuda"</span>
-    <span style="color: #b0b1a3;">(</span>message <span style="color: #e67128;">"Curernt buffer: %s"</span> <span style="color: #97b098;">(</span>current-buffer<span style="color: #97b098;">)</span><span style="color: #b0b1a3;">)</span><span style="color: #93a8c6;">)</span>
-  <span style="color: #93a8c6;">(</span>current-buffer<span style="color: #93a8c6;">)</span><span style="color: #8c8c8c;">)</span>
+<pre class="src src-elisp"><span style="color: #707183;">(</span><span style="color: #a020f0;">progn</span>
+  <span style="color: #7388d6;">(</span><span style="color: #a020f0;">with-current-buffer</span> <span style="color: #8b2252;">"kenjirofukuda"</span>
+    <span style="color: #909183;">(</span>message <span style="color: #8b2252;">"Curernt buffer: %s"</span> <span style="color: #709870;">(</span>current-buffer<span style="color: #709870;">)</span><span style="color: #909183;">)</span><span style="color: #7388d6;">)</span>
+  <span style="color: #7388d6;">(</span>current-buffer<span style="color: #7388d6;">)</span><span style="color: #707183;">)</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org570c785" class="outline-2">
-<h2 id="org570c785">ファイルバッファの操作</h2>
-<div class="outline-text-2" id="text-org570c785">
+<div id="outline-container-org73c759c" class="outline-2">
+<h2 id="org73c759c">ファイルバッファの操作</h2>
+<div class="outline-text-2" id="text-org73c759c">
 <p>
 Emacs にて大抵はファイル内のテキストをバッファにて操作することです。
 <b>find-file</b> のような関数に依って作成されたバッファは <b>buffer-file-name</b> で
@@ -344,29 +353,29 @@ Emacs にて大抵はファイル内のテキストをバッファにて操作�
 </p>
 
 <div class="org-src-container">
-<pre class="src src-elisp"><span style="color: #8c8c8c;">(</span>buffer-file-name<span style="color: #8c8c8c;">)</span>
+<pre class="src src-elisp"><span style="color: #707183;">(</span>buffer-file-name<span style="color: #707183;">)</span>
 </pre>
 </div>
 
 <p>
 <b>get-file-buffer</b> 関数でファイル名またはファイルパス名を渡せば目的のバッ
- ファを取得することができます。
+ファを取得することができます。
 </p>
 
 <div class="org-src-container">
-<pre class="src src-elisp"><span style="color: #8c8c8c;">(</span>get-file-buffer <span style="color: #e67128;">"init.el"</span><span style="color: #8c8c8c;">)</span>
-<span style="color: #8c8c8c;">(</span>get-file-buffer <span style="color: #e67128;">"~/.emacs.d/init.el"</span><span style="color: #8c8c8c;">)</span>
+<pre class="src src-elisp"><span style="color: #707183;">(</span>get-file-buffer <span style="color: #8b2252;">"init.el"</span><span style="color: #707183;">)</span>
+<span style="color: #707183;">(</span>get-file-buffer <span style="color: #8b2252;">"~/.emacs.d/init.el"</span><span style="color: #707183;">)</span>
 
-<span style="color: #8c8c8c;">(</span>get-file-buffer <span style="color: #e67128;">"my-command.el"</span><span style="color: #8c8c8c;">)</span>
-<span style="color: #8c8c8c;">(</span>get-file-buffer <span style="color: #e67128;">"~/.emacs.d/lisp/my-command.el"</span><span style="color: #8c8c8c;">)</span>
+<span style="color: #707183;">(</span>get-file-buffer <span style="color: #8b2252;">"my-command.el"</span><span style="color: #707183;">)</span>
+<span style="color: #707183;">(</span>get-file-buffer <span style="color: #8b2252;">"~/.emacs.d/lisp/my-command.el"</span><span style="color: #707183;">)</span>
 
-<span style="color: #8c8c8c;">(</span>get-file-buffer <span style="color: #e67128;">"my-command.org"</span><span style="color: #8c8c8c;">)</span>
-<span style="color: #8c8c8c;">(</span>get-file-buffer <span style="color: #e67128;">"~/.emacs.d/lisp/my-command.org"</span><span style="color: #8c8c8c;">)</span>
+<span style="color: #707183;">(</span>get-file-buffer <span style="color: #8b2252;">"my-command.org"</span><span style="color: #707183;">)</span>
+<span style="color: #707183;">(</span>get-file-buffer <span style="color: #8b2252;">"~/.emacs.d/lisp/my-command.org"</span><span style="color: #707183;">)</span>
 </pre>
 </div>
 <p>
 <b>NOTE:</b> この関数は検索する前に一旦絶対パス名に変換します。
- <b>default-directory</b> 変数を用いて パス名を展開します。
+<b>default-directory</b> 変数を用いて パス名を展開します。
 </p>
 
 <div class="org-src-container">
@@ -380,38 +389,38 @@ C-h C-v にて変数を確認してみましょう。
 </div>
 </div>
 
-<div id="outline-container-orgce96c47" class="outline-2">
-<h2 id="orgce96c47">バッファにファイルを読み込む</h2>
-<div class="outline-text-2" id="text-orgce96c47">
+<div id="outline-container-orgc25cb8c" class="outline-2">
+<h2 id="orgc25cb8c">バッファにファイルを読み込む</h2>
+<div class="outline-text-2" id="text-orgc25cb8c">
 <p>
 ファイルを表示することなしにバッファに読み込む関数
 <b>find-file-noselect</b> を提供しています。
 </p>
 
 <div class="org-src-container">
-<pre class="src src-elisp"><span style="color: #8c8c8c;">(</span>find-file-noselect <span style="color: #e67128;">"GNUmakefile2"</span><span style="color: #8c8c8c;">)</span>
-<span style="color: #8c8c8c;">(</span>buffer-file-name <span style="color: #93a8c6;">(</span>find-file-noselect <span style="color: #e67128;">"GNUmakefile"</span><span style="color: #93a8c6;">)</span><span style="color: #8c8c8c;">)</span>
+<pre class="src src-elisp"><span style="color: #707183;">(</span>find-file-noselect <span style="color: #8b2252;">"GNUmakefile2"</span><span style="color: #707183;">)</span>
+<span style="color: #707183;">(</span>buffer-file-name <span style="color: #7388d6;">(</span>find-file-noselect <span style="color: #8b2252;">"GNUmakefile"</span><span style="color: #7388d6;">)</span><span style="color: #707183;">)</span>
 </pre>
 </div>
 
 <div class="org-src-container">
-<pre class="src src-elisp"><span style="color: #8c8c8c;">(</span><span style="color: #ffad29; font-weight: bold;">setq</span> my-org-files '<span style="color: #93a8c6;">(</span><span style="color: #e67128;">"Kenjiro1.org"</span> <span style="color: #e67128;">"Kenjiro2.org"</span> <span style="color: #e67128;">"Kenjiro3.org"</span><span style="color: #93a8c6;">)</span><span style="color: #8c8c8c;">)</span>
+<pre class="src src-elisp"><span style="color: #707183;">(</span><span style="color: #a020f0;">setq</span> my-org-files '<span style="color: #7388d6;">(</span><span style="color: #8b2252;">"Kenjiro1.org"</span> <span style="color: #8b2252;">"Kenjiro2.org"</span> <span style="color: #8b2252;">"Kenjiro3.org"</span><span style="color: #7388d6;">)</span><span style="color: #707183;">)</span>
 
-<span style="color: #8c8c8c;">(</span><span style="color: #ffad29; font-weight: bold;">dolist</span> <span style="color: #93a8c6;">(</span>org-file my-org-files<span style="color: #93a8c6;">)</span>
-  <span style="color: #93a8c6;">(</span><span style="color: #ffad29; font-weight: bold;">let</span> <span style="color: #b0b1a3;">(</span><span style="color: #97b098;">(</span>file-path <span style="color: #aebed8;">(</span>expand-file-name org-file <span style="color: #e67128;">"~/Nextcloud/"</span><span style="color: #aebed8;">)</span><span style="color: #97b098;">)</span><span style="color: #b0b1a3;">)</span>
-    <span style="color: #b0b1a3;">(</span><span style="color: #ffad29; font-weight: bold;">with-current-buffer</span> <span style="color: #97b098;">(</span><span style="color: #ffad29; font-weight: bold;">or</span> <span style="color: #aebed8;">(</span>get-file-buffer file-path<span style="color: #aebed8;">)</span>
-                             <span style="color: #aebed8;">(</span>find-file-noselect file-path<span style="color: #aebed8;">)</span><span style="color: #97b098;">)</span>
-      <span style="color: #97b098;">(</span>message <span style="color: #e67128;">"File: %s"</span> <span style="color: #aebed8;">(</span>buffer-file-name<span style="color: #aebed8;">)</span><span style="color: #97b098;">)</span><span style="color: #b0b1a3;">)</span><span style="color: #93a8c6;">)</span><span style="color: #8c8c8c;">)</span>
+<span style="color: #707183;">(</span><span style="color: #a020f0;">dolist</span> <span style="color: #7388d6;">(</span>org-file my-org-files<span style="color: #7388d6;">)</span>
+  <span style="color: #7388d6;">(</span><span style="color: #a020f0;">let</span> <span style="color: #909183;">(</span><span style="color: #709870;">(</span>file-path <span style="color: #907373;">(</span>expand-file-name org-file <span style="color: #8b2252;">"~/Nextcloud/"</span><span style="color: #907373;">)</span><span style="color: #709870;">)</span><span style="color: #909183;">)</span>
+    <span style="color: #909183;">(</span><span style="color: #a020f0;">with-current-buffer</span> <span style="color: #709870;">(</span><span style="color: #a020f0;">or</span> <span style="color: #907373;">(</span>get-file-buffer file-path<span style="color: #907373;">)</span>
+                             <span style="color: #907373;">(</span>find-file-noselect file-path<span style="color: #907373;">)</span><span style="color: #709870;">)</span>
+      <span style="color: #709870;">(</span>message <span style="color: #8b2252;">"File: %s"</span> <span style="color: #907373;">(</span>buffer-file-name<span style="color: #907373;">)</span><span style="color: #709870;">)</span><span style="color: #909183;">)</span><span style="color: #7388d6;">)</span><span style="color: #707183;">)</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org9ab21a3" class="outline-2">
-<h2 id="org9ab21a3">point とは</h2>
-<div class="outline-text-2" id="text-org9ab21a3">
+<div id="outline-container-org060b4f7" class="outline-2">
+<h2 id="org060b4f7">point とは</h2>
+<div class="outline-text-2" id="text-org060b4f7">
 <div class="org-src-container">
-<pre class="src src-elisp"><span style="color: #8c8c8c;">(</span>point<span style="color: #8c8c8c;">)</span>
+<pre class="src src-elisp"><span style="color: #707183;">(</span>point<span style="color: #707183;">)</span>
 </pre>
 </div>
 
@@ -421,58 +430,58 @@ C-h C-v にて変数を確認してみましょう。
 </p>
 
 <div class="org-src-container">
-<pre class="src src-elisp"><span style="color: #8c8c8c;">(</span>point-min<span style="color: #8c8c8c;">)</span>
-<span style="color: #8c8c8c;">(</span>point-max<span style="color: #8c8c8c;">)</span>
+<pre class="src src-elisp"><span style="color: #707183;">(</span>point-min<span style="color: #707183;">)</span>
+<span style="color: #707183;">(</span>point-max<span style="color: #707183;">)</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orgfbea0d6" class="outline-2">
-<h2 id="orgfbea0d6">point の移動</h2>
-<div class="outline-text-2" id="text-orgfbea0d6">
+<div id="outline-container-org0dd5076" class="outline-2">
+<h2 id="org0dd5076">point の移動</h2>
+<div class="outline-text-2" id="text-org0dd5076">
 <div class="org-src-container">
-<pre class="src src-elisp"><span style="color: #8c8c8c;">(</span>goto-char 1<span style="color: #8c8c8c;">)</span>
-<span style="color: #8c8c8c;">(</span>goto-char <span style="color: #93a8c6;">(</span>point-min<span style="color: #93a8c6;">)</span><span style="color: #8c8c8c;">)</span>
-<span style="color: #8c8c8c;">(</span>goto-char <span style="color: #93a8c6;">(</span>point-max<span style="color: #93a8c6;">)</span><span style="color: #8c8c8c;">)</span>
-<span style="color: #8c8c8c;">(</span>beginning-of-buffer<span style="color: #8c8c8c;">)</span>
-<span style="color: #8c8c8c;">(</span>end-of-buffer<span style="color: #8c8c8c;">)</span>
+<pre class="src src-elisp"><span style="color: #707183;">(</span>goto-char 1<span style="color: #707183;">)</span>
+<span style="color: #707183;">(</span>goto-char <span style="color: #7388d6;">(</span>point-min<span style="color: #7388d6;">)</span><span style="color: #707183;">)</span>
+<span style="color: #707183;">(</span>goto-char <span style="color: #7388d6;">(</span>point-max<span style="color: #7388d6;">)</span><span style="color: #707183;">)</span>
+<span style="color: #707183;">(</span>beginning-of-buffer<span style="color: #707183;">)</span>
+<span style="color: #707183;">(</span>end-of-buffer<span style="color: #707183;">)</span>
 
-<span style="color: #8c8c8c;">(</span>forward-char<span style="color: #8c8c8c;">)</span>
-<span style="color: #8c8c8c;">(</span>forward-char 5<span style="color: #8c8c8c;">)</span>
+<span style="color: #707183;">(</span>forward-char<span style="color: #707183;">)</span>
+<span style="color: #707183;">(</span>forward-char 5<span style="color: #707183;">)</span>
 
-<span style="color: #8c8c8c;">(</span>backward-char<span style="color: #8c8c8c;">)</span>
-<span style="color: #8c8c8c;">(</span>backward-char 10<span style="color: #8c8c8c;">)</span>
+<span style="color: #707183;">(</span>backward-char<span style="color: #707183;">)</span>
+<span style="color: #707183;">(</span>backward-char 10<span style="color: #707183;">)</span>
 
-<span style="color: #8c8c8c;">(</span>forward-word<span style="color: #8c8c8c;">)</span>
-<span style="color: #8c8c8c;">(</span>backward-word<span style="color: #8c8c8c;">)</span>
+<span style="color: #707183;">(</span>forward-word<span style="color: #707183;">)</span>
+<span style="color: #707183;">(</span>backward-word<span style="color: #707183;">)</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orgd039dbb" class="outline-2">
-<h2 id="orgd039dbb">point の保護</h2>
-<div class="outline-text-2" id="text-orgd039dbb">
+<div id="outline-container-org2df820c" class="outline-2">
+<h2 id="org2df820c">point の保護</h2>
+<div class="outline-text-2" id="text-org2df820c">
 <div class="org-src-container">
-<pre class="src src-elisp"><span style="color: #8c8c8c;">(</span><span style="color: #ffad29; font-weight: bold;">save-excursion</span>
-  <span style="color: #93a8c6;">(</span>goto-char <span style="color: #b0b1a3;">(</span>point-max<span style="color: #b0b1a3;">)</span><span style="color: #93a8c6;">)</span>
-  <span style="color: #93a8c6;">(</span>point<span style="color: #93a8c6;">)</span><span style="color: #8c8c8c;">)</span>
+<pre class="src src-elisp"><span style="color: #707183;">(</span><span style="color: #a020f0;">save-excursion</span>
+  <span style="color: #7388d6;">(</span>goto-char <span style="color: #909183;">(</span>point-max<span style="color: #909183;">)</span><span style="color: #7388d6;">)</span>
+  <span style="color: #7388d6;">(</span>point<span style="color: #7388d6;">)</span><span style="color: #707183;">)</span>
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orgff2ca65" class="outline-2">
-<h2 id="orgff2ca65">バッファテキストの取得</h2>
-<div class="outline-text-2" id="text-orgff2ca65">
+<div id="outline-container-org4a2286b" class="outline-2">
+<h2 id="org4a2286b">バッファテキストの取得</h2>
+<div class="outline-text-2" id="text-org4a2286b">
 <p>
 カーソル上の文字
 </p>
 <div class="org-src-container">
-<pre class="src src-elisp"><span style="color: #8c8c8c;">(</span>char-after<span style="color: #8c8c8c;">)</span>                            
-<span style="color: #8c8c8c;">(</span>char-after <span style="color: #93a8c6;">(</span>point<span style="color: #93a8c6;">)</span><span style="color: #8c8c8c;">)</span>
-<span style="color: #8c8c8c;">(</span>char-after <span style="color: #93a8c6;">(</span>point-min<span style="color: #93a8c6;">)</span><span style="color: #8c8c8c;">)</span>
+<pre class="src src-elisp"><span style="color: #707183;">(</span>char-after<span style="color: #707183;">)</span>                            
+<span style="color: #707183;">(</span>char-after <span style="color: #7388d6;">(</span>point<span style="color: #7388d6;">)</span><span style="color: #707183;">)</span>
+<span style="color: #707183;">(</span>char-after <span style="color: #7388d6;">(</span>point-min<span style="color: #7388d6;">)</span><span style="color: #707183;">)</span>
 </pre>
 </div>
 
@@ -481,8 +490,8 @@ C-h C-v にて変数を確認してみましょう。
 指定した範囲の部分文字列
 </p>
 <div class="org-src-container">
-<pre class="src src-elisp"><span style="color: #8c8c8c;">(</span>buffer-substring 1 8<span style="color: #8c8c8c;">)</span>
-<span style="color: #8c8c8c;">(</span>buffer-substring-no-properties 1 8<span style="color: #8c8c8c;">)</span>
+<pre class="src src-elisp"><span style="color: #707183;">(</span>buffer-substring 1 8<span style="color: #707183;">)</span>
+<span style="color: #707183;">(</span>buffer-substring-no-properties 1 8<span style="color: #707183;">)</span>
 </pre>
 </div>
 
@@ -497,141 +506,141 @@ C-h C-v にて変数を確認してみましょう。
 </div>
 </div>
 
-<div id="outline-container-orgfb23097" class="outline-2">
-<h2 id="orgfb23097">Thing</h2>
-<div class="outline-text-2" id="text-orgfb23097">
+<div id="outline-container-org6d9383c" class="outline-2">
+<h2 id="org6d9383c">Thing</h2>
+<div class="outline-text-2" id="text-org6d9383c">
 <p>
 現在のカーソル位置でテキストを取得する
 </p>
 
 <div class="org-src-container">
-<pre class="src src-elisp"><span style="color: #8c8c8c;">(</span>thing-at-point 'word<span style="color: #8c8c8c;">)</span>                  
-<span style="color: #8c8c8c;">(</span>thing-at-point 'sentence<span style="color: #8c8c8c;">)</span>
-<span style="color: #8c8c8c;">(</span>thing-at-point 'sentence t<span style="color: #8c8c8c;">)</span>
-<span style="color: #8c8c8c;">(</span>thing-at-point 'sexp<span style="color: #8c8c8c;">)</span>
-<span style="color: #74af68;">;; </span><span style="color: #74af68;">(thing-at-point THING &amp;optional NO-PROPERTIES)</span>
-<span style="color: #74af68;">;; </span><span style="color: #74af68;">THING: &#12395;&#25351;&#23450;&#21487;&#33021;&#12394;&#12471;&#12531;&#12508;&#12523;</span>
-<span style="color: #74af68;">;; </span><span style="color: #74af68;">'(symbol list sexp defun filename existsing-filename</span>
-<span style="color: #74af68;">;;   </span><span style="color: #74af68;">url, email, uuid, word, sentence, whitespace, line</span>
-<span style="color: #74af68;">;;   </span><span style="color: #74af68;">number face page)</span>
+<pre class="src src-elisp"><span style="color: #707183;">(</span>thing-at-point 'word<span style="color: #707183;">)</span>                  
+<span style="color: #707183;">(</span>thing-at-point 'sentence<span style="color: #707183;">)</span>
+<span style="color: #707183;">(</span>thing-at-point 'sentence t<span style="color: #707183;">)</span>
+<span style="color: #707183;">(</span>thing-at-point 'sexp<span style="color: #707183;">)</span>
+<span style="color: #b22222;">;; </span><span style="color: #b22222;">(thing-at-point THING &amp;optional NO-PROPERTIES)</span>
+<span style="color: #b22222;">;; </span><span style="color: #b22222;">THING: &#12395;&#25351;&#23450;&#21487;&#33021;&#12394;&#12471;&#12531;&#12508;&#12523;</span>
+<span style="color: #b22222;">;; </span><span style="color: #b22222;">'(symbol list sexp defun filename existsing-filename</span>
+<span style="color: #b22222;">;;   </span><span style="color: #b22222;">url, email, uuid, word, sentence, whitespace, line</span>
+<span style="color: #b22222;">;;   </span><span style="color: #b22222;">number face page)</span>
 
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orgeb09c94" class="outline-2">
-<h2 id="orgeb09c94">検索</h2>
-<div class="outline-text-2" id="text-orgeb09c94">
+<div id="outline-container-org87bf8dc" class="outline-2">
+<h2 id="org87bf8dc">検索</h2>
+<div class="outline-text-2" id="text-org87bf8dc">
 <div class="org-src-container">
-<pre class="src src-elisp"><span style="color: #8c8c8c;">(</span>search-foward <span style="color: #e67128;">"file-find"</span><span style="color: #8c8c8c;">)</span>
-<span style="color: #8c8c8c;">(</span>search-foward <span style="color: #e67128;">"file-find"</span> nil<span style="color: #8c8c8c;">)</span>
-<span style="color: #74af68;">;; </span><span style="color: #74af68;">1 &#12363;&#12425; 100 &#12398;&#38291;</span>
-<span style="color: #8c8c8c;">(</span>search-foward <span style="color: #e67128;">"file-find"</span> <span style="color: #93a8c6;">(</span>1 . 100<span style="color: #93a8c6;">)</span><span style="color: #8c8c8c;">)</span>
-<span style="color: #74af68;">;; </span><span style="color: #74af68;">&#12456;&#12521;&#12540;&#12434;&#22238;&#36991;&#12375;&#12390; nil &#12434;&#21462;&#24471;</span>
-<span style="color: #8c8c8c;">(</span>search-foward <span style="color: #e67128;">"file-find"</span> nil t<span style="color: #8c8c8c;">)</span>
-<span style="color: #74af68;">;; </span><span style="color: #74af68;">3 &#30058;&#30446;&#12434;&#21462;&#24471;</span>
-<span style="color: #8c8c8c;">(</span>search-foward <span style="color: #e67128;">"file-find"</span> nil t 3<span style="color: #8c8c8c;">)</span>
+<pre class="src src-elisp"><span style="color: #707183;">(</span>search-foward <span style="color: #8b2252;">"file-find"</span><span style="color: #707183;">)</span>
+<span style="color: #707183;">(</span>search-foward <span style="color: #8b2252;">"file-find"</span> nil<span style="color: #707183;">)</span>
+<span style="color: #b22222;">;; </span><span style="color: #b22222;">1 &#12363;&#12425; 100 &#12398;&#38291;</span>
+<span style="color: #707183;">(</span>search-foward <span style="color: #8b2252;">"file-find"</span> <span style="color: #7388d6;">(</span>1 . 100<span style="color: #7388d6;">)</span><span style="color: #707183;">)</span>
+<span style="color: #b22222;">;; </span><span style="color: #b22222;">&#12456;&#12521;&#12540;&#12434;&#22238;&#36991;&#12375;&#12390; nil &#12434;&#21462;&#24471;</span>
+<span style="color: #707183;">(</span>search-foward <span style="color: #8b2252;">"file-find"</span> nil t<span style="color: #707183;">)</span>
+<span style="color: #b22222;">;; </span><span style="color: #b22222;">3 &#30058;&#30446;&#12434;&#21462;&#24471;</span>
+<span style="color: #707183;">(</span>search-foward <span style="color: #8b2252;">"file-find"</span> nil t 3<span style="color: #707183;">)</span>
 
-<span style="color: #74af68;">;; </span><span style="color: #74af68;">(search-forward STRING &amp;optional BOUND NOERROR COUNT)</span>
+<span style="color: #b22222;">;; </span><span style="color: #b22222;">(search-forward STRING &amp;optional BOUND NOERROR COUNT)</span>
 
 </pre>
 </div>
 </div>
 
-<div id="outline-container-orgb5b578a" class="outline-3">
-<h3 id="orgb5b578a">検索の例</h3>
-<div class="outline-text-3" id="text-orgb5b578a">
+<div id="outline-container-orgd0c811b" class="outline-3">
+<h3 id="orgd0c811b">検索の例</h3>
+<div class="outline-text-3" id="text-orgd0c811b">
 <div class="org-src-container">
-<pre class="src src-elisp"><span style="color: #8c8c8c;">(</span><span style="color: #ffad29; font-weight: bold;">with-current-buffer</span> <span style="color: #e67128;">"my-command.org"</span>
-  <span style="color: #93a8c6;">(</span><span style="color: #ffad29; font-weight: bold;">save-excursion</span>
-    <span style="color: #b0b1a3;">(</span>thing-at-point 'word<span style="color: #b0b1a3;">)</span><span style="color: #93a8c6;">)</span><span style="color: #8c8c8c;">)</span>
+<pre class="src src-elisp"><span style="color: #707183;">(</span><span style="color: #a020f0;">with-current-buffer</span> <span style="color: #8b2252;">"my-command.org"</span>
+  <span style="color: #7388d6;">(</span><span style="color: #a020f0;">save-excursion</span>
+    <span style="color: #909183;">(</span>thing-at-point 'word<span style="color: #909183;">)</span><span style="color: #7388d6;">)</span><span style="color: #707183;">)</span>
 
-<span style="color: #8c8c8c;">(</span><span style="color: #ffad29; font-weight: bold;">with-current-buffer</span> <span style="color: #e67128;">"my-command.org"</span>
-  <span style="color: #93a8c6;">(</span><span style="color: #ffad29; font-weight: bold;">save-excursion</span>
-    <span style="color: #b0b1a3;">(</span>thing-at-point 'sentence t<span style="color: #b0b1a3;">)</span><span style="color: #93a8c6;">)</span><span style="color: #8c8c8c;">)</span>
+<span style="color: #707183;">(</span><span style="color: #a020f0;">with-current-buffer</span> <span style="color: #8b2252;">"my-command.org"</span>
+  <span style="color: #7388d6;">(</span><span style="color: #a020f0;">save-excursion</span>
+    <span style="color: #909183;">(</span>thing-at-point 'sentence t<span style="color: #909183;">)</span><span style="color: #7388d6;">)</span><span style="color: #707183;">)</span>
 
-<span style="color: #8c8c8c;">(</span><span style="color: #ffad29; font-weight: bold;">with-current-buffer</span> <span style="color: #e67128;">"my-command.org"</span>
-  <span style="color: #93a8c6;">(</span><span style="color: #ffad29; font-weight: bold;">save-excursion</span>
-    <span style="color: #b0b1a3;">(</span>thing-at-point 'sexp t<span style="color: #b0b1a3;">)</span><span style="color: #93a8c6;">)</span><span style="color: #8c8c8c;">)</span>
-
-
-<span style="color: #74af68;">;; </span><span style="color: #74af68;">&#12371;&#12428;&#12399;&#23455;&#22312;&#12377;&#12427;&#12527;&#12540;&#12489;&#12394;&#12398;&#12391;&#12456;&#12521;&#12540;&#12434;&#36215;&#12371;&#12373;&#12394;&#12356;</span>
-<span style="color: #8c8c8c;">(</span><span style="color: #ffad29; font-weight: bold;">with-current-buffer</span> <span style="color: #e67128;">"my-command.org"</span>
-  <span style="color: #93a8c6;">(</span><span style="color: #ffad29; font-weight: bold;">save-excursion</span>
-    <span style="color: #b0b1a3;">(</span>goto-char <span style="color: #97b098;">(</span>point-min<span style="color: #97b098;">)</span><span style="color: #b0b1a3;">)</span>
-    <span style="color: #b0b1a3;">(</span>search-forward <span style="color: #e67128;">"thing"</span><span style="color: #b0b1a3;">)</span><span style="color: #93a8c6;">)</span><span style="color: #8c8c8c;">)</span>
+<span style="color: #707183;">(</span><span style="color: #a020f0;">with-current-buffer</span> <span style="color: #8b2252;">"my-command.org"</span>
+  <span style="color: #7388d6;">(</span><span style="color: #a020f0;">save-excursion</span>
+    <span style="color: #909183;">(</span>thing-at-point 'sexp t<span style="color: #909183;">)</span><span style="color: #7388d6;">)</span><span style="color: #707183;">)</span>
 
 
-<span style="color: #74af68;">;; </span><span style="color: #74af68;">&#12371;&#12428;&#12399;&#23455;&#22312; !!!&#12375;&#12394;&#12356;!!! &#12527;&#12540;&#12489;&#12394;&#12398;&#12391;&#12456;&#12521;&#12540;&#12434;&#36215;&#12371;&#12377;</span>
-<span style="color: #8c8c8c;">(</span><span style="color: #ffad29; font-weight: bold;">with-current-buffer</span> <span style="color: #e67128;">"my-command.org"</span>
-  <span style="color: #93a8c6;">(</span><span style="color: #ffad29; font-weight: bold;">save-excursion</span>
-    <span style="color: #b0b1a3;">(</span>goto-char <span style="color: #97b098;">(</span>point-min<span style="color: #97b098;">)</span><span style="color: #b0b1a3;">)</span>
-    <span style="color: #b0b1a3;">(</span>search-forward <span style="color: #e67128;">"thing2"</span><span style="color: #b0b1a3;">)</span><span style="color: #93a8c6;">)</span><span style="color: #8c8c8c;">)</span>
-
-<span style="color: #74af68;">;; </span><span style="color: #74af68;">&#12371;&#12428;&#12399;&#23455;&#22312; !!!&#12375;&#12394;&#12356;!!! &#12527;&#12540;&#12489;&#12384;&#12364;</span>
-<span style="color: #74af68;">;; </span><span style="color: #74af68;">&#12458;&#12503;&#12471;&#12519;&#12531;&#12497;&#12521;&#12513;&#12540;&#12479;&#12398;2&#30058;&#30446;&#12395; t &#12434;&#28193;&#12377;&#12371;&#12392;&#12391;&#22238;&#36991;&#12391;&#12365;&#12427;</span>
-<span style="color: #74af68;">;; </span><span style="color: #74af68;">&#12383;&#12384;&#12375;&#12289;&#25147;&#12426;&#20516;&#12399; nil</span>
-<span style="color: #8c8c8c;">(</span><span style="color: #ffad29; font-weight: bold;">with-current-buffer</span> <span style="color: #e67128;">"my-command.org"</span>
-  <span style="color: #93a8c6;">(</span><span style="color: #ffad29; font-weight: bold;">save-excursion</span>
-    <span style="color: #b0b1a3;">(</span>goto-char <span style="color: #97b098;">(</span>point-min<span style="color: #97b098;">)</span><span style="color: #b0b1a3;">)</span>
-    <span style="color: #b0b1a3;">(</span>search-forward <span style="color: #e67128;">"thing2"</span> nil t<span style="color: #b0b1a3;">)</span><span style="color: #93a8c6;">)</span><span style="color: #8c8c8c;">)</span>
+<span style="color: #b22222;">;; </span><span style="color: #b22222;">&#12371;&#12428;&#12399;&#23455;&#22312;&#12377;&#12427;&#12527;&#12540;&#12489;&#12394;&#12398;&#12391;&#12456;&#12521;&#12540;&#12434;&#36215;&#12371;&#12373;&#12394;&#12356;</span>
+<span style="color: #707183;">(</span><span style="color: #a020f0;">with-current-buffer</span> <span style="color: #8b2252;">"my-command.org"</span>
+  <span style="color: #7388d6;">(</span><span style="color: #a020f0;">save-excursion</span>
+    <span style="color: #909183;">(</span>goto-char <span style="color: #709870;">(</span>point-min<span style="color: #709870;">)</span><span style="color: #909183;">)</span>
+    <span style="color: #909183;">(</span>search-forward <span style="color: #8b2252;">"thing"</span><span style="color: #909183;">)</span><span style="color: #7388d6;">)</span><span style="color: #707183;">)</span>
 
 
-<span style="color: #74af68;">;; </span><span style="color: #74af68;">&#29694;&#22312;&#12434;&#26411;&#23614;&#12363;&#12425;&#26908;&#32034;&#12375;&#12289;&#34892;&#12434;&#21462;&#24471;&#12377;&#12427;</span>
-<span style="color: #8c8c8c;">(</span><span style="color: #ffad29; font-weight: bold;">with-current-buffer</span> <span style="color: #e67128;">"my-command.org"</span>
-  <span style="color: #93a8c6;">(</span><span style="color: #ffad29; font-weight: bold;">save-excursion</span>
-    <span style="color: #b0b1a3;">(</span>goto-char <span style="color: #97b098;">(</span>point-max<span style="color: #97b098;">)</span><span style="color: #b0b1a3;">)</span>
-    <span style="color: #b0b1a3;">(</span>search-backward <span style="color: #e67128;">"&#29694;&#22312;"</span><span style="color: #b0b1a3;">)</span>
-    <span style="color: #b0b1a3;">(</span>thing-at-point 'sentence t<span style="color: #b0b1a3;">)</span><span style="color: #93a8c6;">)</span><span style="color: #8c8c8c;">)</span>
+<span style="color: #b22222;">;; </span><span style="color: #b22222;">&#12371;&#12428;&#12399;&#23455;&#22312; !!!&#12375;&#12394;&#12356;!!! &#12527;&#12540;&#12489;&#12394;&#12398;&#12391;&#12456;&#12521;&#12540;&#12434;&#36215;&#12371;&#12377;</span>
+<span style="color: #707183;">(</span><span style="color: #a020f0;">with-current-buffer</span> <span style="color: #8b2252;">"my-command.org"</span>
+  <span style="color: #7388d6;">(</span><span style="color: #a020f0;">save-excursion</span>
+    <span style="color: #909183;">(</span>goto-char <span style="color: #709870;">(</span>point-min<span style="color: #709870;">)</span><span style="color: #909183;">)</span>
+    <span style="color: #909183;">(</span>search-forward <span style="color: #8b2252;">"thing2"</span><span style="color: #909183;">)</span><span style="color: #7388d6;">)</span><span style="color: #707183;">)</span>
+
+<span style="color: #b22222;">;; </span><span style="color: #b22222;">&#12371;&#12428;&#12399;&#23455;&#22312; !!!&#12375;&#12394;&#12356;!!! &#12527;&#12540;&#12489;&#12384;&#12364;</span>
+<span style="color: #b22222;">;; </span><span style="color: #b22222;">&#12458;&#12503;&#12471;&#12519;&#12531;&#12497;&#12521;&#12513;&#12540;&#12479;&#12398;2&#30058;&#30446;&#12395; t &#12434;&#28193;&#12377;&#12371;&#12392;&#12391;&#22238;&#36991;&#12391;&#12365;&#12427;</span>
+<span style="color: #b22222;">;; </span><span style="color: #b22222;">&#12383;&#12384;&#12375;&#12289;&#25147;&#12426;&#20516;&#12399; nil</span>
+<span style="color: #707183;">(</span><span style="color: #a020f0;">with-current-buffer</span> <span style="color: #8b2252;">"my-command.org"</span>
+  <span style="color: #7388d6;">(</span><span style="color: #a020f0;">save-excursion</span>
+    <span style="color: #909183;">(</span>goto-char <span style="color: #709870;">(</span>point-min<span style="color: #709870;">)</span><span style="color: #909183;">)</span>
+    <span style="color: #909183;">(</span>search-forward <span style="color: #8b2252;">"thing2"</span> nil t<span style="color: #909183;">)</span><span style="color: #7388d6;">)</span><span style="color: #707183;">)</span>
+
+
+<span style="color: #b22222;">;; </span><span style="color: #b22222;">&#29694;&#22312;&#12434;&#26411;&#23614;&#12363;&#12425;&#26908;&#32034;&#12375;&#12289;&#34892;&#12434;&#21462;&#24471;&#12377;&#12427;</span>
+<span style="color: #707183;">(</span><span style="color: #a020f0;">with-current-buffer</span> <span style="color: #8b2252;">"my-command.org"</span>
+  <span style="color: #7388d6;">(</span><span style="color: #a020f0;">save-excursion</span>
+    <span style="color: #909183;">(</span>goto-char <span style="color: #709870;">(</span>point-max<span style="color: #709870;">)</span><span style="color: #909183;">)</span>
+    <span style="color: #909183;">(</span>search-backward <span style="color: #8b2252;">"&#29694;&#22312;"</span><span style="color: #909183;">)</span>
+    <span style="color: #909183;">(</span>thing-at-point 'sentence t<span style="color: #909183;">)</span><span style="color: #7388d6;">)</span><span style="color: #707183;">)</span>
 </pre>
 </div>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org56aff20" class="outline-2">
-<h2 id="org56aff20">パス名</h2>
-<div class="outline-text-2" id="text-org56aff20">
+<div id="outline-container-orga9855a4" class="outline-2">
+<h2 id="orga9855a4">パス名</h2>
+<div class="outline-text-2" id="text-orga9855a4">
 <p>
 <b>注意:</b> パス名は実在する必要はない。
 </p>
 
 <div class="org-src-container">
-<pre class="src src-elisp"><span style="color: #8c8c8c;">(</span>file-name-directory <span style="color: #e67128;">"~/home/kenjiro/Documents/gnustep.tar.gz"</span><span style="color: #8c8c8c;">)</span>
-<span style="color: #74af68;">;; </span><span style="color: #74af68;">=&gt; "~/home/kenjiro/Documents/"</span>
+<pre class="src src-elisp"><span style="color: #707183;">(</span>file-name-directory <span style="color: #8b2252;">"~/home/kenjiro/Documents/gnustep.tar.gz"</span><span style="color: #707183;">)</span>
+<span style="color: #b22222;">;; </span><span style="color: #b22222;">=&gt; "~/home/kenjiro/Documents/"</span>
 
-<span style="color: #8c8c8c;">(</span>file-name-nondirectory <span style="color: #e67128;">"~/home/kenjiro/Documents/gnustep.tar.gz"</span><span style="color: #8c8c8c;">)</span>
-<span style="color: #74af68;">;; </span><span style="color: #74af68;">=&gt; "gnustep.tar.gz"</span>
+<span style="color: #707183;">(</span>file-name-nondirectory <span style="color: #8b2252;">"~/home/kenjiro/Documents/gnustep.tar.gz"</span><span style="color: #707183;">)</span>
+<span style="color: #b22222;">;; </span><span style="color: #b22222;">=&gt; "gnustep.tar.gz"</span>
 
-<span style="color: #8c8c8c;">(</span>file-name-extension <span style="color: #e67128;">"~/home/kenjiro/Documents/gnustep.tar.gz"</span><span style="color: #8c8c8c;">)</span>
-<span style="color: #74af68;">;; </span><span style="color: #74af68;">=&gt; "gz"</span>
+<span style="color: #707183;">(</span>file-name-extension <span style="color: #8b2252;">"~/home/kenjiro/Documents/gnustep.tar.gz"</span><span style="color: #707183;">)</span>
+<span style="color: #b22222;">;; </span><span style="color: #b22222;">=&gt; "gz"</span>
 
-<span style="color: #74af68;">;; </span><span style="color: #74af68;">&#31354;&#25991;&#23383;"" &#12434;&#36820;&#12373;&#12394;&#12356;&#12371;&#12392;&#12395;&#27880;&#24847; nil &#12434;&#36820;&#29699;</span>
-<span style="color: #8c8c8c;">(</span>file-name-extension <span style="color: #e67128;">"~/home/kenjiro/Documents/gnustep"</span><span style="color: #8c8c8c;">)</span>
-<span style="color: #74af68;">;; </span><span style="color: #74af68;">=&gt; nil</span>
+<span style="color: #b22222;">;; </span><span style="color: #b22222;">&#31354;&#25991;&#23383;"" &#12434;&#36820;&#12373;&#12394;&#12356;&#12371;&#12392;&#12395;&#27880;&#24847; nil &#12434;&#36820;&#29699;</span>
+<span style="color: #707183;">(</span>file-name-extension <span style="color: #8b2252;">"~/home/kenjiro/Documents/gnustep"</span><span style="color: #707183;">)</span>
+<span style="color: #b22222;">;; </span><span style="color: #b22222;">=&gt; nil</span>
 
-<span style="color: #74af68;">;; </span><span style="color: #74af68;">&#12489;&#12483;&#12488;&#12501;&#12449;&#12452;&#12523;&#12434;&#25313;&#24373;&#23376;&#12392;&#21208;&#36949;&#12356;&#12375;&#12390;&#12356;&#12394;&#12356;&#12424;&#12358;&#12391;&#12354;&#12427;</span>
-<span style="color: #8c8c8c;">(</span>file-name-extension <span style="color: #e67128;">"~/home/kenjiro/Documents/.gitignore"</span><span style="color: #8c8c8c;">)</span>
-<span style="color: #74af68;">;; </span><span style="color: #74af68;">=&gt; nil</span>
+<span style="color: #b22222;">;; </span><span style="color: #b22222;">&#12489;&#12483;&#12488;&#12501;&#12449;&#12452;&#12523;&#12434;&#25313;&#24373;&#23376;&#12392;&#21208;&#36949;&#12356;&#12375;&#12390;&#12356;&#12394;&#12356;&#12424;&#12358;&#12391;&#12354;&#12427;</span>
+<span style="color: #707183;">(</span>file-name-extension <span style="color: #8b2252;">"~/home/kenjiro/Documents/.gitignore"</span><span style="color: #707183;">)</span>
+<span style="color: #b22222;">;; </span><span style="color: #b22222;">=&gt; nil</span>
 
-<span style="color: #8c8c8c;">(</span>file-name-sans-extension <span style="color: #e67128;">"~/home/kenjiro/Documents/gnustep.tar.gz"</span><span style="color: #8c8c8c;">)</span>
-<span style="color: #74af68;">;; </span><span style="color: #74af68;">=&gt; "~/home/kenjiro/Documents/gnustep.tar"</span>
+<span style="color: #707183;">(</span>file-name-sans-extension <span style="color: #8b2252;">"~/home/kenjiro/Documents/gnustep.tar.gz"</span><span style="color: #707183;">)</span>
+<span style="color: #b22222;">;; </span><span style="color: #b22222;">=&gt; "~/home/kenjiro/Documents/gnustep.tar"</span>
 
-<span style="color: #8c8c8c;">(</span>file-name-base <span style="color: #e67128;">"~/home/kenjiro/Documents/gnustep.tar.gz"</span><span style="color: #8c8c8c;">)</span>
-<span style="color: #74af68;">;; </span><span style="color: #74af68;">=&gt; "gnustep.tar"</span>
+<span style="color: #707183;">(</span>file-name-base <span style="color: #8b2252;">"~/home/kenjiro/Documents/gnustep.tar.gz"</span><span style="color: #707183;">)</span>
+<span style="color: #b22222;">;; </span><span style="color: #b22222;">=&gt; "gnustep.tar"</span>
 
-<span style="color: #8c8c8c;">(</span>file-name-as-directory <span style="color: #e67128;">"~/home/kenjiro/Documents/gnustep.tar.gz"</span><span style="color: #8c8c8c;">)</span>
-<span style="color: #74af68;">;; </span><span style="color: #74af68;">=&gt; "~/home/kenjiro/Documents/gnustep.tar.gz/"</span>
+<span style="color: #707183;">(</span>file-name-as-directory <span style="color: #8b2252;">"~/home/kenjiro/Documents/gnustep.tar.gz"</span><span style="color: #707183;">)</span>
+<span style="color: #b22222;">;; </span><span style="color: #b22222;">=&gt; "~/home/kenjiro/Documents/gnustep.tar.gz/"</span>
 
 </pre>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org5aa650a" class="outline-2">
-<h2 id="org5aa650a">パスの解決</h2>
-<div class="outline-text-2" id="text-org5aa650a">
+<div id="outline-container-org6ecd5d3" class="outline-2">
+<h2 id="org6ecd5d3">パスの解決</h2>
+<div class="outline-text-2" id="text-org6ecd5d3">
 <ul class="org-ul">
 <li><code>file-name-absolute-p</code> 絶対パスの場合 t</li>
 <li><code>file-relative-name</code> 相対パスの取得</li>
@@ -639,43 +648,163 @@ C-h C-v にて変数を確認してみましょう。
 </ul>
 
 <div class="org-src-container">
-<pre class="src src-elisp"><span style="color: #8c8c8c;">(</span>file-name-absolute-p <span style="color: #e67128;">"~/home/kenjiro/Documents/gnustep.tar.gz"</span><span style="color: #8c8c8c;">)</span>
-<span style="color: #74af68;">;; </span><span style="color: #74af68;">=&gt; t</span>
+<pre class="src src-elisp"><span style="color: #707183;">(</span>file-name-absolute-p <span style="color: #8b2252;">"~/home/kenjiro/Documents/gnustep.tar.gz"</span><span style="color: #707183;">)</span>
+<span style="color: #b22222;">;; </span><span style="color: #b22222;">=&gt; t</span>
 
-<span style="color: #8c8c8c;">(</span>file-name-absolute-p <span style="color: #e67128;">"gnustep.tar.gz"</span><span style="color: #8c8c8c;">)</span>
-<span style="color: #74af68;">;; </span><span style="color: #74af68;">=&gt; nil</span>
+<span style="color: #707183;">(</span>file-name-absolute-p <span style="color: #8b2252;">"gnustep.tar.gz"</span><span style="color: #707183;">)</span>
+<span style="color: #b22222;">;; </span><span style="color: #b22222;">=&gt; nil</span>
 
-<span style="color: #8c8c8c;">(</span>file-name-absolute-p <span style="color: #e67128;">"Documents/gnustep.tar.gz"</span><span style="color: #8c8c8c;">)</span>
-<span style="color: #74af68;">;; </span><span style="color: #74af68;">=&gt; nil</span>
+<span style="color: #707183;">(</span>file-name-absolute-p <span style="color: #8b2252;">"Documents/gnustep.tar.gz"</span><span style="color: #707183;">)</span>
+<span style="color: #b22222;">;; </span><span style="color: #b22222;">=&gt; nil</span>
 
-<span style="color: #8c8c8c;">(</span>file-name-absolute-p <span style="color: #e67128;">"./Documents/gnustep.tar.gz"</span><span style="color: #8c8c8c;">)</span>
-<span style="color: #74af68;">;; </span><span style="color: #74af68;">=&gt; nil</span>
+<span style="color: #707183;">(</span>file-name-absolute-p <span style="color: #8b2252;">"./Documents/gnustep.tar.gz"</span><span style="color: #707183;">)</span>
+<span style="color: #b22222;">;; </span><span style="color: #b22222;">=&gt; nil</span>
 
-<span style="color: #8c8c8c;">(</span>file-relative-name <span style="color: #93a8c6;">(</span>buffer-file-name<span style="color: #93a8c6;">)</span> <span style="color: #e67128;">"~/Nextcloud"</span><span style="color: #8c8c8c;">)</span>
-<span style="color: #74af68;">;; </span><span style="color: #74af68;">=&gt; "../.emacs.d/lisp/mycommand.el"</span>
+<span style="color: #707183;">(</span>file-relative-name <span style="color: #7388d6;">(</span>buffer-file-name<span style="color: #7388d6;">)</span> <span style="color: #8b2252;">"~/Nextcloud"</span><span style="color: #707183;">)</span>
+<span style="color: #b22222;">;; </span><span style="color: #b22222;">=&gt; "../.emacs.d/lisp/mycommand.el"</span>
 
-<span style="color: #8c8c8c;">(</span>file-relative-name <span style="color: #93a8c6;">(</span>buffer-file-name<span style="color: #93a8c6;">)</span> <span style="color: #e67128;">"~/.emacs.d"</span><span style="color: #8c8c8c;">)</span>
-<span style="color: #74af68;">;; </span><span style="color: #74af68;">=&gt; "lisp/mycommand.el"</span>
+<span style="color: #707183;">(</span>file-relative-name <span style="color: #7388d6;">(</span>buffer-file-name<span style="color: #7388d6;">)</span> <span style="color: #8b2252;">"~/.emacs.d"</span><span style="color: #707183;">)</span>
+<span style="color: #b22222;">;; </span><span style="color: #b22222;">=&gt; "lisp/mycommand.el"</span>
 
-<span style="color: #8c8c8c;">(</span>expand-file-name <span style="color: #e67128;">"my-command.org"</span><span style="color: #8c8c8c;">)</span>
-<span style="color: #74af68;">;; </span><span style="color: #74af68;">=&gt; "/home/kenjiro/.emacs.d/lisp/my-command.org"</span>
+<span style="color: #707183;">(</span>expand-file-name <span style="color: #8b2252;">"my-command.org"</span><span style="color: #707183;">)</span>
+<span style="color: #b22222;">;; </span><span style="color: #b22222;">=&gt; "/home/kenjiro/.emacs.d/lisp/my-command.org"</span>
 
-<span style="color: #74af68;">;; </span><span style="color: #74af68;">&#12381;&#12398;&#12414;&#12414;&#12391;&#12399;&#22793;&#25968;&#23637;&#38283;&#12399;&#12375;&#12390;&#12367;&#12428;&#12394;&#12356;</span>
-<span style="color: #8c8c8c;">(</span>expand-file-name <span style="color: #e67128;">"$HOME/.emacs.d"</span><span style="color: #8c8c8c;">)</span>
-<span style="color: #74af68;">;; </span><span style="color: #74af68;">=&gt; "/home/kenjiro/.emacs.d/lisp/$HOME/my-command.org"</span>
+<span style="color: #b22222;">;; </span><span style="color: #b22222;">&#12381;&#12398;&#12414;&#12414;&#12391;&#12399;&#22793;&#25968;&#23637;&#38283;&#12399;&#12375;&#12390;&#12367;&#12428;&#12394;&#12356;</span>
+<span style="color: #707183;">(</span>expand-file-name <span style="color: #8b2252;">"$HOME/.emacs.d"</span><span style="color: #707183;">)</span>
+<span style="color: #b22222;">;; </span><span style="color: #b22222;">=&gt; "/home/kenjiro/.emacs.d/lisp/$HOME/my-command.org"</span>
 
-<span style="color: #74af68;">;; </span><span style="color: #74af68;">&#22793;&#25968;&#23637;&#38283;&#12399;&#12371;&#12385;&#12425;&#12434;&#20351;&#12358;&#12409;&#12365;</span>
-<span style="color: #8c8c8c;">(</span>substitute-in-file-name <span style="color: #e67128;">"$HOME/.emacs.d"</span><span style="color: #8c8c8c;">)</span>
-<span style="color: #74af68;">;; </span><span style="color: #74af68;">=&gt; "/home/kenjiro/.emacs.d"</span>
+<span style="color: #b22222;">;; </span><span style="color: #b22222;">&#22793;&#25968;&#23637;&#38283;&#12399;&#12371;&#12385;&#12425;&#12434;&#20351;&#12358;&#12409;&#12365;</span>
+<span style="color: #707183;">(</span>substitute-in-file-name <span style="color: #8b2252;">"$HOME/.emacs.d"</span><span style="color: #707183;">)</span>
+<span style="color: #b22222;">;; </span><span style="color: #b22222;">=&gt; "/home/kenjiro/.emacs.d"</span>
 
 </pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org9ceed81" class="outline-2">
+<h2 id="org9ceed81">ディレクトリの作成</h2>
+<div class="outline-text-2" id="text-org9ceed81">
+<div class="org-src-container">
+<pre class="src src-elisp"><span style="color: #b22222;">;; </span><span style="color: #b22222;">mkdir -p </span>
+<span style="color: #707183;">(</span>make-directory <span style="color: #8b2252;">"~/Documents/github/kenjirofukuda/sandbox/Tools"</span> t<span style="color: #707183;">)</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org9d1890b" class="outline-2">
+<h2 id="org9d1890b">ディレクトリ内のファイルの取得</h2>
+<div class="outline-text-2" id="text-org9d1890b">
+<ul class="org-ul">
+<li><code>directory-files</code> ls</li>
+<li><code>directory-files-recursively</code> ls -R</li>
+</ul>
+
+<div class="org-src-container">
+<pre class="src src-elisp"><span style="color: #b22222;">;; </span><span style="color: #b22222;">(directory-files DIRECTORY &amp;optional FULL MATCH NOSORT COUNT)</span>
+<span style="color: #b22222;">;; </span><span style="color: #b22222;">&#12505;&#12540;&#12473;&#21517;&#12398;&#12415;&#12398;&#21462;&#24471;</span>
+<span style="color: #707183;">(</span>directory-files <span style="color: #8b2252;">"~/.emacs.d/lisp/"</span><span style="color: #707183;">)</span>
+
+<span style="color: #b22222;">;; </span><span style="color: #b22222;">&#12501;&#12523;&#12497;&#12473;&#12391;&#21462;&#24471;</span>
+<span style="color: #707183;">(</span>directory-files <span style="color: #8b2252;">"~/.emacs.d/lisp/"</span> t<span style="color: #707183;">)</span>
+
+<span style="color: #b22222;">;; </span><span style="color: #b22222;">.el &#12398;&#12415;&#21462;&#24471;</span>
+<span style="color: #707183;">(</span>directory-files <span style="color: #8b2252;">"~/.emacs.d/lisp/"</span> t <span style="color: #8b2252;">".el"</span><span style="color: #707183;">)</span>
+
+<span style="color: #b22222;">;; </span><span style="color: #b22222;">&#12477;&#12540;&#12488;&#12375;&#12394;&#12356;</span>
+<span style="color: #707183;">(</span>directory-files <span style="color: #8b2252;">"~/.emacs.d/lisp/"</span> t <span style="color: #8b2252;">""</span> t<span style="color: #707183;">)</span>
+
+<span style="color: #b22222;">;; </span><span style="color: #b22222;">&#65299;&#12388;&#12414;&#12391;</span>
+<span style="color: #707183;">(</span>directory-files <span style="color: #8b2252;">"~/.emacs.d/lisp/"</span> t <span style="color: #8b2252;">""</span> nil 3<span style="color: #707183;">)</span>
+
+<span style="color: #b22222;">;; </span><span style="color: #b22222;">(directory-files-recursively</span>
+<span style="color: #b22222;">;;   </span><span style="color: #b22222;">DIR</span>
+<span style="color: #b22222;">;;   </span><span style="color: #b22222;">REGEXP</span>
+<span style="color: #b22222;">;;   </span><span style="color: #b22222;">&amp;optional INCLUDE-DIRECTORIES</span>
+<span style="color: #b22222;">;;             </span><span style="color: #b22222;">PREDICATE</span>
+<span style="color: #b22222;">;;             </span><span style="color: #b22222;">FOLLOW-SYMLINKS)</span>
+
+<span style="color: #b22222;">;; </span><span style="color: #b22222;">PREDICATE &#12395;&#12399; lambda &#38306;&#25968;&#12434;&#28193;&#12377;&#12371;&#12392;&#12364;&#12391;&#12365;&#12427;</span>
+
+<span style="color: #b22222;">;;</span>
+<span style="color: #707183;">(</span>directory-files-recursively <span style="color: #8b2252;">"~/.emacs.d/"</span> <span style="color: #8b2252;">"\\.el$"</span><span style="color: #707183;">)</span>
+
+<span style="color: #b22222;">;; </span><span style="color: #b22222;">gnustep &#12503;&#12525;&#12472;&#12455;&#12463;&#12488;&#12398;&#20013;&#12391;&#12289;&#32020;&#31883;&#12394; &#12477;&#12540;&#12473;&#12467;&#12540;&#12489;&#12504;&#12483;&#12480;&#12540;&#12501;&#12449;&#12452;&#12523;&#12434;&#21462;&#24471;</span>
+<span style="color: #707183;">(</span>directory-files-recursively
+ <span style="color: #8b2252;">"~/Documents/github/kenjirofukuda/gdsfeel-gnustep/"</span> <span style="color: #8b2252;">".[mhc]$"</span>
+ nil
+ <span style="color: #7388d6;">(</span><span style="color: #a020f0;">lambda</span> <span style="color: #909183;">(</span>path<span style="color: #909183;">)</span> <span style="color: #b22222;">;; </span><span style="color: #b22222;">ccls &#12461;&#12515;&#12471;&#12517;&#12434;&#38500;&#22806;</span>
+   <span style="color: #909183;">(</span>not <span style="color: #709870;">(</span><span style="color: #a020f0;">or</span> <span style="color: #907373;">(</span>string-match-p <span style="color: #8b2252;">".*/\\.ccls-cache/.*"</span> path<span style="color: #907373;">)</span>
+            <span style="color: #907373;">(</span>string-match-p <span style="color: #8b2252;">".*/\\.git/.*"</span> path<span style="color: #907373;">)</span><span style="color: #709870;">)</span><span style="color: #909183;">)</span><span style="color: #7388d6;">)</span><span style="color: #707183;">)</span>
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org2d0c1dc" class="outline-2">
+<h2 id="org2d0c1dc">コピー、名称変更/移動、削除</h2>
+<div class="outline-text-2" id="text-org2d0c1dc">
+</div>
+<div id="outline-container-orgc7f1682" class="outline-3">
+<h3 id="orgc7f1682">コピー</h3>
+<div class="outline-text-3" id="text-orgc7f1682">
+<div class="org-src-container">
+<pre class="src src-elisp"><span style="color: #b22222;">;; </span><span style="color: #b22222;">&#36578;&#36865;&#20808;&#12364;&#12487;&#12451;&#12524;&#12463;&#12488;&#12522;&#12398;&#22580;&#21512; / &#12364;&#12394;&#12356;&#12392;&#12456;&#12521;&#12540;</span>
+<span style="color: #707183;">(</span>copy-file <span style="color: #8b2252;">"~/.emacs.d/init.el"</span> <span style="color: #8b2252;">"/tmp"</span><span style="color: #707183;">)</span>
+
+<span style="color: #707183;">(</span>copy-file <span style="color: #8b2252;">"~/.emacs.d/init.el"</span> <span style="color: #8b2252;">"/tmp/"</span><span style="color: #707183;">)</span>
+<span style="color: #707183;">(</span>directory-files <span style="color: #8b2252;">"/tmp"</span> nil <span style="color: #8b2252;">"\\.el$"</span><span style="color: #707183;">)</span>
+
+<span style="color: #b22222;">;; </span><span style="color: #b22222;">2&#22238;&#30446;&#12399;&#12377;&#12391;&#12395;&#23384;&#22312;&#12377;&#12427;&#12398;&#12391;&#12456;&#12521;&#12540;</span>
+<span style="color: #707183;">(</span>copy-file <span style="color: #8b2252;">"~/.emacs.d/init.el"</span> <span style="color: #8b2252;">"/tmp/"</span><span style="color: #707183;">)</span>
+
+<span style="color: #b22222;">;; </span><span style="color: #b22222;">&#19978;&#26360;&#12365;&#12395;&#12399; t &#25351;&#23450;&#12364;&#24517;&#35201;</span>
+<span style="color: #707183;">(</span>copy-file <span style="color: #8b2252;">"~/.emacs.d/init.el"</span> <span style="color: #8b2252;">"/tmp/"</span> t<span style="color: #707183;">)</span>
+
+<span style="color: #b22222;">;; </span><span style="color: #b22222;">(copy-directory DIRECTORY NEWNAME</span>
+<span style="color: #b22222;">;;    </span><span style="color: #b22222;">&amp;optional KEEP-TIME</span>
+<span style="color: #b22222;">;;              </span><span style="color: #b22222;">PARENTS</span>
+<span style="color: #b22222;">;;              </span><span style="color: #b22222;">COPY-CONTENTS</span>
+
+<span style="color: #b22222;">;; </span><span style="color: #b22222;">copy-file &#21516;&#27096; / &#12391;&#32066;&#12431;&#12425;&#12394;&#12356;&#12392;&#12456;&#12521;&#12540;</span>
+<span style="color: #707183;">(</span>copy-directory <span style="color: #8b2252;">"~/.emacs.d/lisp"</span> <span style="color: #8b2252;">"/tmp"</span><span style="color: #707183;">)</span>
+
+<span style="color: #b22222;">;; </span><span style="color: #b22222;">&#12467;&#12500;&#12540;&#21487;&#33021;</span>
+<span style="color: #707183;">(</span>copy-directory <span style="color: #8b2252;">"~/.emacs.d/lisp"</span> <span style="color: #8b2252;">"/tmp/"</span><span style="color: #707183;">)</span>
+<span style="color: #707183;">(</span>directory-files <span style="color: #8b2252;">"/tmp"</span> nil <span style="color: #8b2252;">"^lisp$"</span><span style="color: #707183;">)</span>
+
+<span style="color: #b22222;">;; </span><span style="color: #b22222;">&#12371;&#12398;&#65298;&#12388;&#12399;&#20170;&#12402;&#12392;&#12388;&#29702;&#35299;&#12391;&#12365;&#12394;&#12363;&#12387;&#12383;</span>
+<span style="color: #707183;">(</span>copy-directory <span style="color: #8b2252;">"~/.emacs.d/eshell"</span> <span style="color: #8b2252;">"/tmp/lisp"</span> t t nil<span style="color: #707183;">)</span>
+<span style="color: #707183;">(</span>copy-directory <span style="color: #8b2252;">"~/.emacs.d/eshell"</span> <span style="color: #8b2252;">"/tmp/lisp"</span> t t t<span style="color: #707183;">)</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgbeb1b91" class="outline-3">
+<h3 id="orgbeb1b91">名称変更/移動</h3>
+<div class="outline-text-3" id="text-orgbeb1b91">
+<div class="org-src-container">
+<pre class="src src-elisp">
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgdae51cf" class="outline-3">
+<h3 id="orgdae51cf">削除</h3>
+<div class="outline-text-3" id="text-orgdae51cf">
+<div class="org-src-container">
+<pre class="src src-elisp">
+</pre>
+</div>
 </div>
 </div>
 </div>
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: kenjiro</p>
-<p class="date">Created: 2024-11-08 Fri 17:28</p>
+<p class="date">Created: 2024-11-10 Sun 16:37</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>

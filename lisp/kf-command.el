@@ -23,5 +23,22 @@
     ))
 (global-set-key (kbd "\C-c <f3>") 'kf:open-file-thing)
 
+;; ウィンドウのバッファを固定する
+;; Similar to: http://stackoverflow.com/questions/43765/pin-emacs-buffers-to-windows-for-cscope/65992#65992
+
+(defun kf:pin-buffer ()
+  "Pin buffer to current window."
+  (interactive)
+  (message
+   (if (let (window (get-buffer-window (current-buffer)))
+         (set-window-dedicated-p window (not (window-dedicated-p window))))
+       "pinned buffer" "un-pinned buffer")))
+
+;; ファイルが適切なソースコードか?
+(defun kf:valid-project-file (path)
+  "ファイルが適切なソースコードか?"
+  (not (or (string-match-p ".*/\\.ccls-cache/.*" path)
+	   (string-match-p ".*/\\.git/.*" path))))
+
 (message "kf-command loaded...")
 (provide 'kf-command)

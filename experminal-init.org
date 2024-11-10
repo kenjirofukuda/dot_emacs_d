@@ -203,6 +203,23 @@ C-c C-v C-t
 
 #+END_SRC
 
+* Org
+** <s <tab> でブロック文のテンプレートを挿入
+#+BEGIN_SRC elisp :tangle yes
+  ;; <s <tab> でブロック文のテンプレートを挿入
+  (require 'org-tempo)
+#+END_SRC
+
+** デフォルトのbabelではシェルは禁止されているの使えるようにする
+#+begin_src elisp :tangle yes
+  ;; デフォルトのbabelではシェルは禁止されているの使えるようにする
+  (org-babel-do-load-languages
+   'org-babel-load-languages
+   '(
+     (shell . t)
+     ))
+#+end_src
+
 * 末尾
 #+BEGIN_SRC elisp :tangle yes
   ;; カスタムコマンドのロード
