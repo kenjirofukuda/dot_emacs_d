@@ -1,0 +1,417 @@
+#+TITLE: emacs lisp 学習
+#+OPTIONS: num:nil
+
+* おさらい
+評価は、式の末尾にカーソルを移動し、C-x C-e
+ソース引用は C-c C-, s
+
+System Craft 様の Youtube チュートリアルを見ながら勧めていきます。
+* カレントバッファ
+** バッファの取得
+#+begin_src elisp
+  (current-buffer)
+#+end_src
+#+begin_src elisp
+  (get-buffer "*scratch*")
+#+end_src
+
+** バッファの取得、存在しない場合作成
+#+begin_src elisp
+  (get-buffer-create "kenjirofukuda")
+#+end_src
+
+* カレントバッファの変更
+
+se-buffer は 引数として、バッファオブジェクトまたはバッファ名を取るこ
+とができる。よって次の２つは同義である。
+
+#+begin_src elisp
+  (progn
+    (set-buffer (get-buffer "kenjirofukuda"))
+    (current-buffer))
+
+  (progn
+    (set-buffer "kenjirofukuda")
+    (current-buffer))
+
+  ;; 意図的な副作用何が起こるか
+  (progn
+    (set-buffer "kenjirofukuda")
+    (insert "Hello World!")
+    (current-buffer))
+#+end_src
+期待通りに、バッファに、Hello World! が挿入されたのだが、画面がきりか
+わるわけではない。
+
+* 安全なカレントバッファの変更
+コマンド内で、複数のカレントの切り替えが行われると予期せぬ副作用が発生
+します。
+これらのトラブルを回避するために、バッファを操作するコードを
+*save-current-buffer* で囲みます。
+
+#+begin_src elisp
+  (progn
+    (save-current-buffer
+      (set-buffer "kenjirofukuda")
+      (message "Curernt buffer: %s" (current-buffer)))
+    (current-buffer))
+#+end_src
+
+より単純な手段として *with-current-buffer* がマクロが利用可能です。
+
+#+begin_src elisp
+  (progn
+    (with-current-buffer "kenjirofukuda"
+      (message "Curernt buffer: %s" (current-buffer)))
+    (current-buffer))
+#+end_src
+
+* ファイルバッファの操作
+Emacs にて大抵はファイル内のテキストをバッファにて操作することです。
+*find-file* のような関数に依って作成されたバッファは *buffer-file-name* で
+バッファに結びついたファイルのフルパス名を取得できます。
+
+#+begin_src elisp
+  (buffer-file-name)
+#+end_src
+
+*get-file-buffer* 関数でファイル名またはファイルパス名を渡せば目的のバッ
+ ファを取得することができます。
+
+ #+begin_src elisp
+   (get-file-buffer "init.el")
+   (get-file-buffer "~/.emacs.d/init.el")
+
+   (get-file-buffer "my-command.el")
+   (get-file-buffer "~/.emacs.d/lisp/my-command.el")
+
+   (get-file-buffer "my-command.org")
+   (get-file-buffer "~/.emacs.d/lisp/my-command.org")
+ #+end_src
+*NOTE:* この関数は検索する前に一旦絶対パス名に変換します。
+ *default-directory* 変数を用いて パス名を展開します。
+
+ #+begin_src elisp
+   default-directory
+ #+end_src
+
+ C-h C-v にて変数を確認してみましょう。
+
+* バッファにファイルを読み込む
+ファイルを表示することなしにバッファに読み込む関数
+*find-file-noselect* を提供しています。
+
+#+begin_src elisp
+  (find-file-noselect "GNUmakefile2")
+  (buffer-file-name (find-file-noselect "GNUmakefile"))
+#+end_src
+
+#+begin_src elisp
+  (setq my-org-files '("Kenjiro1.org" "Kenjiro2.org" "Kenjiro3.org"))
+
+  (dolist (org-file my-org-files)
+    (let ((file-path (expand-file-name org-file "~/Nextcloud/")))
+      (with-current-buffer (or (get-file-buffer file-path)
+                               (find-file-noselect file-path))
+        (message "File: %s" (buffer-file-name)))))
+#+end_src
+
+* point とは
+
+#+begin_src elisp
+  (point)
+#+end_src
+
+同じバッファーでもウィンドウが異なれば point の返す値は異なる場合があ
+ります。
+
+#+begin_src elisp
+  (point-min)
+  (point-max)
+#+end_src
+
+* point の移動
+#+begin_src elisp
+  (goto-char 1)
+  (goto-char (point-min))
+  (goto-char (point-max))
+  (beginning-of-buffer)
+  (end-of-buffer)
+
+  (forward-char)
+  (forward-char 5)
+
+  (backward-char)
+  (backward-char 10)
+
+  (forward-word)
+  (backward-word)
+#+end_src
+
+* point の保護
+#+begin_src elisp
+  (save-excursion
+    (goto-char (point-max))
+    (point))
+#+end_src
+
+* バッファテキストの取得
+
+カーソル上の文字
+#+begin_src elisp
+  (char-after)                            
+  (char-after (point))
+  (char-after (point-min))
+#+end_src
+
+
+指定した範囲の部分文字列
+#+begin_src elisp
+  (buffer-substring 1 8)
+  (buffer-substring-no-properties 1 8)
+#+end_src
+
+フォント情報などの他の属性が不要な場合は、-no-properties をつかうこと」
+#+begin_src
+#("#+TITLE" 0 7 (face org-document-info-keyword wrap-prefix "" line-prefix "" fontified t font-lock-fontified t))
+
+"#+TITLE"
+#+end_src
+
+* Thing
+
+現在のカーソル位置でテキストを取得する
+
+#+begin_src elisp
+  (thing-at-point 'word)                  
+  (thing-at-point 'sentence)
+  (thing-at-point 'sentence t)
+  (thing-at-point 'sexp)
+  ;; (thing-at-point THING &optional NO-PROPERTIES)
+  ;; THING: に指定可能なシンボル
+  ;; '(symbol list sexp defun filename existsing-filename
+  ;;   url, email, uuid, word, sentence, whitespace, line
+  ;;   number face page)
+  
+#+end_src
+
+* 検索
+
+#+begin_src elisp
+  (search-foward "file-find")
+  (search-foward "file-find" nil)
+  ;; 1 から 100 の間
+  (search-foward "file-find" (1 . 100))
+  ;; エラーを回避して nil を取得
+  (search-foward "file-find" nil t)
+  ;; 3 番目を取得
+  (search-foward "file-find" nil t 3)
+
+  ;; (search-forward STRING &optional BOUND NOERROR COUNT)
+
+#+end_src
+
+** 検索の例
+#+begin_src elisp
+  (with-current-buffer "my-command.org"
+    (save-excursion
+      (thing-at-point 'word)))
+
+  (with-current-buffer "my-command.org"
+    (save-excursion
+      (thing-at-point 'sentence t)))
+
+  (with-current-buffer "my-command.org"
+    (save-excursion
+      (thing-at-point 'sexp t)))
+
+
+  ;; これは実在するワードなのでエラーを起こさない
+  (with-current-buffer "my-command.org"
+    (save-excursion
+      (goto-char (point-min))
+      (search-forward "thing")))
+
+
+  ;; これは実在 !!!しない!!! ワードなのでエラーを起こす
+  (with-current-buffer "my-command.org"
+    (save-excursion
+      (goto-char (point-min))
+      (search-forward "thing2")))
+
+  ;; これは実在 !!!しない!!! ワードだが
+  ;; オプションパラメータの2番目に t を渡すことで回避できる
+  ;; ただし、戻り値は nil
+  (with-current-buffer "my-command.org"
+    (save-excursion
+      (goto-char (point-min))
+      (search-forward "thing2" nil t)))
+
+
+  ;; 現在を末尾から検索し、行を取得する
+  (with-current-buffer "my-command.org"
+    (save-excursion
+      (goto-char (point-max))
+      (search-backward "現在")
+      (thing-at-point 'sentence t)))
+#+end_src
+
+* パス名
+
+*注意:* パス名は実在する必要はない。
+
+#+begin_src elisp
+  (file-name-directory "~/home/kenjiro/Documents/gnustep.tar.gz")
+  ;; => "~/home/kenjiro/Documents/"
+
+  (file-name-nondirectory "~/home/kenjiro/Documents/gnustep.tar.gz")
+  ;; => "gnustep.tar.gz"
+
+  (file-name-extension "~/home/kenjiro/Documents/gnustep.tar.gz")
+  ;; => "gz"
+
+  ;; 空文字"" を返さないことに注意 nil を返球
+  (file-name-extension "~/home/kenjiro/Documents/gnustep")
+  ;; => nil
+
+  ;; ドットファイルを拡張子と勘違いしていないようである
+  (file-name-extension "~/home/kenjiro/Documents/.gitignore")
+  ;; => nil
+
+  (file-name-sans-extension "~/home/kenjiro/Documents/gnustep.tar.gz")
+  ;; => "~/home/kenjiro/Documents/gnustep.tar"
+
+  (file-name-base "~/home/kenjiro/Documents/gnustep.tar.gz")
+  ;; => "gnustep.tar"
+
+  (file-name-as-directory "~/home/kenjiro/Documents/gnustep.tar.gz")
+  ;; => "~/home/kenjiro/Documents/gnustep.tar.gz/"
+
+#+end_src
+
+* パスの解決
+
+- =file-name-absolute-p= 絶対パスの場合 t
+- =file-relative-name= 相対パスの取得
+- =expand-file-name= 指定ディレクトリでの絶対パス名を取得
+
+#+begin_src elisp
+  (file-name-absolute-p "~/home/kenjiro/Documents/gnustep.tar.gz")
+  ;; => t
+
+  (file-name-absolute-p "gnustep.tar.gz")
+  ;; => nil
+
+  (file-name-absolute-p "Documents/gnustep.tar.gz")
+  ;; => nil
+
+  (file-name-absolute-p "./Documents/gnustep.tar.gz")
+  ;; => nil
+
+  (file-relative-name (buffer-file-name) "~/Nextcloud")
+  ;; => "../.emacs.d/lisp/mycommand.el"
+
+  (file-relative-name (buffer-file-name) "~/.emacs.d")
+  ;; => "lisp/mycommand.el"
+
+  (expand-file-name "my-command.org")
+  ;; => "/home/kenjiro/.emacs.d/lisp/my-command.org"
+
+  ;; そのままでは変数展開はしてくれない
+  (expand-file-name "$HOME/.emacs.d")
+  ;; => "/home/kenjiro/.emacs.d/lisp/$HOME/my-command.org"
+
+  ;; 変数展開はこちらを使うべき
+  (substitute-in-file-name "$HOME/.emacs.d")
+  ;; => "/home/kenjiro/.emacs.d"
+  
+#+end_src
+
+* ディレクトリの作成
+
+#+begin_src elisp
+  ;; mkdir -p 
+  (make-directory "~/Documents/github/kenjirofukuda/sandbox/Tools" t)
+#+end_src
+
+* ディレクトリ内のファイルの取得
+
+- =directory-files= ls
+- =directory-files-recursively= ls -R
+  
+#+begin_src elisp
+  ;; (directory-files DIRECTORY &optional FULL MATCH NOSORT COUNT)
+  ;; ベース名のみの取得
+  (directory-files "~/.emacs.d/lisp/")
+
+  ;; フルパスで取得
+  (directory-files "~/.emacs.d/lisp/" t)
+
+  ;; .el のみ取得
+  (directory-files "~/.emacs.d/lisp/" t ".el")
+
+  ;; ソートしない
+  (directory-files "~/.emacs.d/lisp/" t "" t)
+
+  ;; ３つまで
+  (directory-files "~/.emacs.d/lisp/" t "" nil 3)
+
+  ;; (directory-files-recursively
+  ;;   DIR
+  ;;   REGEXP
+  ;;   &optional INCLUDE-DIRECTORIES
+  ;;             PREDICATE
+  ;;             FOLLOW-SYMLINKS)
+
+  ;; PREDICATE には lambda 関数を渡すことができる
+
+  ;;
+  (directory-files-recursively "~/.emacs.d/" "\\.el$")
+
+  ;; gnustep プロジェクトの中で、純粋な ソースコードヘッダーファイルを取得
+  (directory-files-recursively
+   "~/Documents/github/kenjirofukuda/gdsfeel-gnustep/" ".[mhc]$"
+   nil
+   (lambda (path) ;; ccls キャシュを除外
+     (not (or (string-match-p ".*/\\.ccls-cache/.*" path)
+              (string-match-p ".*/\\.git/.*" path)))))
+#+end_src
+* コピー、名称変更/移動、削除
+** コピー
+#+begin_src elisp
+  ;; 転送先がディレクトリの場合 / がないとエラー
+  (copy-file "~/.emacs.d/init.el" "/tmp")
+
+  (copy-file "~/.emacs.d/init.el" "/tmp/")
+  (directory-files "/tmp" nil "\\.el$")
+
+  ;; 2回目はすでに存在するのでエラー
+  (copy-file "~/.emacs.d/init.el" "/tmp/")
+
+  ;; 上書きには t 指定が必要
+  (copy-file "~/.emacs.d/init.el" "/tmp/" t)
+
+  ;; (copy-directory DIRECTORY NEWNAME
+  ;;    &optional KEEP-TIME
+  ;;              PARENTS
+  ;;              COPY-CONTENTS
+
+  ;; copy-file 同様 / で終わらないとエラー
+  (copy-directory "~/.emacs.d/lisp" "/tmp")
+
+  ;; コピー可能
+  (copy-directory "~/.emacs.d/lisp" "/tmp/")
+  (directory-files "/tmp" nil "^lisp$")
+
+  ;; この２つは今ひとつ理解できなかった
+  (copy-directory "~/.emacs.d/eshell" "/tmp/lisp" t t nil)
+  (copy-directory "~/.emacs.d/eshell" "/tmp/lisp" t t t)
+#+end_src
+
+** 名称変更/移動
+#+begin_src elisp
+#+end_src
+
+** 削除
+#+begin_src elisp
+#+end_src

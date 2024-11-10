@@ -3,7 +3,9 @@
 ;; NOTE: init.el is now generated from Emacs.org.  Please edit that file
 ;;       in Emacs and init.el will be generated automatically!
 
-(load-file (expand-file-name "~/.emacs.d/lisp/initchart.el"))
+(push (expand-file-name "~/.emacs.d/lisp") load-path)
+
+;;(load-file (expand-file-name "~/.emacs.d/lisp/initchart.el"))
 
 ;; Load the library
 (require 'initchart)
@@ -17,14 +19,14 @@
 
 ;;; Code:
 (setq gc-cons-threshold 100000000)
-(setq read-process-output-max (* 1024 1024)) ;; 1mb
+(setq read-process-output-max (* 8 1024 1024)) ;; 1mb
 (setq lsp-idle-delay 0.5)
 (setq lsp-log-io nil)
 
 
 ;; You will most likely need to adjust this font size for your system!
-(defvar efs/default-font-size 180)
-(defvar efs/default-variable-font-size 180)
+(defvar efs/default-font-size 120)
+(defvar efs/default-variable-font-size 120)
 
 ;; Make frame transparency overridable
 (defvar efs/frame-transparency '(95 . 95))
@@ -118,7 +120,7 @@
                 term-mode-hook
                 vterm-mode-hook
                 shell-mode-hook
-		eww-mode-hook
+		            eww-mode-hook
                 treemacs-mode-hook
                 eshell-mode-hook
 		neotree-mode-hook))
@@ -212,16 +214,17 @@
 
 (defun efs/org-font-setup ()
   ;; Replace list hyphen with dot
-  (font-lock-add-keywords 'org-mode
-                          '(("^ *\\([-]\\) "
-                             (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•"))))))
+  ;; STOP: hyphen replacement
+  ;; (font-lock-add-keywords 'org-mode
+  ;;                         '(("^ *\\([-]\\) "
+  ;;                            (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•"))))))
 
   ;; Set faces for heading levels
   (dolist (face '((org-level-1 . 1.2)
                   (org-level-2 . 1.1)
                   (org-level-3 . 1.05)
                   (org-level-4 . 1.0)
-                  (org-level-5 . 1.1) 
+                  (org-level-5 . 1.1)
                   (org-level-6 . 1.1)
                   (org-level-7 . 1.1)
                   (org-level-8 . 1.1)))
@@ -715,6 +718,7 @@
   :init (load (expand-file-name "~/.roswell/helper.el"))
   :custom (inferior-lisp-program "ros -Q run ")
   :config (slime-setup '(slime-fancy slime-company)))
+
 (defun my-slime-sync-repl ()
   "現在のバッファのパッケージに移動してからREPLに移行"
   (slime-sync-package-and-default-directory)
@@ -808,7 +812,6 @@
 (use-package flyspell
   :ensure t)
 
-(push (expand-file-name "~/.emacs.d/lisp") load-path)
 
 ;; modula-2
 ;; https://splendidisolation.ddns.net/Southwales/gaius/web/gm2-mode.html
@@ -1067,6 +1070,116 @@ middle"
 
 (use-package transpose-frame
   :ensure t)
+
+(use-package clang-format
+  :ensure t)
+
+;; https://github.com/seudut/perspeen
+;; http://emacs.rubikitch.com/perspeen/
+(use-package perspeen
+  :ensure t
+  :init
+  (setq perspeen-use-tab t)
+  :config
+  (perspeen-mode))
+
+(define-key perspeen-command-map (kbd "h") 'perspeen-tab-prev)
+(define-key perspeen-command-map (kbd "l") 'perspeen-tab-next)
+(define-key perspeen-command-map (kbd "C-d") 'perspeen-tab-del)
+(global-set-key (kbd "<C-tab>") 'perspeen-tab-next)
+(global-set-key (kbd "<C-S-tab>") 'perspeen-tab-pre)
+
+(use-package git-gutter
+  :init
+  (progn
+    (global-git-gutter-mode t)
+    (git-gutter:linum-setup))
+  :bind
+  (("C-x C-g" . git-gutter:toggle))
+  :config
+  (progn
+    (custom-set-variables
+     '(git-gutter:modified-sign "  ")
+     '(git-gutter:added-sign "++")
+     '(git-gutter:deleted-sign "--"))
+    (set-face-background 'git-gutter:modified "purple")
+    (set-face-foreground 'git-gutter:added "green")
+    (set-face-foreground 'git-gutter:deleted "red")))
+
+
+
+;;; GDB 関連
+;;; 有用なバッファを開くモード
+(setq gdb-many-windows t)
+
+;;; 変数の上にマウスカーソルを置くと値を表示
+(add-hook 'gdb-mode-hook '(lambda () (gud-tooltip-mode t)))
+
+;;; I/O バッファを表示
+(setq gdb-use-separate-io-buffer t)
+
+;;; t にすると mini buffer に値が表示される
+(setq gud-tooltip-echo-area nil)
+
+(use-package dap-mode
+  :ensure t)
+
+(require 'dap-lldb)
+(require 'dap-gdb-lldb)
+
+;; Enabling only some features
+(setq dap-auto-configure-features '(sessions locals controls tooltip))
+(dap-mode 1)
+
+;; The modes below are optional
+
+(dap-ui-mode 1)
+;; enables mouse hover support
+(dap-tooltip-mode 1)
+;; use tooltips for mouse hover
+;; if it is not enabled `dap-mode' will use the minibuffer.
+(tooltip-mode 1)
+;; displays floating panel with debug buttons
+;; requies emacs 26+
+(dap-ui-controls-mode 1)
+
+;; -*- lexical-binding: t -*-
+(define-minor-mode +dap-running-session-mode
+  "A mode for adding keybindings to running sessions"
+  nil
+  nil
+  (make-sparse-keymap)
+  (evil-normalize-keymaps) ;; if you use evil, this is necessary to update the keymaps
+  ;; The following code adds to the dap-terminated-hook
+  ;; so that this minor mode will be deactivated when the debugger finishes
+  (when +dap-running-session-mode
+    (let ((session-at-creation (dap--cur-active-session-or-die)))
+      (add-hook 'dap-terminated-hook
+                (lambda (session)
+                  (when (eq session session-at-creation)
+                    (+dap-running-session-mode -1)))))))
+
+;; Activate this minor mode when dap is initialized
+(add-hook 'dap-session-created-hook '+dap-running-session-mode)
+
+;; Activate this minor mode when hitting a breakpoint in another file
+(add-hook 'dap-stopped-hook '+dap-running-session-mode)
+
+;; Activate this minor mode when stepping into code in another file
+(add-hook 'dap-stack-frame-changed-hook (lambda (session)
+                                          (when (dap--session-running session)
+                                            (+dap-running-session-mode 1))))
+
+
+;; Similar to: http://stackoverflow.com/questions/43765/pin-emacs-buffers-to-windows-for-cscope/65992#65992
+(defun pin-buffer ()
+  "Pin buffer to current window."
+  (interactive)
+  (message
+   (if (let (window (get-buffer-window (current-buffer)))
+         (set-window-dedicated-p window (not (window-dedicated-p window))))
+       "pinned buffer" "un-pinned buffer")
+   ))
 
 (provide 'init)
 ;;; init.el ends here
