@@ -9,7 +9,7 @@
   (push (expand-file-name "~/.emacs.d/lisp") load-path))
 
 (setq gc-cons-threshold 100000000)
-(setq read-process-output-max (* 8 1024 1024)) ;; 1mb
+(setq read-process-output-max (* 8 1024 1024)) ;; 8mb
 
 ;; パッケージアーカイブ
 (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
@@ -104,24 +104,56 @@
 (setq recentf-max-saved-items 25)
 (global-set-key "\C-x\ \C-r" 'recentf-open-files)
 
+;; 拡張選択範囲
+(use-package expand-region
+  :ensure t)
+(global-set-key (kbd "C-q") 'er/expand-region)
+
+;; コード補完
+(use-package company
+  :ensure t)
+
 ;; Magit 設定
 (use-package magit
-    :ensure t
-    :pin melpa)
+  :ensure t
+  :pin melpa)
 
-(use-package git-gutter
+;; https://joppot.info/posts/f3007a42-5ba2-4060-90d4-496697413cf9
+(use-package diff-hl
+  :ensure t
   :init
-  (progn
-    (global-git-gutter-mode t)
-    (git-gutter:linum-setup))
-  :bind
-  (("C-x C-g" . git-gutter-mode))
+  (global-diff-hl-mode)
+  (add-hook 'dired-mode-hook 'diff-hl-dired-mode)
+  (unless (window-system) (diff-hl-margin-mode))
+  :custom-face
+  (diff-hl-change ((t (:background "#8adf80"))))
+  (diff-hl-delete ((t (:background "#ff8f88"))))
+  (diff-hl-insert ((t (:background "#bfc9ff"))))
   :config
-  (progn
-    (custom-set-variables
-     '(git-gutter:modified-sign "  ")
-     '(git-gutter:added-sign "++")
-     '(git-gutter:deleted-sign "--"))
-    (set-face-background 'git-gutter:modified "purple")
-    (set-face-foreground 'git-gutter:added "green")
-    (set-face-foreground 'git-gutter:deleted "red")))
+  (add-hook 'magit-pre-refresh-hook 'diff-hl-magit-pre-refresh)
+  (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh))
+
+;; Lisp ファミリ基本設定
+(show-paren-mode t)
+(use-package paredit
+  :ensure t
+  :commands enable-paredit-mode
+  :hook ((emacs-lisp-mode
+	  org-mode)
+	 . enable-paredit-mode))
+
+(use-package smartparens :ensure t)
+(use-package rainbow-delimiters :ensure t)
+
+;; emacs lisp
+(add-hook 'emacs-lisp-mode-hook 'paredit-mode)
+(add-hook 'emacs-lisp-mode-hook 'rainbow-delimiters-mode)
+;; (add-hook 'emacs-lisp-mode-hook 'company-mode)
+;; (add-hook 'emacs-lisp-mode-hook 'subword-mode)
+;; (add-hook 'emacs-lisp-mode-hook 'aggressive-indent-mode)
+
+(eval-after-load 'inferior-emacs-lisp-mode
+  '(progn
+     (add-hook 'ielm-mode-hook 'paredit-mode)
+     (define-key paredit-mode-map (kbd "RET") nil)
+     (define-key paredit-mode-map (kbd "C-j") 'paredit-newline)))
