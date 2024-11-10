@@ -1,0 +1,52 @@
+#+TITLE: カスタムコマンド
+#+PROPERTY: tangle ~/.emacs.d/lisp/kf-command.el
+
+* このファイルの使用方法
+#+BEGIN_SRC shell :tangle no
+  alias emacs2='emacs -Q -l ~/.emacs.d/experminal-init.el'
+  # then use: emacs2 <Enter>
+#+END_SRC
+
+* ファイルの生成方法
+#+BEGIN_SRC :tangle no
+C-c C-v C-t
+#+END_SRC
+
+* シェルコマンドの挿入
+#+BEGIN_SRC elisp :tangle yes
+  ;; シェルコマンドの結果を挿入
+  (defun kf:insert-shell-command (start end command)
+    "シェルコマンドの結果を挿入"
+    (interactive (let (string)
+		   (setq string (read-shell-command "Shell command on region(and insert): "))
+		   (list (point) (point) string)))
+    (let ((output-buffer t)
+	  (replace t))
+      (shell-command-on-region start end command output-buffer replace)))
+  
+#+END_SRC
+
+* カーソル行のファイルを開く
+#+BEGIN_SRC elisp :tangle yes
+  (defun kf:open-file-thing ()
+    "カーソル行のファイルを開く"
+    (interactive)
+    (let ((filename (thing-at-point 'filename t))
+	  (url (thing-at-point 'url t)))
+      ;; (message "filename: %s" filename)
+      ;; (message "     url: %s" url)
+      (when url
+	(message url)
+	(browse-url-chrome url))
+      (when (and filename (file-exists-p filename))
+	(find-file filename))
+      ))
+  (global-set-key (kbd "\C-c <f3>") 'kf:open-file-thing)
+#+END_SRC
+
+
+* フッタ
+#+BEGIN_SRC elisp :tangle yes
+  (message "kf-command loaded...")
+  (provide 'kf-command)
+#+END_SRC

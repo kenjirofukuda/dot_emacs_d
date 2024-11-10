@@ -19,7 +19,7 @@ C-c C-v C-t
   ;;; Code:
 
   (with-current-buffer "*scratch*"
-    (insert ";;; loading Experminal init.el"))
+    (insert ";;; loading Experminal init.el\n\n"))
 
   (when (file-directory-p "~/.emacs.d/lisp")
     (push (expand-file-name "~/.emacs.d/lisp") load-path))
@@ -203,3 +203,9 @@ C-c C-v C-t
 
 #+END_SRC
 
+* 末尾
+#+BEGIN_SRC elisp :tangle yes
+  ;; カスタムコマンドのロード
+  (require 'kf-command)
+  (recentf-open-files)
+#+END_SRC

@@ -76,26 +76,26 @@ Emacs にて大抵はファイル内のテキストをバッファにて操作�
 #+end_src
 
 *get-file-buffer* 関数でファイル名またはファイルパス名を渡せば目的のバッ
- ファを取得することができます。
+ファを取得することができます。
 
- #+begin_src elisp
-   (get-file-buffer "init.el")
-   (get-file-buffer "~/.emacs.d/init.el")
+#+begin_src elisp
+  (get-file-buffer "init.el")
+  (get-file-buffer "~/.emacs.d/init.el")
 
-   (get-file-buffer "my-command.el")
-   (get-file-buffer "~/.emacs.d/lisp/my-command.el")
+  (get-file-buffer "my-command.el")
+  (get-file-buffer "~/.emacs.d/lisp/my-command.el")
 
-   (get-file-buffer "my-command.org")
-   (get-file-buffer "~/.emacs.d/lisp/my-command.org")
- #+end_src
+  (get-file-buffer "my-command.org")
+  (get-file-buffer "~/.emacs.d/lisp/my-command.org")
+#+end_src
 *NOTE:* この関数は検索する前に一旦絶対パス名に変換します。
- *default-directory* 変数を用いて パス名を展開します。
+*default-directory* 変数を用いて パス名を展開します。
 
- #+begin_src elisp
-   default-directory
- #+end_src
+#+begin_src elisp
+  default-directory
+#+end_src
 
- C-h C-v にて変数を確認してみましょう。
+C-h C-v にて変数を確認してみましょう。
 
 * バッファにファイルを読み込む
 ファイルを表示することなしにバッファに読み込む関数
@@ -112,8 +112,8 @@ Emacs にて大抵はファイル内のテキストをバッファにて操作�
   (dolist (org-file my-org-files)
     (let ((file-path (expand-file-name org-file "~/Nextcloud/")))
       (with-current-buffer (or (get-file-buffer file-path)
-                               (find-file-noselect file-path))
-        (message "File: %s" (buffer-file-name)))))
+			       (find-file-noselect file-path))
+	(message "File: %s" (buffer-file-name)))))
 #+end_src
 
 * point とは
@@ -192,7 +192,7 @@ Emacs にて大抵はファイル内のテキストをバッファにて操作�
   ;; '(symbol list sexp defun filename existsing-filename
   ;;   url, email, uuid, word, sentence, whitespace, line
   ;;   number face page)
-  
+
 #+end_src
 
 * 検索
@@ -324,7 +324,7 @@ Emacs にて大抵はファイル内のテキストをバッファにて操作�
   ;; 変数展開はこちらを使うべき
   (substitute-in-file-name "$HOME/.emacs.d")
   ;; => "/home/kenjiro/.emacs.d"
-  
+
 #+end_src
 
 * ディレクトリの作成
@@ -374,7 +374,7 @@ Emacs にて大抵はファイル内のテキストをバッファにて操作�
    nil
    (lambda (path) ;; ccls キャシュを除外
      (not (or (string-match-p ".*/\\.ccls-cache/.*" path)
-              (string-match-p ".*/\\.git/.*" path)))))
+	      (string-match-p ".*/\\.git/.*" path)))))
 #+end_src
 * コピー、名称変更/移動、削除
 ** コピー

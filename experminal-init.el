@@ -3,7 +3,7 @@
 ;;; Code:
 
 (with-current-buffer "*scratch*"
-  (insert ";;; loading Experminal init.el"))
+  (insert ";;; loading Experminal init.el\n\n"))
 
 (when (file-directory-p "~/.emacs.d/lisp")
   (push (expand-file-name "~/.emacs.d/lisp") load-path))
@@ -157,3 +157,7 @@
      (add-hook 'ielm-mode-hook 'paredit-mode)
      (define-key paredit-mode-map (kbd "RET") nil)
      (define-key paredit-mode-map (kbd "C-j") 'paredit-newline)))
+
+;; カスタムコマンドのロード
+(require 'kf-command)
+(recentf-open-files)
