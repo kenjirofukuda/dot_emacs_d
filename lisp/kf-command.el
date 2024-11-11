@@ -13,14 +13,17 @@
   (interactive)
   (let ((filename (thing-at-point 'filename t))
 	(url (thing-at-point 'url t)))
-    ;; (message "filename: %s" filename)
-    ;; (message "     url: %s" url)
     (when url
-      (message url)
-      (browse-url-chrome url))
+      (cond ((string-match-p "^file:///" url)
+	     (eww-browse-url url)
+	     (message "eww: %s" url))
+	    (t (message "chrome: %s" url)
+	       (browse-url-chrome url))))
     (when (and filename (file-exists-p filename))
-      (find-file filename))
-    ))
+      (cond ((string-match-p "\\.wav$" filename)
+	     (play-sound-file filename)) 	      
+	    (t
+	     (find-file filename))))))
 (global-set-key (kbd "\C-c <f3>") 'kf:open-file-thing)
 
 ;; ウィンドウのバッファを固定する

@@ -104,6 +104,16 @@
 (setq recentf-max-saved-items 25)
 (global-set-key "\C-x\ \C-r" 'recentf-open-files)
 
+(defun options-base-name ()
+  (sys-base-name "options-experminal" ".el"))
+
+(defun options-file-name ()
+  (expand-file-name (locate-user-emacs-file (options-base-name))))
+
+(setq custom-file (options-file-name))
+(if (file-exists-p custom-file)
+    (load custom-file t nil nil))
+
 ;; 拡張選択範囲
 (use-package expand-region
   :ensure t)
@@ -158,6 +168,10 @@
      (define-key paredit-mode-map (kbd "RET") nil)
      (define-key paredit-mode-map (kbd "C-j") 'paredit-newline)))
 
+(use-package org-modern
+  :ensure t
+  :hook ((org-mode . org-modern-mode)))
+
 ;; <s <tab> でブロック文のテンプレートを挿入
 (require 'org-tempo)
 
@@ -168,6 +182,14 @@
    (shell . t)
    ))
 
+(setq browse-url-browser-function 'eww-browse-url)
+
+;; https://systemcrafters.net/emacs-shorts/pomodoro-timer/
+(setq org-clock-sound "/usr/share/sounds/sound-icons/xylofon.wav")
+;; C-c C-x ;
+(org-timer-set-timer 25)
+
 ;; カスタムコマンドのロード
 (require 'kf-command)
 (recentf-open-files)
+(global-display-line-numbers-mode nil)

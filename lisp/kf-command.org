@@ -17,6 +17,7 @@ C-c C-v C-t
 #+BEGIN_SRC :tangle no
 ;; org-babel-execute-maybe
 C-c C-v C-e
+C-c C-c ;; が簡単かも
 #+END_SRC
 
 * シェルコマンドの挿入
@@ -45,16 +46,26 @@ C-c <f3>
     (interactive)
     (let ((filename (thing-at-point 'filename t))
 	  (url (thing-at-point 'url t)))
-      ;; (message "filename: %s" filename)
-      ;; (message "     url: %s" url)
       (when url
-	(message url)
-	(browse-url-chrome url))
+	(cond ((string-match-p "^file:///" url)
+	       (eww-browse-url url)
+	       (message "eww: %s" url))
+	      (t (message "chrome: %s" url)
+		 (browse-url-chrome url))))
       (when (and filename (file-exists-p filename))
-	(find-file filename))
-      ))
+	(cond ((string-match-p "\\.wav$" filename)
+	       (play-sound-file filename)) 	      
+	      (t
+	       (find-file filename))))))
   (global-set-key (kbd "\C-c <f3>") 'kf:open-file-thing)
 #+END_SRC
+
+** 以下のパス名で確認
+以下の文字列上にカーソルを移動し、=C-c <f3>= を実行し、開けるか確認すること
+- https://systemcrafters.net/emacs-shorts/pomodoro-timer/
+- file:///usr/local/share/GNUstep/Documentation/Developer/Base/ProgrammingManual/gs-base/index.html
+- /usr/share/sounds/sound-icons/canary-long.wav
+- ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsFeelCore/GdsInform.m
 
 * ウィンドウのバッファを固定する
 #+begin_src elisp :tangle yes
@@ -78,7 +89,6 @@ C-c <f3>
     (not (or (string-match-p ".*/\\.ccls-cache/.*" path)
 	     (string-match-p ".*/\\.git/.*" path))))
 #+end_src
-
 
 * 試し
 #+begin_src bash :results both

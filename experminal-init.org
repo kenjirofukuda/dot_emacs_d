@@ -1,6 +1,12 @@
 #+TITLE: Experminal init.el
 #+PROPERTY: tangle "~/.emacs.d/experminal-init.el"
 
+* 参考
+- [[https://ayatakesi.github.io/emacs/29.4/html/index.html][Emacs Japanese]]
+- [[https://www.gnu.org/software/emacs/manual/html_node/eintr/][An Introduction to Programing in Emacs Lisp]]
+- [[https://www.google.com/]]
+- file:///usr/local/share/GNUstep/Documentation/Developer/Base/ProgrammingManual/gs-base/index.html
+
 * このファイルの使用方法
 #+BEGIN_SRC shell :tangle no
   alias emacs2='emacs -Q -l ~/.emacs.d/experminal-init.el'
@@ -11,6 +17,29 @@
 #+BEGIN_SRC :tangle no
 C-c C-v C-t
 #+END_SRC
+
+* Script Runner
+
+これはブラウザの拡張機能であり、以下のソースを GNU Manuals というタイトルのもとに貼り付けて利用すれば、おかしな翻訳を避けることができる。
+
+** TODO あれ、javascript で C-M-\ =indent-region= すると、4space のインデントになってしまう。どこかで見直そう。
+
+#+begin_src javascript
+  const classes = [
+      "example",
+      "category-def",
+      "def-name",
+      "def-var-arguments"
+  ]
+
+  const qclasses = classes.map((v) => "." + v).join(",")
+
+  document.querySelectorAll(qclasses).forEach((el) => {
+      if (!el.hasAttribute("translate")) {
+	  el.setAttribute("translate", "no");
+      }
+  });
+#+end_src
 
 * スタートアップメッセージ
 #+BEGIN_SRC elisp :tangle yes
@@ -133,6 +162,19 @@ C-c C-v C-t
   (global-set-key "\C-x\ \C-r" 'recentf-open-files)
 #+END_SRC
 
+* オプション
+#+begin_src elisp :tangle yes
+  (defun options-base-name ()
+    (sys-base-name "options-experminal" ".el"))
+
+  (defun options-file-name ()
+    (expand-file-name (locate-user-emacs-file (options-base-name))))
+
+  (setq custom-file (options-file-name))
+  (if (file-exists-p custom-file)
+      (load custom-file t nil nil))  
+#+end_src
+
 * 拡張選択範囲
 #+BEGIN_SRC elisp :tangle yes
   ;; 拡張選択範囲
@@ -204,7 +246,14 @@ C-c C-v C-t
 #+END_SRC
 
 * Org
-** <s <tab> でブロック文のテンプレートを挿入
+** 近代化
+#+begin_src elisp :tangle yes
+  (use-package org-modern
+    :ensure t
+    :hook ((org-mode . org-modern-mode)))
+#+end_src
+
+** =<s <tab>= でブロック文のテンプレートを挿入
 #+BEGIN_SRC elisp :tangle yes
   ;; <s <tab> でブロック文のテンプレートを挿入
   (require 'org-tempo)
@@ -219,10 +268,90 @@ C-c C-v C-t
      (shell . t)
      ))
 #+end_src
+** =open-url-at-point= で開かれるブラウザの設定
+#+begin_src elisp :tangle yes
+(setq browse-url-browser-function 'eww-browse-url)
+#+end_src
+
+* お遊び
+** ポモドーロタイマに使用する音源を物色中
+#+begin_src elisp :results list
+  (let ((all-sounds
+	 (directory-files-recursively "/usr/share/sounds/sound-icons/" "\\.wav$" nil)))
+    (dolist (snd all-sounds)
+      (play-sound-file snd))
+    all-sounds)
+#+end_src
+
+#+RESULTS:
+- /usr/share/sounds/sound-icons/canary-long.wav
+- /usr/share/sounds/sound-icons/cembalo-1.wav
+- /usr/share/sounds/sound-icons/cembalo-10.wav
+- /usr/share/sounds/sound-icons/cembalo-11.wav
+- /usr/share/sounds/sound-icons/cembalo-12.wav
+- /usr/share/sounds/sound-icons/cembalo-2.wav
+- /usr/share/sounds/sound-icons/cembalo-3.wav
+- /usr/share/sounds/sound-icons/cembalo-6.wav
+- /usr/share/sounds/sound-icons/chord-7.wav
+- /usr/share/sounds/sound-icons/cockchafer-gentleman-1.wav
+- /usr/share/sounds/sound-icons/cymbaly-1.wav
+- /usr/share/sounds/sound-icons/electric-piano-3.wav
+- /usr/share/sounds/sound-icons/glass-water-1.wav
+- /usr/share/sounds/sound-icons/guitar-12.wav
+- /usr/share/sounds/sound-icons/guitar-13.wav
+- /usr/share/sounds/sound-icons/gummy-cat-2.wav
+- /usr/share/sounds/sound-icons/klavichord-4.wav
+- /usr/share/sounds/sound-icons/percussion-10.wav
+- /usr/share/sounds/sound-icons/percussion-12.wav
+- /usr/share/sounds/sound-icons/percussion-28.wav
+- /usr/share/sounds/sound-icons/percussion-50.wav
+- /usr/share/sounds/sound-icons/piano-3.wav
+- /usr/share/sounds/sound-icons/pipe.wav
+- /usr/share/sounds/sound-icons/pisk-down-cink.wav
+- /usr/share/sounds/sound-icons/pisk-down.wav
+- /usr/share/sounds/sound-icons/pisk-up-cink.wav
+- /usr/share/sounds/sound-icons/pisk-up.wav
+- /usr/share/sounds/sound-icons/prompt.wav
+- /usr/share/sounds/sound-icons/trumpet-1.wav
+- /usr/share/sounds/sound-icons/trumpet-12.wav
+- /usr/share/sounds/sound-icons/violoncello-7.wav
+- /usr/share/sounds/sound-icons/xylofon.wav
+  
+** eww がローカルのファイルを開けるか
+#+begin_src elisp
+(eww-browse-url "file:///usr/local/share/GNUstep/Documentation/Developer/Base/ProgrammingManual/gs-base/index.html")
+#+end_src
+
+** string-matchの実験
+#+begin_src elisp
+  (string-match-p "\\.wav$"
+		  "/usr/share/sounds/sound-icons/canary-long.wav")
+  (string-match-p "^file:///"
+		  "file:///usr/local/share/GNUstep/Documentation/Developer/Base/ProgrammingManual/gs-base/index.html")
+#+end_src
+
+* ポモドーロタイマー
+[[https://systemcrafters.net/emacs-shorts/pomodoro-timer/]]
+#+begin_src elisp :tangle yes
+  ;; https://systemcrafters.net/emacs-shorts/pomodoro-timer/
+  (setq org-clock-sound "/usr/share/sounds/sound-icons/xylofon.wav")
+  ;; C-c C-x ;
+  (org-timer-set-timer 25)
+#+end_src
+
+#+RESULTS:
+: /usr/share/sounds/sound-icons/xylofon.wav
 
 * 末尾
 #+BEGIN_SRC elisp :tangle yes
   ;; カスタムコマンドのロード
   (require 'kf-command)
   (recentf-open-files)
+  (global-display-line-numbers-mode nil)
 #+END_SRC
+
+
+;; Local Variables: 
+;; eval: (add-hook 'after-save-hook (lambda ()(if (y-or-n-p "Reload?")(load-file user-init-file))) nil t) 
+;; eval: (add-hook 'after-save-hook (lambda ()(if (y-or-n-p "Tangle?")(org-babel-tangle))) nil t) 
+;; End:
