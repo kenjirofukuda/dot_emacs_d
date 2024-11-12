@@ -41,6 +41,13 @@
   (auto-package-update-maybe)
   (auto-package-update-at-time "20:00"))
 
+;; Editor Config
+;; https://editorconfig.org/
+(use-package editorconfig
+  :ensure t
+  :config
+  (editorconfig-mode 1))
+
 ;; 基本関数
 (defun replace-in-string (what with in)
   (replace-regexp-in-string (regexp-quote what) with in nil 'literal))
@@ -113,6 +120,9 @@
 (setq custom-file (options-file-name))
 (if (file-exists-p custom-file)
     (load custom-file t nil nil))
+
+;; https://www.gnu.org/software/emacs//manual/html_node/emacs/Saving-Emacs-Sessions.html
+(desktop-save-mode 1)
 
 ;; 拡張選択範囲
 (use-package expand-region
@@ -192,4 +202,3 @@
 ;; カスタムコマンドのロード
 (require 'kf-command)
 (recentf-open-files)
-(global-display-line-numbers-mode nil)

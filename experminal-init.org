@@ -1,8 +1,10 @@
 #+TITLE: Experminal init.el
 #+PROPERTY: tangle "~/.emacs.d/experminal-init.el"
+#+STARTUP: content
 
 * 参考
 - [[https://ayatakesi.github.io/emacs/29.4/html/index.html][Emacs Japanese]]
+- https://takaxp.github.io/org-ja.html
 - [[https://www.gnu.org/software/emacs/manual/html_node/eintr/][An Introduction to Programing in Emacs Lisp]]
 - [[https://www.google.com/]]
 - file:///usr/local/share/GNUstep/Documentation/Developer/Base/ProgrammingManual/gs-base/index.html
@@ -21,7 +23,6 @@ C-c C-v C-t
 * Script Runner
 
 これはブラウザの拡張機能であり、以下のソースを GNU Manuals というタイトルのもとに貼り付けて利用すれば、おかしな翻訳を避けることができる。
-
 ** TODO あれ、javascript で C-M-\ =indent-region= すると、4space のインデントになってしまう。どこかで見直そう。
 
 #+begin_src javascript
@@ -36,7 +37,7 @@ C-c C-v C-t
 
   document.querySelectorAll(qclasses).forEach((el) => {
       if (!el.hasAttribute("translate")) {
-	  el.setAttribute("translate", "no");
+          el.setAttribute("translate", "no");
       }
   });
 #+end_src
@@ -90,6 +91,20 @@ C-c C-v C-t
     (auto-package-update-at-time "20:00"))
 #+END_SRC
 
+* EditorConfig
+#+begin_src elisp :tangle yes
+  ;; Editor Config
+  ;; https://editorconfig.org/
+  (use-package editorconfig
+    :ensure t
+    :config
+    (editorconfig-mode 1))
+#+end_src
+
+;; Local Variables:
+;; eval: (add-hook 'after-save-hook (lambda ()(if (y-or-n-p "Reload?")(load-file user-init-file))) nil t)
+;; eval: (add-hook 'after-save-hook (lambda ()(if (y-or-n-p "Tangle?")(org-babel-tangle))) nil t)
+;; End:
 * 基本関数
 #+BEGIN_SRC elisp :tangle yes
   ;; 基本関数
@@ -163,6 +178,9 @@ C-c C-v C-t
 #+END_SRC
 
 * オプション
+現在の起動オプションでは読み込ませたくないので、一時的に除外する。
+これは、emacs の起動引数の役割を私が理解していないためである。
+
 #+begin_src elisp :tangle yes
   (defun options-base-name ()
     (sys-base-name "options-experminal" ".el"))
@@ -172,7 +190,26 @@ C-c C-v C-t
 
   (setq custom-file (options-file-name))
   (if (file-exists-p custom-file)
-      (load custom-file t nil nil))  
+      (load custom-file t nil nil))
+#+end_src
+
+#+begin_src elisp :tangle no
+  ;; TODO この対策は一時的なものであるため、通常のoptionsに戻すのを忘れないこと
+  (when (display-graphic-p)
+    (custom-set-faces
+     ;; custom-set-faces was added by Custom.
+     ;; If you edit it by hand, you could mess it up, so be careful.
+     ;; Your init file should contain only one such instance.
+     ;; If there is more than one, they won't work right.
+     ;;
+     '(default ((t (:family "Iosevka" :foundry "UKWN" :slant normal :weight regular :height 140 :width normal))))
+     ))
+#+end_src
+
+** デスクトップのサイズを記憶
+#+begin_src elisp :tangle yes
+;; https://www.gnu.org/software/emacs//manual/html_node/emacs/Saving-Emacs-Sessions.html
+(desktop-save-mode 1)
 #+end_src
 
 * 拡張選択範囲
@@ -268,6 +305,12 @@ C-c C-v C-t
      (shell . t)
      ))
 #+end_src
+** DONE 起動時に、自動で折りたたむ設定はどうだったっけ
+参考: https://takaxp.github.io/org-ja.html
+#+begin_src
+#+STARTUP: content
+#+end_src
+#+
 ** =open-url-at-point= で開かれるブラウザの設定
 #+begin_src elisp :tangle yes
 (setq browse-url-browser-function 'eww-browse-url)
@@ -316,7 +359,7 @@ C-c C-v C-t
 - /usr/share/sounds/sound-icons/trumpet-12.wav
 - /usr/share/sounds/sound-icons/violoncello-7.wav
 - /usr/share/sounds/sound-icons/xylofon.wav
-  
+
 ** eww がローカルのファイルを開けるか
 #+begin_src elisp
 (eww-browse-url "file:///usr/local/share/GNUstep/Documentation/Developer/Base/ProgrammingManual/gs-base/index.html")
@@ -347,11 +390,4 @@ C-c C-v C-t
   ;; カスタムコマンドのロード
   (require 'kf-command)
   (recentf-open-files)
-  (global-display-line-numbers-mode nil)
 #+END_SRC
-
-
-;; Local Variables: 
-;; eval: (add-hook 'after-save-hook (lambda ()(if (y-or-n-p "Reload?")(load-file user-init-file))) nil t) 
-;; eval: (add-hook 'after-save-hook (lambda ()(if (y-or-n-p "Tangle?")(org-babel-tangle))) nil t) 
-;; End:
