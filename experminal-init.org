@@ -105,6 +105,21 @@ C-c C-v C-t
 ;; eval: (add-hook 'after-save-hook (lambda ()(if (y-or-n-p "Reload?")(load-file user-init-file))) nil t)
 ;; eval: (add-hook 'after-save-hook (lambda ()(if (y-or-n-p "Tangle?")(org-babel-tangle))) nil t)
 ;; End:
+* より本物に近いターミナルエミュレータ
+https://github.com/akermu/emacs-libvterm
+** 前提条件
+Cライブラリをコンパイルして利用するため、コンパイル環境を準備
+*** Debian 系列
+#+begin_src sh
+  sudo apt install libtool
+  sudo apt install libtool-bin
+#+end_src
+** パッケージ導入
+#+begin_src elisp :tangle yes
+  ;; より本物に近いターミナルエミュレータ
+  (use-package vterm
+    :ensure t)
+#+end_src
 * 基本関数
 #+BEGIN_SRC elisp :tangle yes
   ;; 基本関数
