@@ -8,6 +8,7 @@
 - [[https://www.gnu.org/software/emacs/manual/html_node/eintr/][An Introduction to Programing in Emacs Lisp]]
 - [[https://www.google.com/]]
 - file:///usr/local/share/GNUstep/Documentation/Developer/Base/ProgrammingManual/gs-base/index.html
+- file:///usr/local/share/GNUstep/Documentation/Developer/Base/Reference/Base.html
 
 * このファイルの使用方法
 #+BEGIN_SRC shell :tangle no
@@ -223,10 +224,25 @@ Cライブラリをコンパイルして利用するため、コンパイル環�
 
 ** デスクトップのサイズを記憶
 #+begin_src elisp :tangle yes
-;; https://www.gnu.org/software/emacs//manual/html_node/emacs/Saving-Emacs-Sessions.html
-(desktop-save-mode 1)
+  ;; デスクトップ環境の保存
+  ;; https://www.gnu.org/software/emacs//manual/html_node/emacs/Saving-Emacs-Sessions.html
+  (desktop-save-mode 1)
+  ;; ホスト名を付加してファイル名衝突回避
+  (setq desktop-base-file-name (concat "." (safe-host-name-string) "-emacs.desktop"))
 #+end_src
 
+#+begin_src elisp :results output
+desktop-path
+desktop-base-file-name
+(safe-host-name-string)
+#+end_src
+
+#+RESULTS:
+
+*** DONE 他のホストと、衝突する恐れがある
+単純に導入しただけでは、Nextcloudで共有している他のホストと衝突してしまう。
+本来であれば、Nextcloudクライアント側でignore ファイルを共有して回避すべき問題である。
+ホスト名を付加して衝突回避できるか要検討。
 * 拡張選択範囲
 #+BEGIN_SRC elisp :tangle yes
   ;; 拡張選択範囲
@@ -400,6 +416,292 @@ Cライブラリをコンパイルして利用するため、コンパイル環�
 #+RESULTS:
 : /usr/share/sounds/sound-icons/xylofon.wav
 
+* 日本語フォントの設定
+** 使用できるフォント名の確認
+#+begin_src elisp :results list
+  (seq-uniq (sort (font-family-list) 'string<) 'string=)
+#+end_src
+
+#+RESULTS:
+- Abyssinica SIL
+- Ani
+- AnjaliOldLipi
+- Bitstream Charter
+- C059
+- Cantarell
+- Century Schoolbook L
+- Chandas
+- Chilanka
+- Courier
+- Courier 10 Pitch
+- D050000L
+- DejaVu Sans
+- DejaVu Sans Mono
+- DejaVu Serif
+- Dhurjati
+- Dingbats
+- Droid Sans Fallback
+- Dyuthi
+- Fira Code
+- FontAwesome
+- FreeMono
+- FreeSans
+- FreeSerif
+- Gargi
+- Garuda
+- Gayathri
+- Gidugu
+- Gubbi
+- Gurajada
+- Iosevka
+- Jamrul
+- KacstArt
+- KacstBook
+- KacstDecorative
+- KacstDigital
+- KacstFarsi
+- KacstLetter
+- KacstNaskh
+- KacstOffice
+- KacstOne
+- KacstPen
+- KacstPoster
+- KacstQurn
+- KacstScreen
+- KacstTitle
+- KacstTitleL
+- Kalapi
+- Kalimati
+- Karumbi
+- Keraleeyam
+- Khmer OS
+- Khmer OS System
+- Kinnari
+- LKLUG
+- LakkiReddy
+- Laksaman
+- Latin Modern Math
+- Latin Modern Mono
+- Latin Modern Mono Caps
+- Latin Modern Mono Light
+- Latin Modern Mono Light Cond
+- Latin Modern Mono Prop
+- Latin Modern Mono Prop Light
+- Latin Modern Mono Slanted
+- Latin Modern Roman
+- Latin Modern Roman Caps
+- Latin Modern Roman Demi
+- Latin Modern Roman Dunhill
+- Latin Modern Roman Slanted
+- Latin Modern Roman Unslanted
+- Latin Modern Sans
+- Latin Modern Sans Demi Cond
+- Latin Modern Sans Quotation
+- Lato
+- Liberation Mono
+- Liberation Sans
+- Liberation Sans Narrow
+- Liberation Serif
+- Likhan
+- Lohit Assamese
+- Lohit Bengali
+- Lohit Devanagari
+- Lohit Gujarati
+- Lohit Gurmukhi
+- Lohit Kannada
+- Lohit Malayalam
+- Lohit Odia
+- Lohit Tamil
+- Lohit Tamil Classical
+- Lohit Telugu
+- Loma
+- Mallanna
+- Mandali
+- Manjari
+- Material Icons
+- Meera
+- Mitra
+- Mukti
+- NATS
+- NTR
+- Nakula
+- Navilu
+- Nimbus Mono L
+- Nimbus Mono PS
+- Nimbus Roman
+- Nimbus Roman No9 L
+- Nimbus Sans
+- Nimbus Sans L
+- Nimbus Sans Narrow
+- Norasi
+- Noto Color Emoji
+- Noto Mono
+- Noto Sans CJK HK
+- Noto Sans CJK JP
+- Noto Sans CJK KR
+- Noto Sans CJK SC
+- Noto Sans CJK TC
+- Noto Sans Mono
+- Noto Sans Mono CJK HK
+- Noto Sans Mono CJK JP
+- Noto Sans Mono CJK KR
+- Noto Sans Mono CJK SC
+- Noto Sans Mono CJK TC
+- Noto Serif CJK HK
+- Noto Serif CJK JP
+- Noto Serif CJK KR
+- Noto Serif CJK SC
+- Noto Serif CJK TC
+- OpenSymbol
+- P052
+- Padauk
+- Padauk Book
+- Pagul
+- Peddana
+- Phetsarath OT
+- Ponnala
+- Pothana2000
+- Potti Sreeramulu
+- Purisa
+- Rachana
+- RaghuMalayalamSans
+- Ramabhadra
+- Ramaraja
+- Rasa
+- RaviPrakash
+- Rekha
+- Saab
+- Sahadeva
+- Samanata
+- Samyak Devanagari
+- Samyak Gujarati
+- Samyak Malayalam
+- Samyak Tamil
+- Sarai
+- Sawasdee
+- Sree Krushnadevaraya
+- Standard Symbols L
+- Standard Symbols PS
+- Suranna
+- Suravaram
+- Suruma
+- Syamala Ramana
+- Symbols Nerd Font Mono
+- TeX Gyre Adventor
+- TeX Gyre Bonum
+- TeX Gyre Bonum Math
+- TeX Gyre Chorus
+- TeX Gyre Cursor
+- TeX Gyre DejaVu Math
+- TeX Gyre Heros
+- TeX Gyre Heros Cn
+- TeX Gyre Pagella
+- TeX Gyre Pagella Math
+- TeX Gyre Schola
+- TeX Gyre Schola Math
+- TeX Gyre Termes
+- TeX Gyre Termes Math
+- TenaliRamakrishna
+- Tibetan Machine Uni
+- Timmana
+- Tlwg Mono
+- Tlwg Typewriter
+- Tlwg Typist
+- Tlwg Typo
+- URW Bookman
+- URW Bookman L
+- URW Chancery L
+- URW Gothic
+- URW Gothic L
+- URW Palladio L
+- Ubuntu
+- Ubuntu Condensed
+- Ubuntu Mono
+- Umpush
+- Uroob
+- Utopia
+- Vemana2000
+- Waree
+- Weather Icons
+- Yrsa
+- Z003
+- aakar
+- all-the-icons
+- bitstream charter
+- clean
+- clearlyu
+- clearlyu alternate glyphs
+- clearlyu arabic
+- clearlyu arabic extra
+- clearlyu devanagari
+- clearlyu devangari extra
+- clearlyu ligature
+- clearlyu pua
+- courier 10 pitch
+- fangsong ti
+- file-icons
+- fixed
+- github-octicons
+- gothic
+- latin modern roman
+- latin modern sans
+- latin modern sansquotation
+- latin modern typewriter
+- latin modern typewriter variable width
+- mincho
+- mry_KacstQurn
+- newspaper
+- nil
+- open look cursor
+- open look glyph
+- ori1Uni
+- padmaa
+- padmaa-Bold.1.1
+- song ti
+- texgyreadventor
+- texgyrebonum
+- texgyrechorus
+- texgyrecursor
+- texgyreheros
+- texgyrepagella
+- texgyreschola
+- texgyretermes
+
+** 日本語の範囲をNotoフォントに設定してみる。
+#+begin_src elisp tangle yes
+  ;; 日本語の範囲をNotoフォントに設定
+  (set-fontset-font nil 'japanese-jisx0208 (font-spec :family "Noto Serif CJK JP"))
+  ;; (set-fontset-font nil 'japanese-jisx0208 (font-spec :family "Noto Sans CJK JP"))
+#+end_src
+
+確認のためテーブルがきちんと表示されているかを見る。
+|----------------------------------+------------------------|
+| this is a header 1               | this is a header2      |
+|----------------------------------+------------------------|
+| これはヘッダー位置ですよーん漢字 | 揃っているみたいですね |
+| カタカナ                         | カタカナ崩れませんか   |
+|                                  |                        |
+|----------------------------------+------------------------|
+
+* ewwのフォントが汚い件
+#+begin_src
+M-x eww-toggle-fonts
+または
+F => Shift-f
+#+end_src
+
+* Eglot導入
+lspサーバーとの比較のため導入してみる
+#+begin_src elisp :tangle yes
+  (use-package eglot
+    :ensure t
+    :hook
+    (c-mode . eglot-ensure)
+    (c++-mode . eglot-ensure)
+    (objc-mode . eglot-ensure)
+    :config
+    (add-to-list 'eglot-server-programs '((c-mode c++-mode objc-mode) "ccls")))
+#+end_src
 * 末尾
 #+BEGIN_SRC elisp :tangle yes
   ;; カスタムコマンドのロード

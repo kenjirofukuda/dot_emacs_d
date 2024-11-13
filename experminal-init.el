@@ -48,6 +48,10 @@
   :config
   (editorconfig-mode 1))
 
+;; より本物に近いターミナルエミュレータ
+(use-package vterm
+  :ensure t)
+
 ;; 基本関数
 (defun replace-in-string (what with in)
   (replace-regexp-in-string (regexp-quote what) with in nil 'literal))
@@ -121,8 +125,11 @@
 (if (file-exists-p custom-file)
     (load custom-file t nil nil))
 
+;; デスクトップ環境の保存
 ;; https://www.gnu.org/software/emacs//manual/html_node/emacs/Saving-Emacs-Sessions.html
 (desktop-save-mode 1)
+;; ホスト名を付加してファイル名衝突回避
+(setq desktop-base-file-name (concat "." (safe-host-name-string) "-emacs.desktop"))
 
 ;; 拡張選択範囲
 (use-package expand-region
@@ -198,6 +205,15 @@
 (setq org-clock-sound "/usr/share/sounds/sound-icons/xylofon.wav")
 ;; C-c C-x ;
 (org-timer-set-timer 25)
+
+(use-package eglot
+  :ensure t
+  :hook
+  (c-mode . eglot-ensure)
+  (c++-mode . eglot-ensure)
+  (objc-mode . eglot-ensure)
+  :config
+  (add-to-list 'eglot-server-programs '((c-mode c++-mode objc-mode) "ccls")))
 
 ;; カスタムコマンドのロード
 (require 'kf-command)

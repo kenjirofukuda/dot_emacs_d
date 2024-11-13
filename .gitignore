@@ -3,6 +3,9 @@
 \#*\#
 /.emacs.desktop
 /.emacs.desktop.lock
+/.*.desktop
+/.*.desktop.lock
+
 *.elc
 auto-save-list
 tramp
@@ -71,3 +74,6 @@ tutorial
 url
 viper
 **/#.*#
+
+/experminal-init.html
+/lisp/kf-command.html
