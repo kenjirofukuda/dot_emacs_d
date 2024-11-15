@@ -50,6 +50,7 @@
 
 ;; より本物に近いターミナルエミュレータ
 (use-package vterm
+  :if (not (eq system-type 'windows-nt))
   :ensure t)
 
 ;; 基本関数
@@ -205,6 +206,10 @@
 (setq org-clock-sound "/usr/share/sounds/sound-icons/xylofon.wav")
 ;; C-c C-x ;
 (org-timer-set-timer 25)
+
+;; 日本語の範囲をNotoフォントに設定
+(set-fontset-font nil 'japanese-jisx0208 (font-spec :family "Noto Serif CJK JP"))
+;; (set-fontset-font nil 'japanese-jisx0208 (font-spec :family "Noto Sans CJK JP"))
 
 (use-package eglot
   :ensure t

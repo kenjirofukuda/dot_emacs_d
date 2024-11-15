@@ -119,6 +119,7 @@ Cライブラリをコンパイルして利用するため、コンパイル環�
 #+begin_src elisp :tangle yes
   ;; より本物に近いターミナルエミュレータ
   (use-package vterm
+    :if (not (eq system-type 'windows-nt))
     :ensure t)
 #+end_src
 * 基本関数
@@ -348,16 +349,228 @@ desktop-base-file-name
 #+end_src
 
 * お遊び
-** ポモドーロタイマに使用する音源を物色中
+** TODO ポモドーロタイマに使用する音源を物色中
+Windows の検索パスは別途検討
 #+begin_src elisp :results list
   (let ((all-sounds
-	 (directory-files-recursively "/usr/share/sounds/sound-icons/" "\\.wav$" nil)))
+         (directory-files-recursively "/usr/share/sounds/sound-icons/" "\\.wav$" nil)))
     (dolist (snd all-sounds)
       (play-sound-file snd))
     all-sounds)
 #+end_src
 
+#+begin_src elisp :results list
+  (let ((all-sounds
+         (directory-files-recursively "C:/Windows" "\\.wav$" nil)))
+    ;; (dolist (snd all-sounds)
+    ;;   (play-sound-file snd))
+    all-sounds)
+#+end_src
+
 #+RESULTS:
+- c:/Windows/Media/dm/Windows Background.wav
+- c:/Windows/Media/dm/Windows Foreground.wav
+- c:/Windows/Media/dm/Windows Hardware Fail.wav
+- c:/Windows/Media/dm/Windows Hardware Insert.wav
+- c:/Windows/Media/dm/Windows Hardware Remove.wav
+- c:/Windows/Media/dm/Windows Notify Calendar.wav
+- c:/Windows/Media/dm/Windows Notify Email.wav
+- c:/Windows/Media/dm/Windows Notify Messaging.wav
+- c:/Windows/Media/dm/Windows Notify System Generic.wav
+- c:/Windows/Media/dm/Windows User Account Control.wav
+- c:/Windows/Media/Alarm01.wav
+- c:/Windows/Media/Alarm02.wav
+- c:/Windows/Media/Alarm03.wav
+- c:/Windows/Media/Alarm04.wav
+- c:/Windows/Media/Alarm05.wav
+- c:/Windows/Media/Alarm06.wav
+- c:/Windows/Media/Alarm07.wav
+- c:/Windows/Media/Alarm08.wav
+- c:/Windows/Media/Alarm09.wav
+- c:/Windows/Media/Alarm10.wav
+- c:/Windows/Media/Ring01.wav
+- c:/Windows/Media/Ring02.wav
+- c:/Windows/Media/Ring03.wav
+- c:/Windows/Media/Ring04.wav
+- c:/Windows/Media/Ring05.wav
+- c:/Windows/Media/Ring06.wav
+- c:/Windows/Media/Ring07.wav
+- c:/Windows/Media/Ring08.wav
+- c:/Windows/Media/Ring09.wav
+- c:/Windows/Media/Ring10.wav
+- c:/Windows/Media/Speech Disambiguation.wav
+- c:/Windows/Media/Speech Misrecognition.wav
+- c:/Windows/Media/Speech Off.wav
+- c:/Windows/Media/Speech On.wav
+- c:/Windows/Media/Speech Sleep.wav
+- c:/Windows/Media/Windows Background.wav
+- c:/Windows/Media/Windows Balloon.wav
+- c:/Windows/Media/Windows Battery Critical.wav
+- c:/Windows/Media/Windows Battery Low.wav
+- c:/Windows/Media/Windows Critical Stop.wav
+- c:/Windows/Media/Windows Default.wav
+- c:/Windows/Media/Windows Ding.wav
+- c:/Windows/Media/Windows Error.wav
+- c:/Windows/Media/Windows Exclamation.wav
+- c:/Windows/Media/Windows Feed Discovered.wav
+- c:/Windows/Media/Windows Foreground.wav
+- c:/Windows/Media/Windows Hardware Fail.wav
+- c:/Windows/Media/Windows Hardware Insert.wav
+- c:/Windows/Media/Windows Hardware Remove.wav
+- c:/Windows/Media/Windows Information Bar.wav
+- c:/Windows/Media/Windows Logoff Sound.wav
+- c:/Windows/Media/Windows Logon.wav
+- c:/Windows/Media/Windows Menu Command.wav
+- c:/Windows/Media/Windows Message Nudge.wav
+- c:/Windows/Media/Windows Minimize.wav
+- c:/Windows/Media/Windows Navigation Start.wav
+- c:/Windows/Media/Windows Notify Calendar.wav
+- c:/Windows/Media/Windows Notify Email.wav
+- c:/Windows/Media/Windows Notify Messaging.wav
+- c:/Windows/Media/Windows Notify System Generic.wav
+- c:/Windows/Media/Windows Notify.wav
+- c:/Windows/Media/Windows Pop-up Blocked.wav
+- c:/Windows/Media/Windows Print complete.wav
+- c:/Windows/Media/Windows Proximity Connection.wav
+- c:/Windows/Media/Windows Proximity Notification.wav
+- c:/Windows/Media/Windows Recycle.wav
+- c:/Windows/Media/Windows Restore.wav
+- c:/Windows/Media/Windows Ringin.wav
+- c:/Windows/Media/Windows Ringout.wav
+- c:/Windows/Media/Windows Shutdown.wav
+- c:/Windows/Media/Windows Startup.wav
+- c:/Windows/Media/Windows Unlock.wav
+- c:/Windows/Media/Windows User Account Control.wav
+- c:/Windows/Media/chimes.wav
+- c:/Windows/Media/chord.wav
+- c:/Windows/Media/ding.wav
+- c:/Windows/Media/notify.wav
+- c:/Windows/Media/recycle.wav
+- c:/Windows/Media/ringout.wav
+- c:/Windows/Media/tada.wav
+- c:/Windows/SystemApps/MicrosoftWindows.Client.CBS_cw5n1h2txyewy/InputApp/Assets/Dictation/BasicCancelledEarcon.wav
+- c:/Windows/SystemApps/MicrosoftWindows.Client.CBS_cw5n1h2txyewy/InputApp/Assets/Dictation/BasicDoneListeningEarcon.wav
+- c:/Windows/SystemApps/MicrosoftWindows.Client.CBS_cw5n1h2txyewy/InputApp/Assets/Dictation/BasicListeningEarcon.wav
+- c:/Windows/SystemApps/MicrosoftWindows.Client.CBS_cw5n1h2txyewy/InputApp/Assets/KbdAccentPicker.wav
+- c:/Windows/SystemApps/MicrosoftWindows.Client.CBS_cw5n1h2txyewy/InputApp/Assets/KbdFunction.wav
+- c:/Windows/SystemApps/MicrosoftWindows.Client.CBS_cw5n1h2txyewy/InputApp/Assets/KbdFunctionModernUX.wav
+- c:/Windows/SystemApps/MicrosoftWindows.Client.CBS_cw5n1h2txyewy/InputApp/Assets/KbdKeyTap.wav
+- c:/Windows/SystemApps/MicrosoftWindows.Client.CBS_cw5n1h2txyewy/InputApp/Assets/KbdKeyTapModernUX.wav
+- c:/Windows/SystemApps/MicrosoftWindows.Client.CBS_cw5n1h2txyewy/InputApp/Assets/KbdSpaceBarModernUX.wav
+- c:/Windows/SystemApps/MicrosoftWindows.Client.CBS_cw5n1h2txyewy/InputApp/Assets/KbdSpacebar.wav
+- c:/Windows/SystemApps/MicrosoftWindows.Client.CBS_cw5n1h2txyewy/InputApp/Assets/KbdSwipeGesture.wav
+- c:/Windows/SystemApps/MicrosoftWindows.Client.CBS_cw5n1h2txyewy/ScreenClipping/Assets/Sounds/camerashutter.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-ie-internetexplorer_31bf3856ad364e35_11.0.22621.3527_none_52f66545bf10ea29/Windows Feed Discovered.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-ie-internetexplorer_31bf3856ad364e35_11.0.22621.3527_none_52f66545bf10ea29/Windows Information Bar.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-ie-internetexplorer_31bf3856ad364e35_11.0.22621.3527_none_52f66545bf10ea29/Windows Navigation Start.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-ie-internetexplorer_31bf3856ad364e35_11.0.22621.3527_none_52f66545bf10ea29/Windows Pop-up Blocked.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds-dm_31bf3856ad364e35_10.0.22621.1_none_a9a06b326661fac0/Windows Background.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds-dm_31bf3856ad364e35_10.0.22621.1_none_a9a06b326661fac0/Windows Foreground.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds-dm_31bf3856ad364e35_10.0.22621.1_none_a9a06b326661fac0/Windows Hardware Fail.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds-dm_31bf3856ad364e35_10.0.22621.1_none_a9a06b326661fac0/Windows Hardware Insert.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds-dm_31bf3856ad364e35_10.0.22621.1_none_a9a06b326661fac0/Windows Hardware Remove.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds-dm_31bf3856ad364e35_10.0.22621.1_none_a9a06b326661fac0/Windows Notify Calendar.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds-dm_31bf3856ad364e35_10.0.22621.1_none_a9a06b326661fac0/Windows Notify Email.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds-dm_31bf3856ad364e35_10.0.22621.1_none_a9a06b326661fac0/Windows Notify Messaging.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds-dm_31bf3856ad364e35_10.0.22621.1_none_a9a06b326661fac0/Windows Notify System Generic.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds-dm_31bf3856ad364e35_10.0.22621.1_none_a9a06b326661fac0/Windows User Account Control.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Alarm01.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Alarm02.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Alarm03.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Alarm04.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Alarm05.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Alarm06.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Alarm07.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Alarm08.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Alarm09.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Alarm10.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Ring01.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Ring02.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Ring03.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Ring04.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Ring05.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Ring06.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Ring07.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Ring08.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Ring09.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Ring10.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Background.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Balloon.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Battery Critical.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Battery Low.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Critical Stop.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Default.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Ding.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Error.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Exclamation.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Foreground.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Hardware Fail.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Hardware Insert.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Hardware Remove.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Logoff Sound.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Logon.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Menu Command.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Message Nudge.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Minimize.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Notify Calendar.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Notify Email.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Notify Messaging.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Notify System Generic.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Notify.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Print complete.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Proximity Connection.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Proximity Notification.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Recycle.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Restore.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Ringin.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Ringout.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Shutdown.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Startup.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Unlock.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows User Account Control.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/chimes.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/chord.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/ding.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/notify.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/recycle.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/ringout.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/tada.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-speech-userexperience_31bf3856ad364e35_10.0.22621.3672_none_fbe0e4c2c76d8bb2/Speech Disambiguation.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-speech-userexperience_31bf3856ad364e35_10.0.22621.3672_none_fbe0e4c2c76d8bb2/Speech Misrecognition.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-speech-userexperience_31bf3856ad364e35_10.0.22621.3672_none_fbe0e4c2c76d8bb2/Speech Off.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-speech-userexperience_31bf3856ad364e35_10.0.22621.3672_none_fbe0e4c2c76d8bb2/Speech On.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-speech-userexperience_31bf3856ad364e35_10.0.22621.3672_none_fbe0e4c2c76d8bb2/Speech Sleep.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-speech-userexperience_31bf3856ad364e35_10.0.22621.4249_none_fc088602c7508077/Speech Disambiguation.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-speech-userexperience_31bf3856ad364e35_10.0.22621.4249_none_fc088602c7508077/Speech Misrecognition.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-speech-userexperience_31bf3856ad364e35_10.0.22621.4249_none_fc088602c7508077/Speech Off.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-speech-userexperience_31bf3856ad364e35_10.0.22621.4249_none_fc088602c7508077/Speech On.wav
+- c:/Windows/WinSxS/amd64_microsoft-windows-speech-userexperience_31bf3856ad364e35_10.0.22621.4249_none_fc088602c7508077/Speech Sleep.wav
+- c:/Windows/WinSxS/amd64_userexperience-desktop_31bf3856ad364e35_10.0.22621.4111_none_0c5d079de5c7d956/CBS/InputApp/Assets/Dictation/BasicCancelledEarcon.wav
+- c:/Windows/WinSxS/amd64_userexperience-desktop_31bf3856ad364e35_10.0.22621.4111_none_0c5d079de5c7d956/CBS/InputApp/Assets/Dictation/BasicDoneListeningEarcon.wav
+- c:/Windows/WinSxS/amd64_userexperience-desktop_31bf3856ad364e35_10.0.22621.4111_none_0c5d079de5c7d956/CBS/InputApp/Assets/Dictation/BasicListeningEarcon.wav
+- c:/Windows/WinSxS/amd64_userexperience-desktop_31bf3856ad364e35_10.0.22621.4111_none_0c5d079de5c7d956/CBS/InputApp/Assets/KbdAccentPicker.wav
+- c:/Windows/WinSxS/amd64_userexperience-desktop_31bf3856ad364e35_10.0.22621.4111_none_0c5d079de5c7d956/CBS/InputApp/Assets/KbdFunction.wav
+- c:/Windows/WinSxS/amd64_userexperience-desktop_31bf3856ad364e35_10.0.22621.4111_none_0c5d079de5c7d956/CBS/InputApp/Assets/KbdFunctionModernUX.wav
+- c:/Windows/WinSxS/amd64_userexperience-desktop_31bf3856ad364e35_10.0.22621.4111_none_0c5d079de5c7d956/CBS/InputApp/Assets/KbdKeyTap.wav
+- c:/Windows/WinSxS/amd64_userexperience-desktop_31bf3856ad364e35_10.0.22621.4111_none_0c5d079de5c7d956/CBS/InputApp/Assets/KbdKeyTapModernUX.wav
+- c:/Windows/WinSxS/amd64_userexperience-desktop_31bf3856ad364e35_10.0.22621.4111_none_0c5d079de5c7d956/CBS/InputApp/Assets/KbdSpaceBarModernUX.wav
+- c:/Windows/WinSxS/amd64_userexperience-desktop_31bf3856ad364e35_10.0.22621.4111_none_0c5d079de5c7d956/CBS/InputApp/Assets/KbdSpacebar.wav
+- c:/Windows/WinSxS/amd64_userexperience-desktop_31bf3856ad364e35_10.0.22621.4111_none_0c5d079de5c7d956/CBS/InputApp/Assets/KbdSwipeGesture.wav
+- c:/Windows/WinSxS/amd64_userexperience-desktop_31bf3856ad364e35_10.0.22621.4111_none_0c5d079de5c7d956/CBS/ScreenClipping/Assets/Sounds/camerashutter.wav
+- c:/Windows/WinSxS/amd64_userexperience-desktop_31bf3856ad364e35_10.0.22621.4249_none_0c54824fe5ce0e54/CBS/InputApp/Assets/Dictation/BasicCancelledEarcon.wav
+- c:/Windows/WinSxS/amd64_userexperience-desktop_31bf3856ad364e35_10.0.22621.4249_none_0c54824fe5ce0e54/CBS/InputApp/Assets/Dictation/BasicDoneListeningEarcon.wav
+- c:/Windows/WinSxS/amd64_userexperience-desktop_31bf3856ad364e35_10.0.22621.4249_none_0c54824fe5ce0e54/CBS/InputApp/Assets/Dictation/BasicListeningEarcon.wav
+- c:/Windows/WinSxS/amd64_userexperience-desktop_31bf3856ad364e35_10.0.22621.4249_none_0c54824fe5ce0e54/CBS/InputApp/Assets/KbdAccentPicker.wav
+- c:/Windows/WinSxS/amd64_userexperience-desktop_31bf3856ad364e35_10.0.22621.4249_none_0c54824fe5ce0e54/CBS/InputApp/Assets/KbdFunction.wav
+- c:/Windows/WinSxS/amd64_userexperience-desktop_31bf3856ad364e35_10.0.22621.4249_none_0c54824fe5ce0e54/CBS/InputApp/Assets/KbdFunctionModernUX.wav
+- c:/Windows/WinSxS/amd64_userexperience-desktop_31bf3856ad364e35_10.0.22621.4249_none_0c54824fe5ce0e54/CBS/InputApp/Assets/KbdKeyTap.wav
+- c:/Windows/WinSxS/amd64_userexperience-desktop_31bf3856ad364e35_10.0.22621.4249_none_0c54824fe5ce0e54/CBS/InputApp/Assets/KbdKeyTapModernUX.wav
+- c:/Windows/WinSxS/amd64_userexperience-desktop_31bf3856ad364e35_10.0.22621.4249_none_0c54824fe5ce0e54/CBS/InputApp/Assets/KbdSpaceBarModernUX.wav
+- c:/Windows/WinSxS/amd64_userexperience-desktop_31bf3856ad364e35_10.0.22621.4249_none_0c54824fe5ce0e54/CBS/InputApp/Assets/KbdSpacebar.wav
+- c:/Windows/WinSxS/amd64_userexperience-desktop_31bf3856ad364e35_10.0.22621.4249_none_0c54824fe5ce0e54/CBS/InputApp/Assets/KbdSwipeGesture.wav
+- c:/Windows/WinSxS/amd64_userexperience-desktop_31bf3856ad364e35_10.0.22621.4249_none_0c54824fe5ce0e54/CBS/ScreenClipping/Assets/Sounds/camerashutter.wav
+
+#+RESULTS(Linux):
 - /usr/share/sounds/sound-icons/canary-long.wav
 - /usr/share/sounds/sound-icons/cembalo-1.wav
 - /usr/share/sounds/sound-icons/cembalo-10.wav
@@ -422,7 +635,370 @@ desktop-base-file-name
   (seq-uniq (sort (font-family-list) 'string<) 'string=)
 #+end_src
 
-#+RESULTS:
+#+RESULTS(Windows):
+- Arial
+- Arial Black
+- BIZ UDPゴシック
+- BIZ UDP明朝 Medium
+- BIZ UDゴシック
+- BIZ UD明朝 Medium
+- Bahnschrift
+- Bahnschrift Condensed
+- Bahnschrift Light
+- Bahnschrift Light Condensed
+- Bahnschrift Light SemiCondensed
+- Bahnschrift SemiBold
+- Bahnschrift SemiBold Condensed
+- Bahnschrift SemiBold SemiConden
+- Bahnschrift SemiCondensed
+- Bahnschrift SemiLight
+- Bahnschrift SemiLight Condensed
+- Bahnschrift SemiLight SemiConde
+- Calibri
+- Calibri Light
+- Cambria
+- Cambria Math
+- Candara
+- Candara Light
+- Cantarell
+- Cascadia Code
+- Cascadia Code ExtraLight
+- Cascadia Code Light
+- Cascadia Code SemiBold
+- Cascadia Code SemiLight
+- Cascadia Mono
+- Cascadia Mono ExtraLight
+- Cascadia Mono Light
+- Cascadia Mono SemiBold
+- Cascadia Mono SemiLight
+- Comic Sans MS
+- Consolas
+- Constantia
+- Corbel
+- Corbel Light
+- Courier
+- Courier New
+- Ebrima
+- Fira Code
+- Fira Code Light
+- Fira Code Medium
+- Fira Code Retina
+- Fira Code SemiBold
+- FixedSys
+- FontAwesome
+- Franklin Gothic Medium
+- Gabriola
+- Gadugi
+- Georgia
+- HackGen
+- HackGen Console
+- HackGen Console NF
+- HackGen Console NFJ
+- HackGen35
+- HackGen35 Console
+- HackGen35 Console NF
+- HackGen35 Console NFJ
+- HoloLens MDL2 Assets
+- Impact
+- Ink Free
+- Iosevka NF
+- Iosevka NF ExtraBold
+- Iosevka NF ExtraBold Obl
+- Iosevka NF ExtraLight
+- Iosevka NF ExtraLight Obl
+- Iosevka NF Heavy
+- Iosevka NF Heavy Obl
+- Iosevka NF Light
+- Iosevka NF Light Obl
+- Iosevka NF Medium
+- Iosevka NF Medium Obl
+- Iosevka NF Obl
+- Iosevka NF SemiBold
+- Iosevka NF SemiBold Obl
+- Iosevka NF Thin
+- Iosevka NF Thin Obl
+- Iosevka NFM
+- Iosevka NFM ExtraBold
+- Iosevka NFM ExtraBold Obl
+- Iosevka NFM ExtraLight
+- Iosevka NFM ExtraLight Obl
+- Iosevka NFM Heavy
+- Iosevka NFM Heavy Obl
+- Iosevka NFM Light
+- Iosevka NFM Light Obl
+- Iosevka NFM Medium
+- Iosevka NFM Medium Obl
+- Iosevka NFM Obl
+- Iosevka NFM SemiBold
+- Iosevka NFM SemiBold Obl
+- Iosevka NFM Thin
+- Iosevka NFM Thin Obl
+- Iosevka NFP
+- Iosevka NFP ExtraBold
+- Iosevka NFP ExtraBold Obl
+- Iosevka NFP ExtraLight
+- Iosevka NFP ExtraLight Obl
+- Iosevka NFP Heavy
+- Iosevka NFP Heavy Obl
+- Iosevka NFP Light
+- Iosevka NFP Light Obl
+- Iosevka NFP Medium
+- Iosevka NFP Medium Obl
+- Iosevka NFP Obl
+- Iosevka NFP SemiBold
+- Iosevka NFP SemiBold Obl
+- Iosevka NFP Thin
+- Iosevka NFP Thin Obl
+- IosevkaTerm NF
+- IosevkaTerm NF ExtraBold
+- IosevkaTerm NF ExtraBold Obl
+- IosevkaTerm NF ExtraLight
+- IosevkaTerm NF ExtraLight Obl
+- IosevkaTerm NF Heavy
+- IosevkaTerm NF Heavy Obl
+- IosevkaTerm NF Light
+- IosevkaTerm NF Light Obl
+- IosevkaTerm NF Medium
+- IosevkaTerm NF Medium Obl
+- IosevkaTerm NF Obl
+- IosevkaTerm NF SemiBold
+- IosevkaTerm NF SemiBold Obl
+- IosevkaTerm NF Thin
+- IosevkaTerm NF Thin Obl
+- IosevkaTerm NFM
+- IosevkaTerm NFM ExtraBold
+- IosevkaTerm NFM ExtraBold Obl
+- IosevkaTerm NFM ExtraLight
+- IosevkaTerm NFM ExtraLight Obl
+- IosevkaTerm NFM Heavy
+- IosevkaTerm NFM Heavy Obl
+- IosevkaTerm NFM Light
+- IosevkaTerm NFM Light Obl
+- IosevkaTerm NFM Medium
+- IosevkaTerm NFM Medium Obl
+- IosevkaTerm NFM Obl
+- IosevkaTerm NFM SemiBold
+- IosevkaTerm NFM SemiBold Obl
+- IosevkaTerm NFM Thin
+- IosevkaTerm NFM Thin Obl
+- IosevkaTerm NFP
+- IosevkaTerm NFP ExtraBold
+- IosevkaTerm NFP ExtraBold Obl
+- IosevkaTerm NFP ExtraLight
+- IosevkaTerm NFP ExtraLight Obl
+- IosevkaTerm NFP Heavy
+- IosevkaTerm NFP Heavy Obl
+- IosevkaTerm NFP Light
+- IosevkaTerm NFP Light Obl
+- IosevkaTerm NFP Medium
+- IosevkaTerm NFP Medium Obl
+- IosevkaTerm NFP Obl
+- IosevkaTerm NFP SemiBold
+- IosevkaTerm NFP SemiBold Obl
+- IosevkaTerm NFP Thin
+- IosevkaTerm NFP Thin Obl
+- IosevkaTermSlab NF
+- IosevkaTermSlab NF ExtraBold
+- IosevkaTermSlab NF ExtraBold Ob
+- IosevkaTermSlab NF Light
+- IosevkaTermSlab NF Light Obl
+- IosevkaTermSlab NF Medium
+- IosevkaTermSlab NF Medium Obl
+- IosevkaTermSlab NF Obl
+- IosevkaTermSlab NFM
+- IosevkaTermSlab NFM ExtraBold
+- IosevkaTermSlab NFM ExtraBold O
+- IosevkaTermSlab NFM Light
+- IosevkaTermSlab NFM Light Obl
+- IosevkaTermSlab NFM Medium
+- IosevkaTermSlab NFM Medium Obl
+- IosevkaTermSlab NFM Obl
+- IosevkaTermSlab NFP
+- IosevkaTermSlab NFP ExtraBold
+- IosevkaTermSlab NFP ExtraBold O
+- IosevkaTermSlab NFP Light
+- IosevkaTermSlab NFP Light Obl
+- IosevkaTermSlab NFP Medium
+- IosevkaTermSlab NFP Medium Obl
+- IosevkaTermSlab NFP Obl
+- Javanese Text
+- Leelawadee UI
+- Leelawadee UI Semilight
+- Lucida Console
+- Lucida Sans Unicode
+- MS Sans Serif
+- MS Serif
+- MS UI Gothic
+- MV Boli
+- Malgun Gothic
+- Malgun Gothic Semilight
+- Marlett
+- Material Icons
+- Meiryo UI
+- Microsoft Himalaya
+- Microsoft JhengHei
+- Microsoft JhengHei Light
+- Microsoft JhengHei UI
+- Microsoft JhengHei UI Light
+- Microsoft New Tai Lue
+- Microsoft PhagsPa
+- Microsoft Sans Serif
+- Microsoft Tai Le
+- Microsoft YaHei
+- Microsoft YaHei Light
+- Microsoft YaHei UI
+- Microsoft YaHei UI Light
+- Microsoft Yi Baiti
+- MingLiU-ExtB
+- MingLiU_HKSCS-ExtB
+- Modern
+- Mongolian Baiti
+- Myanmar Text
+- NSimSun
+- Nirmala UI
+- Nirmala UI Semilight
+- Noto Sans CJK HK
+- Noto Sans CJK HK Black
+- Noto Sans CJK HK DemiLight
+- Noto Sans CJK HK Light
+- Noto Sans CJK HK Medium
+- Noto Sans CJK HK Thin
+- Noto Sans CJK JP
+- Noto Sans CJK JP Black
+- Noto Sans CJK JP DemiLight
+- Noto Sans CJK JP Light
+- Noto Sans CJK JP Medium
+- Noto Sans CJK JP Thin
+- Noto Sans CJK KR
+- Noto Sans CJK KR Black
+- Noto Sans CJK KR DemiLight
+- Noto Sans CJK KR Light
+- Noto Sans CJK KR Medium
+- Noto Sans CJK KR Thin
+- Noto Sans CJK SC
+- Noto Sans CJK SC Black
+- Noto Sans CJK SC DemiLight
+- Noto Sans CJK SC Light
+- Noto Sans CJK SC Medium
+- Noto Sans CJK SC Thin
+- Noto Sans CJK TC
+- Noto Sans CJK TC Black
+- Noto Sans CJK TC DemiLight
+- Noto Sans CJK TC Light
+- Noto Sans CJK TC Medium
+- Noto Sans CJK TC Thin
+- Noto Sans Mono CJK HK
+- Noto Sans Mono CJK JP
+- Noto Sans Mono CJK KR
+- Noto Sans Mono CJK SC
+- Noto Sans Mono CJK TC
+- Noto Serif CJK JP
+- Noto Serif CJK JP Black
+- Noto Serif CJK JP ExtraLight
+- Noto Serif CJK JP Light
+- Noto Serif CJK JP Medium
+- Noto Serif CJK JP SemiBold
+- Noto Serif CJK KR
+- Noto Serif CJK KR Black
+- Noto Serif CJK KR ExtraLight
+- Noto Serif CJK KR Light
+- Noto Serif CJK KR Medium
+- Noto Serif CJK KR SemiBold
+- Noto Serif CJK SC
+- Noto Serif CJK SC Black
+- Noto Serif CJK SC ExtraLight
+- Noto Serif CJK SC Light
+- Noto Serif CJK SC Medium
+- Noto Serif CJK SC SemiBold
+- Noto Serif CJK TC
+- Noto Serif CJK TC Black
+- Noto Serif CJK TC ExtraLight
+- Noto Serif CJK TC Light
+- Noto Serif CJK TC Medium
+- Noto Serif CJK TC SemiBold
+- PMingLiU-ExtB
+- Palatino Linotype
+- Roman
+- Sans Serif Collection
+- Script
+- Segoe Fluent Icons
+- Segoe MDL2 Assets
+- Segoe Print
+- Segoe Script
+- Segoe UI
+- Segoe UI Black
+- Segoe UI Emoji
+- Segoe UI Historic
+- Segoe UI Light
+- Segoe UI Semibold
+- Segoe UI Semilight
+- Segoe UI Symbol
+- Segoe UI Variable Display
+- Segoe UI Variable Display Light
+- Segoe UI Variable Display Semib
+- Segoe UI Variable Display Semil
+- Segoe UI Variable Small
+- Segoe UI Variable Small Light
+- Segoe UI Variable Small Semibol
+- Segoe UI Variable Small Semilig
+- Segoe UI Variable Text
+- Segoe UI Variable Text Light
+- Segoe UI Variable Text Semibold
+- Segoe UI Variable Text Semiligh
+- SimSun
+- SimSun-ExtB
+- SimSun-ExtG
+- Sitka Banner
+- Sitka Banner Semibold
+- Sitka Display
+- Sitka Display Semibold
+- Sitka Heading
+- Sitka Heading Semibold
+- Sitka Small
+- Sitka Small Semibold
+- Sitka Subheading
+- Sitka Subheading Semibold
+- Sitka Text
+- Sitka Text Semibold
+- Small Fonts
+- Sylfaen
+- Symbol
+- Symbols Nerd Font Mono
+- System
+- Tahoma
+- Terminal
+- Times New Roman
+- Trebuchet MS
+- UD デジタル 教科書体 N-B
+- UD デジタル 教科書体 N-R
+- UD デジタル 教科書体 NK-B
+- UD デジタル 教科書体 NK-R
+- UD デジタル 教科書体 NP-B
+- UD デジタル 教科書体 NP-R
+- Verdana
+- Weather Icons
+- Webdings
+- Wingdings
+- Yu Gothic UI
+- Yu Gothic UI Light
+- Yu Gothic UI Semibold
+- Yu Gothic UI Semilight
+- all-the-icons
+- file-icons
+- github-octicons
+- メイリオ
+- 游ゴシック
+- 游ゴシック Light
+- 游ゴシック Medium
+- 游明朝
+- 游明朝 Demibold
+- 游明朝 Light
+- ＭＳ ゴシック
+- ＭＳ 明朝
+- ＭＳ Ｐゴシック
+- ＭＳ Ｐ明朝
+
+#+RESULTS(LINUX):
 - Abyssinica SIL
 - Ani
 - AnjaliOldLipi
@@ -668,7 +1244,7 @@ desktop-base-file-name
 - texgyretermes
 
 ** 日本語の範囲をNotoフォントに設定してみる。
-#+begin_src elisp tangle yes
+#+begin_src elisp :tangle yes
   ;; 日本語の範囲をNotoフォントに設定
   (set-fontset-font nil 'japanese-jisx0208 (font-spec :family "Noto Serif CJK JP"))
   ;; (set-fontset-font nil 'japanese-jisx0208 (font-spec :family "Noto Sans CJK JP"))
@@ -682,6 +1258,129 @@ desktop-base-file-name
 | カタカナ                         | カタカナ崩れませんか   |
 |                                  |                        |
 |----------------------------------+------------------------|
+
+** Notoフォントのインストール
+*** Windows
+#+begin_src bash
+  kenjiro@um560-win11 MINGW64 ~
+  $ scoop bucket add nerd-fonts
+  Checking repo... OK
+  The nerd-fonts bucket was added successfully.
+
+  kenjiro@um560-win11 MINGW64 ~
+  $ scoop search noto
+  Results from local buckets...
+
+  Name                          Version  Source     Binaries
+  ----                          -------  ------     --------
+  Noto-CJK-Mega-OTC             20190603 nerd-fonts
+  Noto-NF-Mono                  3.2.1    nerd-fonts
+  Noto-NF-Propo                 3.2.1    nerd-fonts
+  Noto-NF                       3.2.1    nerd-fonts
+  Source-Han-Noto-CJK-Ultra-OTC 20190603 nerd-fonts
+
+
+  kenjiro@um560-win11 MINGW64 ~
+  $ scoop install Noto-CJK-Mega-OTC
+  Updating Scoop...
+  Updating Buckets...
+  Scoop was updated successfully!
+  Installing 'Noto-CJK-Mega-OTC' (20190603) [64bit] from 'nerd-fonts' bucket
+  NotoCJK.ttc (272.5 MB) [======================================================================================] 100%
+  Checking hash of NotoCJK.ttc ... ok.
+  Running installer script...done.
+  Linking ~\scoop\apps\Noto-CJK-Mega-OTC\current => ~\scoop\apps\Noto-CJK-Mega-OTC\20190603
+  'Noto-CJK-Mega-OTC' (20190603) was installed successfully!
+
+  kenjiro@um560-win11 MINGW64 ~
+#+end_src
+
+* Iosevkaフォントのインストール
+** Windows
+#+begin_src bash
+  kenjiro@um560-win11 MINGW64 ~
+  $ scoop search iosevka
+  Results from local buckets...
+
+  Name                     Version Source     Binaries
+  ----                     ------- ------     --------
+  Iosevka-NF-Mono          3.2.1   nerd-fonts
+  Iosevka-NF-Propo         3.2.1   nerd-fonts
+  Iosevka-NF               3.2.1   nerd-fonts
+  IosevkaTerm-NF-Mono      3.2.1   nerd-fonts
+  IosevkaTerm-NF-Propo     3.2.1   nerd-fonts
+  IosevkaTerm-NF           3.2.1   nerd-fonts
+  IosevkaTermSlab-NF-Mono  3.2.1   nerd-fonts
+  IosevkaTermSlab-NF-Propo 3.2.1   nerd-fonts
+  IosevkaTermSlab-NF       3.2.1   nerd-fonts
+
+
+  kenjiro@um560-win11 MINGW64 ~
+  $ scoop install Iosevka-NF-Mono Iosevka-NF-Propo Iosevka-NF IosevkaTerm-NF-Mono IosevkaTerm-NF-Propo IosevkaTerm-NF IosevkaTermSlab-NF-Mono IosevkaTermSlab-NF-Propo IosevkaTermSlab-NF
+  Installing 'Iosevka-NF-Mono' (3.2.1) [64bit] from 'nerd-fonts' bucket
+  Iosevka.zip (324.0 MB) [======================================================================================] 100%
+  Checking hash of Iosevka.zip ... ok.
+  Extracting Iosevka.zip ... done.
+  Running installer script...done.
+  Linking ~\scoop\apps\Iosevka-NF-Mono\current => ~\scoop\apps\Iosevka-NF-Mono\3.2.1
+  'Iosevka-NF-Mono' (3.2.1) was installed successfully!
+  Installing 'Iosevka-NF-Propo' (3.2.1) [64bit] from 'nerd-fonts' bucket
+  Iosevka.zip (324.0 MB) [======================================================================================] 100%
+  Checking hash of Iosevka.zip ... ok.
+  Extracting Iosevka.zip ... done.
+  Running installer script...done.
+  Linking ~\scoop\apps\Iosevka-NF-Propo\current => ~\scoop\apps\Iosevka-NF-Propo\3.2.1
+  'Iosevka-NF-Propo' (3.2.1) was installed successfully!
+  Installing 'Iosevka-NF' (3.2.1) [64bit] from 'nerd-fonts' bucket
+  Iosevka.zip (324.0 MB) [======================================================================================] 100%
+  Checking hash of Iosevka.zip ... ok.
+  Extracting Iosevka.zip ... done.
+  Running installer script...done.
+  Linking ~\scoop\apps\Iosevka-NF\current => ~\scoop\apps\Iosevka-NF\3.2.1
+  'Iosevka-NF' (3.2.1) was installed successfully!
+  Installing 'IosevkaTerm-NF-Mono' (3.2.1) [64bit] from 'nerd-fonts' bucket
+  IosevkaTerm.zip (324.1 MB) [==================================================================================] 100%
+  Checking hash of IosevkaTerm.zip ... ok.
+  Extracting IosevkaTerm.zip ... done.
+  Running installer script...done.
+  Linking ~\scoop\apps\IosevkaTerm-NF-Mono\current => ~\scoop\apps\IosevkaTerm-NF-Mono\3.2.1
+  'IosevkaTerm-NF-Mono' (3.2.1) was installed successfully!
+  Installing 'IosevkaTerm-NF-Propo' (3.2.1) [64bit] from 'nerd-fonts' bucket
+  IosevkaTerm.zip (324.1 MB) [==================================================================================] 100%
+  Checking hash of IosevkaTerm.zip ... ok.
+  Extracting IosevkaTerm.zip ... done.
+  Running installer script...done.
+  Linking ~\scoop\apps\IosevkaTerm-NF-Propo\current => ~\scoop\apps\IosevkaTerm-NF-Propo\3.2.1
+  'IosevkaTerm-NF-Propo' (3.2.1) was installed successfully!
+  Installing 'IosevkaTerm-NF' (3.2.1) [64bit] from 'nerd-fonts' bucket
+  IosevkaTerm.zip (324.1 MB) [==================================================================================] 100%
+  Checking hash of IosevkaTerm.zip ... ok.
+  Extracting IosevkaTerm.zip ... done.
+  Running installer script...done.
+  Linking ~\scoop\apps\IosevkaTerm-NF\current => ~\scoop\apps\IosevkaTerm-NF\3.2.1
+  'IosevkaTerm-NF' (3.2.1) was installed successfully!
+  Installing 'IosevkaTermSlab-NF-Mono' (3.2.1) [64bit] from 'nerd-fonts' bucket
+  IosevkaTermSlab.zip (182.4 MB) [==============================================================================] 100%
+  Checking hash of IosevkaTermSlab.zip ... ok.
+  Extracting IosevkaTermSlab.zip ... done.
+  Running installer script...done.
+  Linking ~\scoop\apps\IosevkaTermSlab-NF-Mono\current => ~\scoop\apps\IosevkaTermSlab-NF-Mono\3.2.1
+  'IosevkaTermSlab-NF-Mono' (3.2.1) was installed successfully!
+  Installing 'IosevkaTermSlab-NF-Propo' (3.2.1) [64bit] from 'nerd-fonts' bucket
+  IosevkaTermSlab.zip (182.4 MB) [==============================================================================] 100%
+  Checking hash of IosevkaTermSlab.zip ... ok.
+  Extracting IosevkaTermSlab.zip ... done.
+  Running installer script...done.
+  Linking ~\scoop\apps\IosevkaTermSlab-NF-Propo\current => ~\scoop\apps\IosevkaTermSlab-NF-Propo\3.2.1
+  'IosevkaTermSlab-NF-Propo' (3.2.1) was installed successfully!
+  Installing 'IosevkaTermSlab-NF' (3.2.1) [64bit] from 'nerd-fonts' bucket
+  IosevkaTermSlab.zip (182.4 MB) [==============================================================================] 100%
+  Checking hash of IosevkaTermSlab.zip ... ok.
+  Extracting IosevkaTermSlab.zip ... done.
+  Running installer script...done.
+  Linking ~\scoop\apps\IosevkaTermSlab-NF\current => ~\scoop\apps\IosevkaTermSlab-NF\3.2.1
+  'IosevkaTermSlab-NF' (3.2.1) was installed successfully!
+#+end_src
 
 * ewwのフォントが汚い件
 #+begin_src
