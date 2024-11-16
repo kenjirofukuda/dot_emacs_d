@@ -58,7 +58,23 @@ C-c C-v C-t
   (setq gc-cons-threshold 100000000)
   (setq read-process-output-max (* 8 1024 1024)) ;; 8mb
 #+END_SRC
+* 基本設定
+#+begin_src elisp :tangle yes
+  (setq inhibit-startup-message t)
 
+  (scroll-bar-mode -1)        ; Disable visible scrollbar
+  (tool-bar-mode -1)          ; Disable the toolbar
+  (tooltip-mode -1)           ; Disable tooltips
+  (set-fringe-mode 10)        ; Give some breathing room
+
+  (menu-bar-mode -1)            ; Disable the menu bar
+
+  ;; Set up the visible bell
+  (setq visible-bell t)
+
+  (column-number-mode)
+  (global-display-line-numbers-mode -1)
+#+end_src
 * パッケージ自動アップデート
 #+BEGIN_SRC elisp :tangle yes
   ;; パッケージアーカイブ
@@ -144,25 +160,26 @@ Cライブラリをコンパイルして利用するため、コンパイル環�
 * 外部プロセス更新ファイルのバッファ同期
 #+BEGIN_SRC elisp :tangle yes
   ;; 外部プロセス更新ファイルのバッファ同期
+  (setq make-backup-files nil)
   ;; https://takaxp.github.io/init.html#orgc2257142
   (when (require 'auto-save-buffers nil t)
 
     (defun my-ox-hugo-auto-saving-p ()
       (when (eq major-mode 'org-mode)
-	(or (bound-and-true-p org-capture-mode) ;; when activating org-capture
-	    (and (fboundp 'org-entry-get)
-		 (equal "" (org-entry-get (point) "EXPORT_FILE_NAME"))))))
+        (or (bound-and-true-p org-capture-mode) ;; when activating org-capture
+            (and (fboundp 'org-entry-get)
+                 (equal "" (org-entry-get (point) "EXPORT_FILE_NAME"))))))
 
     (defun my-auto-save-buffers ()
       (cond ((memq major-mode '(undo-tree-visualizer-mode diff-mode)) nil)
-	    ((string-match "Org Src" (buffer-name)) nil)
-	    ((let ((pt (point)))
-	       (and (string-match ".gpg" (buffer-name))
-		    (not (eq pt 1))
-		    (string-match (buffer-substring (- pt 1) pt) " "))) nil) ;; .gpg で半角スペースの後ろのブリッツでは自動保存しない．FIXME 半角スペース+行末
-	    ((my-ox-hugo-auto-saving-p) nil)
-	    (t
-	     (auto-save-buffers))))
+            ((string-match "Org Src" (buffer-name)) nil)
+            ((let ((pt (point)))
+               (and (string-match ".gpg" (buffer-name))
+                    (not (eq pt 1))
+                    (string-match (buffer-substring (- pt 1) pt) " "))) nil) ;; .gpg で半角スペースの後ろのブリッツでは自動保存しない．FIXME 半角スペース+行末
+            ((my-ox-hugo-auto-saving-p) nil)
+            (t
+             (auto-save-buffers))))
 
     (run-with-idle-timer 1.6 t #'my-auto-save-buffers))
 
@@ -172,8 +189,8 @@ Cライブラリをコンパイルして利用するため、コンパイル環�
     ;; カーソルが (point-max) に移動してしまう場合は非推奨
     (with-eval-after-load "org"
       (defun my-org-hide-drawers-all ()
-	(when (eq major-mode 'org-mode)
-	  (org-cycle-hide-drawers 'all)))
+        (when (eq major-mode 'org-mode)
+          (org-cycle-hide-drawers 'all)))
       (add-hook 'after-revert-hook 'my-org-hide-drawers-all)))
 #+END_SRC
 
@@ -439,7 +456,7 @@ https://emacs.stackexchange.com/questions/27912/dired-sort-and-hide-by-default
   ;; https://emacs.stackexchange.com/questions/27912/dired-sort-and-hide-by-default
   (add-hook 'dired-mode-hook
             (lambda ()
-              (dired-hide-details-mode)
+              (dired-hide-details-mode 1)
               (dired-sort-toggle-or-edit)))
 #+end_src
 * Magit 設定
@@ -811,7 +828,13 @@ Windows の検索パスは別途検討
 
 #+RESULTS:
 : /usr/share/sounds/sound-icons/xylofon.wav
-
+* キーストローク表示
+#+begin_src elisp :tangle yes
+  ;; キーストローク表示
+  ;; https://github.com/tarsius/keycast
+  (use-package keycast
+    :ensure t)
+#+end_src
 * 日本語フォントの設定
 ** 使用できるフォント名の確認
 #+begin_src elisp :results list
@@ -1594,6 +1617,135 @@ lspサーバーとの比較のため導入してみる
     (objc-mode . eglot-ensure)
     :config
     (add-to-list 'eglot-server-programs '((c-mode c++-mode objc-mode) "ccls")))
+#+end_src
+* Tree sitter
+#+begin_src elisp :tangle yes
+  ;; 構文解析エンジン Tree sitter
+  (use-package treesit-auto
+    :ensure t
+    :config
+    (setq treesit-auto-install t)
+    (global-treesit-auto-mode))
+#+end_src
+* フレームの回転
+#+begin_src elisp :tangle yes
+  ;; フレームの回転
+  (use-package transpose-frame
+    :ensure t)
+#+end_src
+* ウィンドウのリサイズ
+#+begin_src elisp :tangle yes
+  ;; C-s <araow keys> でウィンドウのサイズをマウスを使わずに調節する
+  ;;
+  ;; Window Resize
+  ;; https://www.emacswiki.org/emacs/WindowResize
+  ;;
+  (defun win-resize-top-or-bot ()
+    "Figure out if the current window is on top, bottom or in the
+  middle"
+    (let* ((win-edges (window-edges))
+           (this-window-y-min (nth 1 win-edges))
+           (this-window-y-max (nth 3 win-edges))
+           (fr-height (frame-height)))
+      (cond
+       ((eq 0 this-window-y-min) "top")
+       ((eq (- fr-height 1) this-window-y-max) "bot")
+       (t "mid"))))
+
+  (defun win-resize-left-or-right ()
+    "Figure out if the current window is to the left, right or in the
+  middle"
+    (let* ((win-edges (window-edges))
+           (this-window-x-min (nth 0 win-edges))
+           (this-window-x-max (nth 2 win-edges))
+           (fr-width (frame-width)))
+      (cond
+       ((eq 0 this-window-x-min) "left")
+       ((eq (+ fr-width 4) this-window-x-max) "right")
+       (t "mid"))))
+
+  (defun win-resize-enlarge-horiz ()
+    (interactive)
+    (cond
+     ((equal "top" (win-resize-top-or-bot)) (enlarge-window -1))
+     ((equal "bot" (win-resize-top-or-bot)) (enlarge-window 1))
+     ((equal "mid" (win-resize-top-or-bot)) (enlarge-window -1))
+     (t (message "nil"))))
+
+  (defun win-resize-minimize-horiz ()
+    (interactive)
+    (cond
+     ((equal "top" (win-resize-top-or-bot)) (enlarge-window 1))
+     ((equal "bot" (win-resize-top-or-bot)) (enlarge-window -1))
+     ((equal "mid" (win-resize-top-or-bot)) (enlarge-window 1))
+     (t (message "nil"))))
+
+  (defun win-resize-enlarge-vert ()
+    (interactive)
+    (cond
+     ((equal "left" (win-resize-left-or-right)) (enlarge-window-horizontally -1))
+     ((equal "right" (win-resize-left-or-right)) (enlarge-window-horizontally 1))
+     ((equal "mid" (win-resize-left-or-right)) (enlarge-window-horizontally -1))))
+
+  (defun win-resize-minimize-vert ()
+    (interactive)
+    (cond
+     ((equal "left" (win-resize-left-or-right)) (enlarge-window-horizontally 1))
+     ((equal "right" (win-resize-left-or-right)) (enlarge-window-horizontally -1))
+     ((equal "mid" (win-resize-left-or-right)) (enlarge-window-horizontally 1))))
+
+  ;; replace all C-M-(down|up|left|right) to
+  ;;             C-s-(down|up|left|right)
+  ;; reason for confilict to paredit
+  (global-set-key [C-s-down] 'win-resize-minimize-vert)
+  (global-set-key [C-s-up] 'win-resize-enlarge-vert)
+  (global-set-key [C-s-left] 'win-resize-minimize-horiz)
+  (global-set-key [C-s-right] 'win-resize-enlarge-horiz)
+  (global-set-key [C-s-up] 'win-resize-enlarge-horiz)
+  (global-set-key [C-s-down] 'win-resize-minimize-horiz)
+  (global-set-key [C-s-left] 'win-resize-enlarge-vert)
+  (global-set-key [C-s-right] 'win-resize-minimize-vert)
+#+end_src
+* sudo編集
+#+begin_src elisp :tangle yes
+  (use-package sudo-edit
+    :ensure t
+    :pin melpa)
+#+end_src
+* Which Key
+ [[https://github.com/justbur/emacs-which-key][which-key]] is a useful UI panel that appears when you start pressing any key binding in Emacs to offer you all possible completions for the prefix.  For example, if you press =C-c= (hold control and press the letter =c=), a panel will appear at the bottom of the frame displaying all of the bindings under that prefix and which command they run.  This is very useful for learning the possible key bindings in the mode of your current buffer.
+#+begin_src emacs-lisp :tangle yes
+  (use-package which-key
+    :defer 0
+    :diminish which-key-mode
+    :config
+    (which-key-mode)
+    (setq which-key-idle-delay 1))
+#+end_src
+* アイコン装飾
+#+begin_src elisp :tangle yes
+  (use-package all-the-icons
+    :if (display-graphic-p))
+
+  (use-package all-the-icons-dired
+    :if (display-graphic-p)
+    :hook (dired-mode . all-the-icons-dired-mode))
+#+end_src
+* astyle
+#+begin_src elisp :tangle yes
+  (use-package astyle
+    :ensure t
+    :when (executable-find "astyle"))
+#+end_src
+* CMake 対応
+#+begin_src elisp :tangle yes
+  (use-package cmake-mode
+    :ensure t)
+  (setq auto-mode-alist
+        (append
+         '(("CMakeLists\\.txt\\'" . cmake-mode))
+         '(("\\.cmake\\'" . cmake-mode))
+         auto-mode-alist))
 #+end_src
 * 末尾
 #+BEGIN_SRC elisp :tangle yes

@@ -11,6 +11,21 @@
 (setq gc-cons-threshold 100000000)
 (setq read-process-output-max (* 8 1024 1024)) ;; 8mb
 
+(setq inhibit-startup-message t)
+
+(scroll-bar-mode -1)        ; Disable visible scrollbar
+(tool-bar-mode -1)          ; Disable the toolbar
+(tooltip-mode -1)           ; Disable tooltips
+(set-fringe-mode 10)        ; Give some breathing room
+
+(menu-bar-mode -1)            ; Disable the menu bar
+
+;; Set up the visible bell
+(setq visible-bell t)
+
+(column-number-mode)
+(global-display-line-numbers-mode -1)
+
 ;; パッケージアーカイブ
 (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
 (eval-and-compile
@@ -70,25 +85,26 @@
   (concat prefix "-" (safe-host-name-string) suffix ))
 
 ;; 外部プロセス更新ファイルのバッファ同期
+(setq make-backup-files nil)
 ;; https://takaxp.github.io/init.html#orgc2257142
 (when (require 'auto-save-buffers nil t)
 
   (defun my-ox-hugo-auto-saving-p ()
     (when (eq major-mode 'org-mode)
       (or (bound-and-true-p org-capture-mode) ;; when activating org-capture
-	  (and (fboundp 'org-entry-get)
-	       (equal "" (org-entry-get (point) "EXPORT_FILE_NAME"))))))
+          (and (fboundp 'org-entry-get)
+               (equal "" (org-entry-get (point) "EXPORT_FILE_NAME"))))))
 
   (defun my-auto-save-buffers ()
     (cond ((memq major-mode '(undo-tree-visualizer-mode diff-mode)) nil)
-	  ((string-match "Org Src" (buffer-name)) nil)
-	  ((let ((pt (point)))
-	     (and (string-match ".gpg" (buffer-name))
-		  (not (eq pt 1))
-		  (string-match (buffer-substring (- pt 1) pt) " "))) nil) ;; .gpg で半角スペースの後ろのブリッツでは自動保存しない．FIXME 半角スペース+行末
-	  ((my-ox-hugo-auto-saving-p) nil)
-	  (t
-	   (auto-save-buffers))))
+          ((string-match "Org Src" (buffer-name)) nil)
+          ((let ((pt (point)))
+             (and (string-match ".gpg" (buffer-name))
+                  (not (eq pt 1))
+                  (string-match (buffer-substring (- pt 1) pt) " "))) nil) ;; .gpg で半角スペースの後ろのブリッツでは自動保存しない．FIXME 半角スペース+行末
+          ((my-ox-hugo-auto-saving-p) nil)
+          (t
+           (auto-save-buffers))))
 
   (run-with-idle-timer 1.6 t #'my-auto-save-buffers))
 
@@ -99,7 +115,7 @@
   (with-eval-after-load "org"
     (defun my-org-hide-drawers-all ()
       (when (eq major-mode 'org-mode)
-	(org-cycle-hide-drawers 'all)))
+        (org-cycle-hide-drawers 'all)))
     (add-hook 'after-revert-hook 'my-org-hide-drawers-all)))
 
 ;; 最近訪れたファイル対応
@@ -369,6 +385,11 @@
 ;; C-c C-x ;
 (org-timer-set-timer 25)
 
+;; キーストローク表示
+;; https://github.com/tarsius/keycast
+(use-package keycast
+  :ensure t)
+
 ;; 日本語の範囲をNotoフォントに設定
 (when (display-graphic-p)
   (set-fontset-font nil 'japanese-jisx0208 (font-spec :family "Noto Serif CJK JP"))
@@ -383,6 +404,118 @@
   (objc-mode . eglot-ensure)
   :config
   (add-to-list 'eglot-server-programs '((c-mode c++-mode objc-mode) "ccls")))
+
+;; 構文解析エンジン Tree sitter
+(use-package treesit-auto
+  :ensure t
+  :config
+  (setq treesit-auto-install t)
+  (global-treesit-auto-mode))
+
+;; フレームの回転
+(use-package transpose-frame
+  :ensure t)
+
+;; C-s <araow keys> でウィンドウのサイズをマウスを使わずに調節する
+;;
+;; Window Resize
+;; https://www.emacswiki.org/emacs/WindowResize
+;;
+(defun win-resize-top-or-bot ()
+  "Figure out if the current window is on top, bottom or in the
+middle"
+  (let* ((win-edges (window-edges))
+         (this-window-y-min (nth 1 win-edges))
+         (this-window-y-max (nth 3 win-edges))
+         (fr-height (frame-height)))
+    (cond
+     ((eq 0 this-window-y-min) "top")
+     ((eq (- fr-height 1) this-window-y-max) "bot")
+     (t "mid"))))
+
+(defun win-resize-left-or-right ()
+  "Figure out if the current window is to the left, right or in the
+middle"
+  (let* ((win-edges (window-edges))
+         (this-window-x-min (nth 0 win-edges))
+         (this-window-x-max (nth 2 win-edges))
+         (fr-width (frame-width)))
+    (cond
+     ((eq 0 this-window-x-min) "left")
+     ((eq (+ fr-width 4) this-window-x-max) "right")
+     (t "mid"))))
+
+(defun win-resize-enlarge-horiz ()
+  (interactive)
+  (cond
+   ((equal "top" (win-resize-top-or-bot)) (enlarge-window -1))
+   ((equal "bot" (win-resize-top-or-bot)) (enlarge-window 1))
+   ((equal "mid" (win-resize-top-or-bot)) (enlarge-window -1))
+   (t (message "nil"))))
+
+(defun win-resize-minimize-horiz ()
+  (interactive)
+  (cond
+   ((equal "top" (win-resize-top-or-bot)) (enlarge-window 1))
+   ((equal "bot" (win-resize-top-or-bot)) (enlarge-window -1))
+   ((equal "mid" (win-resize-top-or-bot)) (enlarge-window 1))
+   (t (message "nil"))))
+
+(defun win-resize-enlarge-vert ()
+  (interactive)
+  (cond
+   ((equal "left" (win-resize-left-or-right)) (enlarge-window-horizontally -1))
+   ((equal "right" (win-resize-left-or-right)) (enlarge-window-horizontally 1))
+   ((equal "mid" (win-resize-left-or-right)) (enlarge-window-horizontally -1))))
+
+(defun win-resize-minimize-vert ()
+  (interactive)
+  (cond
+   ((equal "left" (win-resize-left-or-right)) (enlarge-window-horizontally 1))
+   ((equal "right" (win-resize-left-or-right)) (enlarge-window-horizontally -1))
+   ((equal "mid" (win-resize-left-or-right)) (enlarge-window-horizontally 1))))
+
+;; replace all C-M-(down|up|left|right) to
+;;             C-s-(down|up|left|right)
+;; reason for confilict to paredit
+(global-set-key [C-s-down] 'win-resize-minimize-vert)
+(global-set-key [C-s-up] 'win-resize-enlarge-vert)
+(global-set-key [C-s-left] 'win-resize-minimize-horiz)
+(global-set-key [C-s-right] 'win-resize-enlarge-horiz)
+(global-set-key [C-s-up] 'win-resize-enlarge-horiz)
+(global-set-key [C-s-down] 'win-resize-minimize-horiz)
+(global-set-key [C-s-left] 'win-resize-enlarge-vert)
+(global-set-key [C-s-right] 'win-resize-minimize-vert)
+
+(use-package sudo-edit
+  :ensure t
+  :pin melpa)
+
+(use-package which-key
+  :defer 0
+  :diminish which-key-mode
+  :config
+  (which-key-mode)
+  (setq which-key-idle-delay 1))
+
+(use-package all-the-icons
+  :if (display-graphic-p))
+
+(use-package all-the-icons-dired
+  :if (display-graphic-p)
+  :hook (dired-mode . all-the-icons-dired-mode))
+
+(use-package astyle
+  :ensure t
+  :when (executable-find "astyle"))
+
+(use-package cmake-mode
+  :ensure t)
+(setq auto-mode-alist
+      (append
+       '(("CMakeLists\\.txt\\'" . cmake-mode))
+       '(("\\.cmake\\'" . cmake-mode))
+       auto-mode-alist))
 
 ;; カスタムコマンドのロード
 (require 'kf-command)
