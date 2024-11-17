@@ -142,12 +142,6 @@
 (if (file-exists-p custom-file)
     (load custom-file t nil nil))
 
-;; デスクトップ環境の保存
-;; https://www.gnu.org/software/emacs//manual/html_node/emacs/Saving-Emacs-Sessions.html
-(desktop-save-mode 1)
-;; ホスト名を付加してファイル名衝突回避
-(setq desktop-base-file-name (concat "." (safe-host-name-string) "-emacs.desktop"))
-
 ;; 拡張選択範囲
 (use-package expand-region
   :ensure t)
@@ -516,6 +510,19 @@ middle"
        '(("CMakeLists\\.txt\\'" . cmake-mode))
        '(("\\.cmake\\'" . cmake-mode))
        auto-mode-alist))
+
+(setq-default show-trailing-whitespace t)
+
+(use-package doom-modeline
+  :if (display-graphic-p)
+  :init
+  (doom-modeline-mode +1))
+
+;; デスクトップ環境の保存
+;; https://www.gnu.org/software/emacs//manual/html_node/emacs/Saving-Emacs-Sessions.html
+(desktop-save-mode (if (display-graphic-p) +1 -1))
+;; ホスト名を付加してファイル名衝突回避
+(setq desktop-base-file-name (concat "." (safe-host-name-string) "-emacs.desktop"))
 
 ;; カスタムコマンドのロード
 (require 'kf-command)

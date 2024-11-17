@@ -227,36 +227,6 @@ Cライブラリをコンパイルして利用するため、コンパイル環�
       (load custom-file t nil nil))
 #+end_src
 
-#+begin_src elisp :tangle no
-  ;; TODO この対策は一時的なものであるため、通常のoptionsに戻すのを忘れないこと
-  (when (display-graphic-p)
-    (custom-set-faces
-     ;; custom-set-faces was added by Custom.
-     ;; If you edit it by hand, you could mess it up, so be careful.
-     ;; Your init file should contain only one such instance.
-     ;; If there is more than one, they won't work right.
-     ;;
-     '(default ((t (:family "Iosevka" :foundry "UKWN" :slant normal :weight regular :height 140 :width normal))))
-     ))
-#+end_src
-
-** デスクトップのサイズを記憶
-#+begin_src elisp :tangle yes
-  ;; デスクトップ環境の保存
-  ;; https://www.gnu.org/software/emacs//manual/html_node/emacs/Saving-Emacs-Sessions.html
-  (desktop-save-mode 1)
-  ;; ホスト名を付加してファイル名衝突回避
-  (setq desktop-base-file-name (concat "." (safe-host-name-string) "-emacs.desktop"))
-#+end_src
-
-#+begin_src elisp :results output
-desktop-path
-desktop-base-file-name
-(safe-host-name-string)
-#+end_src
-
-#+RESULTS:
-
 *** DONE 他のホストと、衝突する恐れがある
 単純に導入しただけでは、Nextcloudで共有している他のホストと衝突してしまう。
 本来であれば、Nextcloudクライアント側でignore ファイルを共有して回避すべき問題である。
@@ -1747,6 +1717,48 @@ lspサーバーとの比較のため導入してみる
          '(("\\.cmake\\'" . cmake-mode))
          auto-mode-alist))
 #+end_src
+* 末尾のゴミを可視化
+#+begin_src elisp :tangle yes
+  (setq-default show-trailing-whitespace t)
+#+end_src
+* モードラインをシンプル化
+#+begin_src elisp :tangle yes
+  (use-package doom-modeline
+    :if (display-graphic-p)
+    :init
+    (doom-modeline-mode +1))
+#+end_src
+* Iosevkaを標準フォントに(現在無効)
+#+begin_src elisp :tangle no
+  ;; TODO この対策は一時的なものであるため、通常のoptionsに戻すのを忘れないこと
+  (when (display-graphic-p)
+    (custom-set-faces
+     ;; custom-set-faces was added by Custom.
+     ;; If you edit it by hand, you could mess it up, so be careful.
+     ;; Your init file should contain only one such instance.
+     ;; If there is more than one, they won't work right.
+     ;;
+     '(default ((t (:family "Iosevka" :foundry "UKWN" :slant normal :weight regular :height 140 :width normal))))
+     ))
+#+end_src
+
+* デスクトップのサイズを記憶
+#+begin_src elisp :tangle yes
+  ;; デスクトップ環境の保存
+  ;; https://www.gnu.org/software/emacs//manual/html_node/emacs/Saving-Emacs-Sessions.html
+  (desktop-save-mode (if (display-graphic-p) +1 -1))
+  ;; ホスト名を付加してファイル名衝突回避
+  (setq desktop-base-file-name (concat "." (safe-host-name-string) "-emacs.desktop"))
+#+end_src
+
+#+begin_src elisp :results output
+  desktop-path
+  desktop-base-file-name
+  (safe-host-name-string)
+#+end_src
+
+#+RESULTS:
+
 * 末尾
 #+BEGIN_SRC elisp :tangle yes
   ;; カスタムコマンドのロード
