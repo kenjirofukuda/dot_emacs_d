@@ -524,6 +524,9 @@ middle"
 ;; ホスト名を付加してファイル名衝突回避
 (setq desktop-base-file-name (concat "." (safe-host-name-string) "-emacs.desktop"))
 
+(use-package ef-themes
+  :ensure t)
+
 ;; カスタムコマンドのロード
 (require 'kf-command)
 (recentf-open-files)

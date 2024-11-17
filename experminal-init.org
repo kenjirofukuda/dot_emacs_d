@@ -1478,7 +1478,7 @@ https://github.com/be5invis/Iosevka
 #+begin_src bash
   cd ~/Downloads
   curl -O https://sid.ethz.ch/debian/fonts-iosevka/fonts-iosevka_22.0.0%2Bds-1_all.deb
-  sudo dpkg -i fonts-iosevka_22.0.0%2Bds-1_all.debvter
+  sudo dpkg -i fonts-iosevka_22.0.0%2Bds-1_all.deb
 #+end_src
 
 #+RESULTS:
@@ -1758,6 +1758,10 @@ lspサーバーとの比較のため導入してみる
 #+end_src
 
 #+RESULTS:
+#+begin_src elisp :tangle yes
+  (use-package ef-themes
+    :ensure t)
+#+end_src
 
 * 末尾
 #+BEGIN_SRC elisp :tangle yes
