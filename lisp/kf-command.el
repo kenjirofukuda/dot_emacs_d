@@ -1,3 +1,9 @@
+(defun kf:font-family-installed-p (fontname)
+  ;; フォントがインストールされているかを調べる
+  (seq-some (lambda (elt)
+              (string-prefix-p fontname (downcase elt)))
+            (font-family-list)))
+
 ;; シェルコマンドの結果を挿入
 (defun kf:insert-shell-command (start end command)
   "シェルコマンドの結果を挿入"
@@ -12,18 +18,18 @@
   "カーソル行のファイルを開く"
   (interactive)
   (let ((filename (thing-at-point 'filename t))
-	(url (thing-at-point 'url t)))
+        (url (thing-at-point 'url t)))
     (when url
       (cond ((string-match-p "^file:///" url)
-	     (eww-browse-url url)
-	     (message "eww: %s" url))
-	    (t (message "chrome: %s" url)
-	       (browse-url-chrome url))))
+             (eww-browse-url url)
+             (message "eww: %s" url))
+            (t (message "chrome: %s" url)
+               (browse-url-chrome url))))
     (when (and filename (file-exists-p filename))
       (cond ((string-match-p "\\.wav$" filename)
-	     (play-sound-file filename)) 	      
-	    (t
-	     (find-file filename))))))
+             (play-sound-file filename))
+            (t
+             (find-file filename))))))
 (global-set-key (kbd "\C-c <f3>") 'kf:open-file-thing)
 
 ;; ウィンドウのバッファを固定する

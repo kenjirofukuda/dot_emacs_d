@@ -57,6 +57,8 @@ C-c C-v C-t
 
   (setq gc-cons-threshold 100000000)
   (setq read-process-output-max (* 8 1024 1024)) ;; 8mb
+    ;; カスタムコマンドのロード
+  (require 'kf-command)
 #+END_SRC
 * 基本設定
 #+begin_src elisp :tangle yes
@@ -1476,6 +1478,7 @@ Windows の検索パスは別途検討
 https://github.com/be5invis/Iosevka
 *** Linux
 #+begin_src bash
+  mkdir -p ~/Downloads
   cd ~/Downloads
   curl -O https://sid.ethz.ch/debian/fonts-iosevka/fonts-iosevka_22.0.0%2Bds-1_all.deb
   sudo dpkg -i fonts-iosevka_22.0.0%2Bds-1_all.deb
@@ -1728,10 +1731,10 @@ lspサーバーとの比較のため導入してみる
     :init
     (doom-modeline-mode +1))
 #+end_src
-* Iosevkaを標準フォントに(現在無効)
-#+begin_src elisp :tangle no
+* Iosevkaを標準フォントに
+#+begin_src elisp :tangle yes
   ;; TODO この対策は一時的なものであるため、通常のoptionsに戻すのを忘れないこと
-  (when (display-graphic-p)
+  (when (and (display-graphic-p) (kf:font-family-installed-p "iosevka"))
     (custom-set-faces
      ;; custom-set-faces was added by Custom.
      ;; If you edit it by hand, you could mess it up, so be careful.
@@ -1763,9 +1766,14 @@ lspサーバーとの比較のため導入してみる
     :ensure t)
 #+end_src
 
+* グローバル高速検索
+#+begin_src elisp :tangle yes
+  ;; https://agel.readthedocs.io/en/latest/index.html
+  (use-package ag
+    :ensure t)
+#+end_src
+
 * 末尾
 #+BEGIN_SRC elisp :tangle yes
-  ;; カスタムコマンドのロード
-  (require 'kf-command)
   (recentf-open-files)
 #+END_SRC

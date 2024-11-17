@@ -10,6 +10,8 @@
 
 (setq gc-cons-threshold 100000000)
 (setq read-process-output-max (* 8 1024 1024)) ;; 8mb
+  ;; カスタムコマンドのロード
+(require 'kf-command)
 
 (setq inhibit-startup-message t)
 
@@ -518,6 +520,17 @@ middle"
   :init
   (doom-modeline-mode +1))
 
+;; TODO この対策は一時的なものであるため、通常のoptionsに戻すのを忘れないこと
+(when (and (display-graphic-p) (kf:font-family-installed-p "iosevka"))
+  (custom-set-faces
+   ;; custom-set-faces was added by Custom.
+   ;; If you edit it by hand, you could mess it up, so be careful.
+   ;; Your init file should contain only one such instance.
+   ;; If there is more than one, they won't work right.
+   ;;
+   '(default ((t (:family "Iosevka" :foundry "UKWN" :slant normal :weight regular :height 140 :width normal))))
+   ))
+
 ;; デスクトップ環境の保存
 ;; https://www.gnu.org/software/emacs//manual/html_node/emacs/Saving-Emacs-Sessions.html
 (desktop-save-mode (if (display-graphic-p) +1 -1))
@@ -527,6 +540,8 @@ middle"
 (use-package ef-themes
   :ensure t)
 
-;; カスタムコマンドのロード
-(require 'kf-command)
+;; https://agel.readthedocs.io/en/latest/index.html
+(use-package ag
+  :ensure t)
+
 (recentf-open-files)

@@ -20,6 +20,21 @@ C-c C-v C-e
 C-c C-c ;; が簡単かも
 #+END_SRC
 
+* フォントがインストールされているかを調べる
+#+begin_src elisp :tangle yes
+  (defun kf:font-family-installed-p (fontname)
+    ;; フォントがインストールされているかを調べる
+    (seq-some (lambda (elt)
+                (string-prefix-p fontname (downcase elt)))
+              (font-family-list)))
+#+end_src
+
+** 例
+#+begin_src elisp
+  (kf:font-family-installed-p "iosevka")
+  (kf:font-family-installed-p "noto serif cjk")
+#+end_src
+
 * シェルコマンドの挿入
 #+BEGIN_SRC elisp :tangle yes
   ;; シェルコマンドの結果を挿入
