@@ -513,7 +513,25 @@ middle"
        '(("\\.cmake\\'" . cmake-mode))
        auto-mode-alist))
 
+;; https://qiita.com/tadsan/items/df73c711f921708facdc
 (setq-default show-trailing-whitespace t)
+(defun my/disable-trailing-mode-hook ()
+  "Disable show tail whitespace."
+  (setq show-trailing-whitespace nil))
+
+(defvar my/disable-trailing-modes
+  '(comint-mode
+    eshell-mode
+    eww-mode
+    term-mode
+    vterm-mode
+    twittering-mode))
+
+(mapc
+ (lambda (mode)
+   (add-hook (intern (concat (symbol-name mode) "-hook"))
+             'my/disable-trailing-mode-hook))
+ my/disable-trailing-modes)
 
 (use-package doom-modeline
   :if (display-graphic-p)
