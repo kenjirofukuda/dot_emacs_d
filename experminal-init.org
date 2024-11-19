@@ -1782,6 +1782,10 @@ lspサーバーとの比較のため導入してみる
 #+begin_src elisp :tangle yes
   (use-package ef-themes
     :ensure t)
+  (when (display-graphic-p)
+    (custom-set-variables
+     '(custom-enabled-themes '(ef-cyprus)))
+     )
 #+end_src
 
 * グローバル高速検索

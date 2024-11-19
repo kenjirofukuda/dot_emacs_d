@@ -557,6 +557,10 @@ middle"
 
 (use-package ef-themes
   :ensure t)
+(when (display-graphic-p)
+  (custom-set-variables
+   '(custom-enabled-themes '(ef-cyprus)))
+   )
 
 ;; https://agel.readthedocs.io/en/latest/index.html
 (use-package ag
