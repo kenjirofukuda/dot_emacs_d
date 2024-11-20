@@ -49,6 +49,23 @@ C-c C-c ;; が簡単かも
 
 #+END_SRC
 
+* VTERM
+#+begin_src elisp :tangle yes
+  (defun kf:vterm-cd (dir)
+    (with-current-buffer "*vterm*"
+      (vterm-send-string (concat "cd " dir))
+      (vterm-send-return)))
+
+  (defun kf:vterm-visit (dir)
+    (kf:vterm-cd dir)
+    (switch-to-buffer-other-window "*vterm*"))
+
+  (defun kf:vterm-quit ()
+    (with-current-buffer "*vterm*"
+      (vterm-send-C-d)))
+#+end_src
+
+
 * カーソル行のファイルを開く
 
 #+begin_src
@@ -71,7 +88,7 @@ C-c <f3>
         (cond ((string-match-p "\\.wav$" filename)
                (play-sound-file filename))
               (t
-               (find-file filename))))))
+               (find-file-other-window filename))))))
   (global-set-key (kbd "\C-c <f3>") 'kf:open-file-thing)
 #+END_SRC
 
@@ -175,6 +192,7 @@ C-c <f3>
 - ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsStructureView.h
 - ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsStructureView.m
 - ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/main.m
+- ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/
 
 * フッタ
 #+BEGIN_SRC elisp :tangle yes

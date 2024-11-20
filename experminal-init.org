@@ -462,8 +462,8 @@ https://emacs.stackexchange.com/questions/27912/dired-sort-and-hide-by-default
     :ensure t
     :commands enable-paredit-mode
     :hook ((emacs-lisp-mode
-	    org-mode)
-	   . enable-paredit-mode))
+            org-mode)
+           . enable-paredit-mode))
 
   (use-package smartparens :ensure t)
   (use-package rainbow-delimiters :ensure t)
@@ -485,6 +485,35 @@ https://emacs.stackexchange.com/questions/27912/dired-sort-and-hide-by-default
        (define-key paredit-mode-map (kbd "C-j") 'paredit-newline)))
 
 #+END_SRC
+
+* DONE 横に広がりすぎて編集しづらい。auto wrapp で単語境界で区切るのは日本語には合わない
+=C-x x t=
+=toggle-truncate-lines=
+でトグルできるのだが、継続行が先頭に来て見づらくなる。
+そこで次の記事を参考にしてみた。
+https://zenn.dev/ebang/articles/231106_emacs-markdown
+#+begin_src elisp :tangle yes
+  (use-package markdown-mode
+    :mode ("\\.md\\'" . markdown-mode)
+    :init
+    (add-hook 'markdown-mode-hook #'turn-off-auto-fill)
+    (add-hook 'markdown-mode-hook #'turn-on-visual-line-mode))
+
+  (use-package word-wrap-mode
+    :hook (visual-line-mode . word-wrap-whitespace-mode)
+    :config
+    (add-to-list 'word-wrap-whitespace-characters ?\]))
+
+  (use-package visual-fill-column
+    :hook (visual-line-mode . visual-fill-column-mode)
+    :init
+    (setq visual-line-fringe-indicators '(left-curly-arrow nil))
+    :config
+    (setq visual-fill-column-width 120))
+
+  (use-package adaptive-wrap
+    :hook (visual-line-mode . adaptive-wrap-prefix-mode))
+#+end_src
 
 * Org
 ** 近代化
@@ -1787,11 +1816,9 @@ lspサーバーとの比較のため導入してみる
 #+RESULTS:
 #+begin_src elisp :tangle yes
   (use-package ef-themes
-    :ensure t)
-  (when (display-graphic-p)
-    (custom-set-variables
-     '(custom-enabled-themes '(ef-cyprus)))
-     )
+    :ensure t
+    :config
+    (ef-themes-select 'ef-cyprus))
 #+end_src
 
 * グローバル高速検索
@@ -1805,3 +1832,35 @@ lspサーバーとの比較のため導入してみる
 #+BEGIN_SRC elisp :tangle yes
   (recentf-open-files)
 #+END_SRC
+* TODO 垂直分割より水分平割を優先する(表現が逆かな)
+一時的にオフにしておく、frame が縦長か横長かの判定で切り分ける
+frame-geometry関数のouter-sizeで判定すること
+#+begin_src elisp :tangle no
+  ;; https://qiita.com/nobuyuki86/items/6b7aa2f17faa63b6a900#%E6%B0%B4%E5%B9%B3%E5%88%86%E5%89%B2%E3%82%88%E3%82%8A%E5%9E%82%E7%9B%B4%E5%88%86%E5%89%B2%E3%82%92%E5%84%AA%E5%85%88%E3%81%99%E3%82%8B
+  (setq split-height-threshold nil)
+  (setq split-width-threshold 0)
+#+end_src
+* TODO 導入予定
+** TODO narrow時にツリー間の移動を用意にし、プレゼンテーションも行える
+https://protesilaos.com/emacs/logos
+** TODO モードラインに IME 情報が載せられないか?
+
+* Projectile
+#+begin_src elisp :tangle yes
+  (use-package projectile
+    :config
+    (defun projectile-project-find-function (dir)
+      (let* ((root (projectile-project-root dir)))
+        (and root (cons 'transient root))))
+    (with-eval-after-load 'project
+      (add-to-list 'project-find-functions 'projectile-project-find-function))
+    )
+
+  ;; (use-package eglot
+  ;;   :bind (:map eglot-mode-map
+  ;;               ("C-c C-d" . eglot-help-at-point)
+  ;;               ("C-c C-r" . eglot-code-actions))
+  ;;   :hook
+  ;;   ((c-mode-common . eglot-ensure))
+  ;;   )
+#+end_src

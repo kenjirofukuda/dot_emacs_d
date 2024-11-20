@@ -341,8 +341,8 @@
   :ensure t
   :commands enable-paredit-mode
   :hook ((emacs-lisp-mode
-	  org-mode)
-	 . enable-paredit-mode))
+          org-mode)
+         . enable-paredit-mode))
 
 (use-package smartparens :ensure t)
 (use-package rainbow-delimiters :ensure t)
@@ -359,6 +359,27 @@
      (add-hook 'ielm-mode-hook 'paredit-mode)
      (define-key paredit-mode-map (kbd "RET") nil)
      (define-key paredit-mode-map (kbd "C-j") 'paredit-newline)))
+
+(use-package markdown-mode
+  :mode ("\\.md\\'" . markdown-mode)
+  :init
+  (add-hook 'markdown-mode-hook #'turn-off-auto-fill)
+  (add-hook 'markdown-mode-hook #'turn-on-visual-line-mode))
+
+(use-package word-wrap-mode
+  :hook (visual-line-mode . word-wrap-whitespace-mode)
+  :config
+  (add-to-list 'word-wrap-whitespace-characters ?\]))
+
+(use-package visual-fill-column
+  :hook (visual-line-mode . visual-fill-column-mode)
+  :init
+  (setq visual-line-fringe-indicators '(left-curly-arrow nil))
+  :config
+  (setq visual-fill-column-width 120))
+
+(use-package adaptive-wrap
+  :hook (visual-line-mode . adaptive-wrap-prefix-mode))
 
 (use-package org-modern
   :ensure t
@@ -562,14 +583,29 @@ middle"
 (setq desktop-base-file-name (concat "." (safe-host-name-string) "-emacs.desktop"))
 
 (use-package ef-themes
-  :ensure t)
-(when (display-graphic-p)
-  (custom-set-variables
-   '(custom-enabled-themes '(ef-cyprus)))
-   )
+  :ensure t
+  :config
+  (ef-themes-select 'ef-cyprus))
 
 ;; https://agel.readthedocs.io/en/latest/index.html
 (use-package ag
   :ensure t)
 
 (recentf-open-files)
+
+(use-package projectile
+  :config
+  (defun projectile-project-find-function (dir)
+    (let* ((root (projectile-project-root dir)))
+      (and root (cons 'transient root))))
+  (with-eval-after-load 'project
+    (add-to-list 'project-find-functions 'projectile-project-find-function))
+  )
+
+;; (use-package eglot
+;;   :bind (:map eglot-mode-map
+;;               ("C-c C-d" . eglot-help-at-point)
+;;               ("C-c C-r" . eglot-code-actions))
+;;   :hook
+;;   ((c-mode-common . eglot-ensure))
+;;   )

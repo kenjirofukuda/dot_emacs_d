@@ -14,6 +14,19 @@
 	(replace t))
     (shell-command-on-region start end command output-buffer replace)))
 
+(defun kf:vterm-cd (dir)
+  (with-current-buffer "*vterm*"
+    (vterm-send-string (concat "cd " dir))
+    (vterm-send-return)))
+
+(defun kf:vterm-visit (dir)
+  (kf:vterm-cd dir)
+  (switch-to-buffer-other-window "*vterm*"))
+
+(defun kf:vterm-quit ()
+  (with-current-buffer "*vterm*"
+    (vterm-send-C-d)))
+
 (defun kf:open-file-thing ()
   "カーソル行のファイルを開く"
   (interactive)
@@ -29,7 +42,7 @@
       (cond ((string-match-p "\\.wav$" filename)
              (play-sound-file filename))
             (t
-             (find-file filename))))))
+             (find-file-other-window filename))))))
 (global-set-key (kbd "\C-c <f3>") 'kf:open-file-thing)
 
 ;; ウィンドウのバッファを固定する
