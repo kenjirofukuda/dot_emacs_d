@@ -315,6 +315,48 @@
   :hook
   (embark-collect-mode . consult-preview-at-point-mode))
 
+;; https://github.com/minad/corfu
+(use-package corfu
+  ;; Optional customizations
+  ;; :custom
+  ;; (corfu-cycle t)                ;; Enable cycling for `corfu-next/previous'
+  ;; (corfu-auto t)                 ;; Enable auto completion
+  ;; (corfu-quit-at-boundary nil)   ;; Never quit at completion boundary
+  ;; (corfu-quit-no-match nil)      ;; Never quit, even if there is no match
+  ;; (corfu-preview-current nil)    ;; Disable current candidate preview
+  ;; (corfu-preselect 'prompt)      ;; Preselect the prompt
+  ;; (corfu-on-exact-match nil)     ;; Configure handling of exact matches
+
+  ;; Enable Corfu only for certain modes. See also `global-corfu-modes'.
+  ;; :hook ((prog-mode . corfu-mode)
+  ;;        (shell-mode . corfu-mode)
+  ;;        (eshell-mode . corfu-mode))
+
+  ;; Recommended: Enable Corfu globally.  This is recommended since Dabbrev can
+  ;; be used globally (M-/).  See also the customization variable
+  ;; `global-corfu-modes' to exclude certain modes.
+  :init
+  (global-corfu-mode))
+
+;; A few more useful configurations...
+(use-package emacs
+  :custom
+  ;; TAB cycle if there are only few candidates
+  ;; (completion-cycle-threshold 3)
+
+  ;; Enable indentation+completion using the TAB key.
+  ;; `completion-at-point' is often bound to M-TAB.
+  (tab-always-indent 'complete)
+
+  ;; Emacs 30 and newer: Disable Ispell completion function.
+  ;; Try `cape-dict' as an alternative.
+  (text-mode-ispell-word-completion nil)
+
+  ;; Hide commands in M-x which do not apply to the current mode.  Corfu
+  ;; commands are hidden, since they are not used via M-x. This setting is
+  ;; useful beyond Corfu.
+  (read-extended-command-predicate #'command-completion-default-include-p))
+
 ;; Magit 設定
 (use-package magit
   :ensure t
@@ -371,12 +413,12 @@
   :config
   (add-to-list 'word-wrap-whitespace-characters ?\]))
 
-(use-package visual-fill-column
-  :hook (visual-line-mode . visual-fill-column-mode)
-  :init
-  (setq visual-line-fringe-indicators '(left-curly-arrow nil))
-  :config
-  (setq visual-fill-column-width 120))
+;; (use-package visual-fill-column
+;;   :hook (visual-line-mode . visual-fill-column-mode)
+;;   :init
+;;   (setq visual-line-fringe-indicators '(left-curly-arrow nil))
+;;   :config
+;;   (setq visual-fill-column-width 120))
 
 (use-package adaptive-wrap
   :hook (visual-line-mode . adaptive-wrap-prefix-mode))
@@ -591,8 +633,6 @@ middle"
 (use-package ag
   :ensure t)
 
-(recentf-open-files)
-
 (use-package projectile
   :config
   (defun projectile-project-find-function (dir)
@@ -609,3 +649,47 @@ middle"
 ;;   :hook
 ;;   ((c-mode-common . eglot-ensure))
 ;;   )
+
+(defun kf:c-mode-init ()
+  (c-toggle-auto-newline 1)
+  (setq c-hanging-braces-alist '((statement-open before after)
+                                 (substatement-open before after) ))
+  )
+(defun kf:objc-mode-init ()
+  (c-toggle-auto-newline 1)
+  (setq c-hanging-braces-alist '((statement before after)
+                                 (statement-open before after)
+                                 (substatement-open before after) ))
+  )
+(add-hook 'c-mode-hook 'kf:c-mode-init)
+(add-hook 'objc-mode-hook 'kf:objc-mode-init)
+
+;; https://qiita.com/fujimisakari/items/a6ff082f0e8eddc09511
+;; .hファイルもobjc-modeで開くけるようにする
+(add-to-list 'magic-mode-alist
+             `(,(lambda ()
+                  (and (string= (file-name-extension buffer-file-name) "h")
+                       (re-search-forward "@\\<interface\\>"
+                                          magic-mode-regexp-match-limit t)))
+               . objc-mode))
+
+(use-package clang-format
+  :ensure t)
+
+(add-to-list 'auto-mode-alist '("\\.gsmarkup$" . xml-mode))
+
+;; NeoTree
+;; https://tsuu32.hatenablog.com/entry/2020/08/19/004306
+(use-package neotree
+  :ensure t
+  :config
+  (setq neo-show-hidden-files t) ; dot-fileも表示する
+  (setq neo-theme 'icons) )
+
+(use-package orderless
+  :ensure t
+  :custom
+  (completion-styles '(orderless basic))
+  (completion-category-overrides '((file (styles basic partial-completion)))))
+
+(recentf-open-files)
