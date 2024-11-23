@@ -609,14 +609,15 @@ middle"
 
 ;; TODO この対策は一時的なものであるため、通常のoptionsに戻すのを忘れないこと
 (when (and (display-graphic-p) (kf:font-family-installed-p "iosevka"))
-  (custom-set-faces
-   ;; custom-set-faces was added by Custom.
-   ;; If you edit it by hand, you could mess it up, so be careful.
-   ;; Your init file should contain only one such instance.
-   ;; If there is more than one, they won't work right.
-   ;;
-   '(default ((t (:family "Iosevka" :foundry "UKWN" :slant normal :weight regular :height 140 :width normal))))
-   ))
+  (let ((font-height (if (< (display-pixel-height) 900) 100 130))
+        (custom-set-faces
+         ;; custom-set-faces was added by Custom.
+         ;; If you edit it by hand, you could mess it up, so be careful.
+         ;; Your init file should contain only one such instance.
+         ;; If there is more than one, they won't work right.
+         ;;
+         '(default ((t (:family "Iosevka" :foundry "UKWN" :slant normal :weight regular :height font-height :width normal))))
+         ))))
 
 ;; デスクトップ環境の保存
 ;; https://www.gnu.org/software/emacs//manual/html_node/emacs/Saving-Emacs-Sessions.html
