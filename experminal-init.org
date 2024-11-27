@@ -1968,6 +1968,19 @@ https://protesilaos.com/emacs/logos
     (completion-styles '(orderless basic))
     (completion-category-overrides '((file (styles basic partial-completion)))))
 #+end_src
+* Mozc
+#+begin_src elisp :tangle yes
+  ;; sudo apt install -y emacs-mozc emacs-mozc-bin
+
+  (let ((mozc-path "/usr/share/emacs/site-lisp/emacs-mozc/mozc.el"))
+     (when (file-exists-p mozc-path)
+       (load-file mozc-path)
+       (setq default-input-method "japanese-mozc")))
+      #+end_src
+ジャパニーズもずく打てますかね？
+入力の感触は良いが、インライン変換できるのは気持ちが良い。
+#+RESULTS:
+: t
 * 末尾
 #+BEGIN_SRC elisp :tangle yes
   (recentf-open-files)

@@ -693,4 +693,11 @@ middle"
   (completion-styles '(orderless basic))
   (completion-category-overrides '((file (styles basic partial-completion)))))
 
+;; sudo apt install -y emacs-mozc emacs-mozc-bin
+
+(let ((mozc-path "/usr/share/emacs/site-lisp/emacs-mozc/mozc.el"))
+   (when (file-exists-p mozc-path)
+     (load-file mozc-path)
+     (setq default-input-method "japanese-mozc")))
+
 (recentf-open-files)
