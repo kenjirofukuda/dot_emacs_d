@@ -9,7 +9,7 @@
   (push (expand-file-name "~/.emacs.d/lisp") load-path))
 
 (setq gc-cons-threshold 100000000)
-(setq read-process-output-max (* 8 1024 1024)) ;; 8mb
+(setq read-process-output-max (* 80 1024 1024)) ;; 8mb
   ;; カスタムコマンドのロード
 (require 'kf-command)
 

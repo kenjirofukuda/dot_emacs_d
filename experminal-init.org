@@ -56,7 +56,7 @@ C-c C-v C-t
     (push (expand-file-name "~/.emacs.d/lisp") load-path))
 
   (setq gc-cons-threshold 100000000)
-  (setq read-process-output-max (* 8 1024 1024)) ;; 8mb
+  (setq read-process-output-max (* 80 1024 1024)) ;; 8mb
     ;; カスタムコマンドのロード
   (require 'kf-command)
 #+END_SRC
@@ -132,6 +132,11 @@ Cライブラリをコンパイルして利用するため、コンパイル環�
 #+begin_src sh
   sudo apt install libtool
   sudo apt install libtool-bin
+#+end_src
+*** Haiku
+#+begin_src sh
+  pkgman install cmake
+  pkgman install libtool
 #+end_src
 ** パッケージ導入
 #+begin_src elisp :tangle yes
@@ -885,6 +890,40 @@ Windows の検索パスは別途検討
 #+begin_src elisp :results list
   (seq-uniq (sort (font-family-list) 'string<) 'string=)
 #+end_src
+
+#+RESULTS(Haiku):
+- Bitstream Charter
+- Cantarell
+- DejaVu Math TeX Gyre
+- DejaVu Sans
+- DejaVu Sans Mono
+- DejaVu Serif
+- Fira Mono
+- Fira Sans
+- Fira Sans Condensed
+- FontAwesome
+- Material Icons
+- Noto Sans
+- Noto Sans CJK JP
+- Noto Sans Display
+- Noto Sans Mono
+- Noto Sans Mono CJK JP
+- Noto Sans Symbols
+- Noto Sans Symbols 2
+- Noto Sans Thai
+- Noto Serif
+- Noto Serif Display
+- Noto Serif Thai
+- Source Code Pro
+- Source Sans Pro
+- Source Serif Pro
+- Ubuntu
+- Ubuntu Condensed
+- Ubuntu Mono
+- Weather Icons
+- all-the-icons
+- file-icons
+- github-octicons
 
 #+RESULTS(Windows):
 - Arial
