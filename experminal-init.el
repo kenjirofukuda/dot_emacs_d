@@ -462,7 +462,7 @@
   (c++-mode . eglot-ensure)
   (objc-mode . eglot-ensure)
   :config
-  (add-to-list 'eglot-server-programs '((c-mode c++-mode objc-mode) "ccls")))
+  (add-to-list 'eglot-server-programs '((c-mode c++-mode objc-mode) "clangd")))
 
 ;; 構文解析エンジン Tree sitter
 (use-package treesit-auto
@@ -603,7 +603,7 @@ middle"
  my/disable-trailing-modes)
 
 (use-package doom-modeline
-  :if (display-graphic-p)
+  :if (and (display-graphic-p) (not (eq system-type 'haiku)))
   :init
   (doom-modeline-mode +1))
 

@@ -1701,7 +1701,7 @@ lspサーバーとの比較のため導入してみる
     (c++-mode . eglot-ensure)
     (objc-mode . eglot-ensure)
     :config
-    (add-to-list 'eglot-server-programs '((c-mode c++-mode objc-mode) "ccls")))
+    (add-to-list 'eglot-server-programs '((c-mode c++-mode objc-mode) "clangd")))
 #+end_src
 * Tree sitter
 #+begin_src elisp :tangle yes
@@ -1863,7 +1863,7 @@ lspサーバーとの比較のため導入してみる
 * モードラインをシンプル化
 #+begin_src elisp :tangle yes
   (use-package doom-modeline
-    :if (display-graphic-p)
+    :if (and (display-graphic-p) (not (eq system-type 'haiku)))
     :init
     (doom-modeline-mode +1))
 #+end_src
