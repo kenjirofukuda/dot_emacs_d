@@ -700,4 +700,8 @@ middle"
      (load-file mozc-path)
      (setq default-input-method "japanese-mozc")))
 
+(let ((jam-mode-path (expand-file-name "~/.emacs.d/lisp/jam-mode.el")))
+  (when (file-exists-p jam-mode-path)
+    (load-file jam-mode-path)))
+
 (recentf-open-files)

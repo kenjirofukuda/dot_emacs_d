@@ -2020,6 +2020,16 @@ https://protesilaos.com/emacs/logos
 入力の感触は良いが、インライン変換できるのは気持ちが良い。
 #+RESULTS:
 : t
+* Haiku Support
+** Setup Jamfile mode
+#+begin_src elisp :tangle yes
+  (let ((jam-mode-path (expand-file-name "~/.emacs.d/lisp/jam-mode.el")))
+    (when (file-exists-p jam-mode-path)
+      (load-file jam-mode-path)))
+#+end_src
+
+** Haiku Format
+
 * 末尾
 #+BEGIN_SRC elisp :tangle yes
   (recentf-open-files)
