@@ -561,6 +561,7 @@ middle"
   :if (display-graphic-p))
 
 (when (display-graphic-p)
+  (use-package nerd-icons)
   (unless (kf:font-family-installed-p "all-the-icons")
     (all-the-icons-install-fonts))
   (unless (kf:font-family-installed-p "symbols nerd")
