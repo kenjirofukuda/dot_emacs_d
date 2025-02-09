@@ -893,7 +893,7 @@ Windows の検索パスは別途検討
   (seq-uniq (sort (font-family-list) 'string<) 'string=)
 #+end_src
 
-#+RESULTS(Haiku):
+*** RESULTS(Haiku):
 - Bitstream Charter
 - Cantarell
 - DejaVu Math TeX Gyre
@@ -927,7 +927,7 @@ Windows の検索パスは別途検討
 - file-icons
 - github-octicons
 
-#+RESULTS(Windows):
+*** RESULTS(Windows):
 - Arial
 - Arial Black
 - BIZ UDPゴシック
@@ -1290,7 +1290,7 @@ Windows の検索パスは別途検討
 - ＭＳ Ｐゴシック
 - ＭＳ Ｐ明朝
 
-#+RESULTS(LINUX):
+*** RESULTS(LINUX):
 - Abyssinica SIL
 - Ani
 - AnjaliOldLipi
@@ -2011,9 +2011,9 @@ https://protesilaos.com/emacs/logos
     (completion-category-overrides '((file (styles basic partial-completion)))))
 #+end_src
 * Mozc
-#+begin_src elisp :tangle yes
+#+begin_src elisp :tangle no
   ;; sudo apt install -y emacs-mozc emacs-mozc-bin
-
+  ;; 現在、 cl deprecated で起動エラーが出るため、OFFにしておく
   (let ((mozc-path "/usr/share/emacs/site-lisp/emacs-mozc/mozc.el"))
      (when (file-exists-p mozc-path)
        (load-file mozc-path)
