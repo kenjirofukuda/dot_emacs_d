@@ -585,6 +585,8 @@ https://zenn.dev/ebang/articles/231106_emacs-markdown
    'org-babel-load-languages
    '(
      (shell . t)
+     (ruby . t)
+     (python . t)
      ))
 #+end_src
 ** DONE 起動時に、自動で折りたたむ設定はどうだったっけ

@@ -435,6 +435,8 @@
  'org-babel-load-languages
  '(
    (shell . t)
+   (ruby . t)
+   (python . t)
    ))
 
 (setq browse-url-browser-function 'eww-browse-url)
