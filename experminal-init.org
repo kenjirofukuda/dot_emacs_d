@@ -2032,6 +2032,22 @@ https://protesilaos.com/emacs/logos
 #+end_src
 
 ** Haiku Format
+* マルチプルカーソル
+- [[https://emacsrocks.com/e13.html]]
+- [[https://github.com/magnars/multiple-cursors.el]]
+#+begin_src elisp :tangle yes
+  (use-package multiple-cursors
+    :ensure t)
+
+  (global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
+  (global-set-key (kbd "C->")         'mc/mark-next-like-this)
+  (global-set-key (kbd "C-<")         'mc/mark-previous-like-this)
+  (global-set-key (kbd "C-c C-<")     'mc/mark-all-like-this)
+  (global-set-key (kbd "C-\"")        'mc/skip-to-next-like-this)
+  (global-set-key (kbd "C-:")         'mc/skip-to-previous-like-this)
+#+end_src
+
+#+RESULTS:
 
 * 末尾
 #+BEGIN_SRC elisp :tangle yes
