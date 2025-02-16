@@ -2048,7 +2048,14 @@ https://protesilaos.com/emacs/logos
 #+end_src
 
 #+RESULTS:
-
+* Transclude
+#+begin_src elisp :tangle yes
+  (use-package transclude-code
+    :ensure t
+    :after org)
+  (define-key global-map (kbd "C-c <f12>") #'org-transclusion-add)
+  (define-key global-map (kbd "C-c t") #'org-transclusion-mode)
+#+end_src
 * 末尾
 #+BEGIN_SRC elisp :tangle yes
   (recentf-open-files)

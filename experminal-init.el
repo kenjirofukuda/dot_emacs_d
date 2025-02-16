@@ -710,5 +710,10 @@ middle"
 (global-set-key (kbd "C-\"")        'mc/skip-to-next-like-this)
 (global-set-key (kbd "C-:")         'mc/skip-to-previous-like-this)
 
+(use-package transclude-code
+  :ensure t
+  :after org)
+(define-key global-map (kbd "C-c <f12>") #'org-transclusion-add)
+(define-key global-map (kbd "C-c t") #'org-transclusion-mode)
+
 (recentf-open-files)
-(put 'downcase-region 'disabled nil)
