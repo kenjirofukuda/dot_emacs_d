@@ -716,4 +716,7 @@ middle"
 (define-key global-map (kbd "C-c <f12>") #'org-transclusion-add)
 (define-key global-map (kbd "C-c t") #'org-transclusion-mode)
 
+(require yasnippet)
+(require yasnippet-snippets)
+
 (recentf-open-files)

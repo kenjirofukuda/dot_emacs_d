@@ -2056,6 +2056,12 @@ https://protesilaos.com/emacs/logos
   (define-key global-map (kbd "C-c <f12>") #'org-transclusion-add)
   (define-key global-map (kbd "C-c t") #'org-transclusion-mode)
 #+end_src
+* 定型文の挿入
+#+begin_src elisp :tangle yes
+  (require yasnippet)
+  (require yasnippet-snippets)
+#+end_src
+
 * 末尾
 #+BEGIN_SRC elisp :tangle yes
   (recentf-open-files)
