@@ -59,6 +59,7 @@ C-c C-v C-t
   (setq read-process-output-max (* 80 1024 1024)) ;; 8mb
     ;; カスタムコマンドのロード
   (require 'kf-command)
+  (require 'mpascal)
 #+END_SRC
 * 基本設定
 #+begin_src elisp :tangle yes

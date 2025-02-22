@@ -12,6 +12,7 @@
 (setq read-process-output-max (* 80 1024 1024)) ;; 8mb
   ;; カスタムコマンドのロード
 (require 'kf-command)
+(require 'mpascal)
 
 (setq inhibit-startup-message t)
 
