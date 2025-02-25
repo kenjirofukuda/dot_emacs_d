@@ -14,6 +14,9 @@
 (require 'kf-command)
 (require 'mpascal)
 
+(add-to-list 'auto-mode-alist
+	     '("\\.\\(p\\|pas\\|dpr\\|dpk\\)\\'" . mpascal-mode))
+
 (setq inhibit-startup-message t)
 
 (scroll-bar-mode -1)        ; Disable visible scrollbar
@@ -711,13 +714,13 @@ middle"
 (global-set-key (kbd "C-\"")        'mc/skip-to-next-like-this)
 (global-set-key (kbd "C-:")         'mc/skip-to-previous-like-this)
 
-(use-package transclude-code
+(use-package org-transclusion
   :ensure t
   :after org)
 (define-key global-map (kbd "C-c <f12>") #'org-transclusion-add)
 (define-key global-map (kbd "C-c t") #'org-transclusion-mode)
 
-(require yasnippet)
-(require yasnippet-snippets)
+(use-package yasnippet)
+(use-package yasnippet-snippets)
 
 (recentf-open-files)

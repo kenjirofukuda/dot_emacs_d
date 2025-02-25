@@ -60,6 +60,9 @@ C-c C-v C-t
     ;; カスタムコマンドのロード
   (require 'kf-command)
   (require 'mpascal)
+
+  (add-to-list 'auto-mode-alist
+	       '("\\.\\(p\\|pas\\|dpr\\|dpk\\)\\'" . mpascal-mode))
 #+END_SRC
 * 基本設定
 #+begin_src elisp :tangle yes
@@ -2051,7 +2054,7 @@ https://protesilaos.com/emacs/logos
 #+RESULTS:
 * Transclude
 #+begin_src elisp :tangle yes
-  (use-package transclude-code
+  (use-package org-transclusion
     :ensure t
     :after org)
   (define-key global-map (kbd "C-c <f12>") #'org-transclusion-add)
@@ -2059,8 +2062,8 @@ https://protesilaos.com/emacs/logos
 #+end_src
 * 定型文の挿入
 #+begin_src elisp :tangle yes
-  (require yasnippet)
-  (require yasnippet-snippets)
+  (use-package yasnippet)
+  (use-package yasnippet-snippets)
 #+end_src
 
 * 末尾
