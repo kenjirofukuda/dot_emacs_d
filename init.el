@@ -1,1 +1,1 @@
-experminal-init.el
+experimental-init.el
