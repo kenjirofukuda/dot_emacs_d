@@ -45,8 +45,6 @@ C-c C-v C-t
 
 * スタートアップメッセージ
 #+BEGIN_SRC elisp :tangle yes
-  ;;;
-
   ;;; Code:
 
   (with-current-buffer "*scratch*"
@@ -57,12 +55,12 @@ C-c C-v C-t
 
   (setq gc-cons-threshold 100000000)
   (setq read-process-output-max (* 80 1024 1024)) ;; 8mb
-    ;; カスタムコマンドのロード
+  ;; カスタムコマンドのロード
   (require 'kf-command)
   (require 'mpascal)
 
   (add-to-list 'auto-mode-alist
-	       '("\\.\\(p\\|pas\\|dpr\\|dpk\\)\\'" . mpascal-mode))
+               '("\\.\\(p\\|pas\\|dpr\\|dpk\\)\\'" . mpascal-mode))
 #+END_SRC
 * 基本設定
 #+begin_src elisp :tangle yes

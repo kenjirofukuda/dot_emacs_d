@@ -1,5 +1,3 @@
-;;;
-
 ;;; Code:
 
 (with-current-buffer "*scratch*"
@@ -10,12 +8,12 @@
 
 (setq gc-cons-threshold 100000000)
 (setq read-process-output-max (* 80 1024 1024)) ;; 8mb
-  ;; カスタムコマンドのロード
+;; カスタムコマンドのロード
 (require 'kf-command)
 (require 'mpascal)
 
 (add-to-list 'auto-mode-alist
-	       '("\\.\\(p\\|pas\\|dpr\\|dpk\\)\\'" . mpascal-mode))
+             '("\\.\\(p\\|pas\\|dpr\\|dpk\\)\\'" . mpascal-mode))
 
 (setq inhibit-startup-message t)
 
@@ -38,9 +36,9 @@
   (require 'package)
   (customize-set-variable
    'package-archives '(("org" . "https://orgmode.org/elpa/")
-			 ("melpa" . "https://melpa.org/packages/")
-			 ("melpa-stable" . "https://mstable.elpa.org/packages/")
-			 ("gnu" . "https://elpa.gnu.org/packages/")))
+		       ("melpa" . "https://melpa.org/packages/")
+		       ("melpa-stable" . "https://mstable.elpa.org/packages/")
+		       ("gnu" . "https://elpa.gnu.org/packages/")))
   (package-initialize)
   (unless package-archive-contents
     (package-refresh-contents))
