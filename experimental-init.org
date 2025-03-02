@@ -144,7 +144,7 @@ Cライブラリをコンパイルして利用するため、コンパイル環�
 #+begin_src elisp :tangle yes
   ;; より本物に近いターミナルエミュレータ
   (use-package vterm
-    :if (not (eq system-type 'windows-nt))
+    :unless (eq system-type 'windows-nt)
     :ensure t)
 #+end_src
 * 基本関数
@@ -550,10 +550,11 @@ https://zenn.dev/ebang/articles/231106_emacs-markdown
     (add-hook 'markdown-mode-hook #'turn-off-auto-fill)
     (add-hook 'markdown-mode-hook #'turn-on-visual-line-mode))
 
-  (use-package word-wrap-mode
-    :hook (visual-line-mode . word-wrap-whitespace-mode)
-    :config
-    (add-to-list 'word-wrap-whitespace-characters ?\]))
+  (unless (version< emacs-version "29.1")
+    (use-package word-wrap-mode
+      :hook (visual-line-mode . word-wrap-whitespace-mode)
+      :config
+      (add-to-list 'word-wrap-whitespace-characters ?\])))
 
   ;; (use-package visual-fill-column
   ;;   :hook (visual-line-mode . visual-fill-column-mode)
@@ -1710,11 +1711,12 @@ lspサーバーとの比較のため導入してみる
 * Tree sitter
 #+begin_src elisp :tangle yes
   ;; 構文解析エンジン Tree sitter
-  (use-package treesit-auto
-    :ensure t
-    :config
-    (setq treesit-auto-install t)
-    (global-treesit-auto-mode))
+  (unless (version< emacs-version "29.0")
+    (use-package treesit-auto
+      :ensure t
+      :config
+      (setq treesit-auto-install t)
+      (global-treesit-auto-mode)))
 #+end_src
 * フレームの回転
 #+begin_src elisp :tangle yes

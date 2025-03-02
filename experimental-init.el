@@ -69,7 +69,7 @@
 
 ;; より本物に近いターミナルエミュレータ
 (use-package vterm
-  :if (not (eq system-type 'windows-nt))
+  :unless (eq system-type 'windows-nt)
   :ensure t)
 
 ;; 基本関数
@@ -410,10 +410,11 @@
   (add-hook 'markdown-mode-hook #'turn-off-auto-fill)
   (add-hook 'markdown-mode-hook #'turn-on-visual-line-mode))
 
-(use-package word-wrap-mode
-  :hook (visual-line-mode . word-wrap-whitespace-mode)
-  :config
-  (add-to-list 'word-wrap-whitespace-characters ?\]))
+(unless (version< emacs-version "29.1")
+  (use-package word-wrap-mode
+    :hook (visual-line-mode . word-wrap-whitespace-mode)
+    :config
+    (add-to-list 'word-wrap-whitespace-characters ?\])))
 
 ;; (use-package visual-fill-column
 ;;   :hook (visual-line-mode . visual-fill-column-mode)
@@ -469,11 +470,12 @@
   (add-to-list 'eglot-server-programs '((c-mode c++-mode objc-mode) "clangd")))
 
 ;; 構文解析エンジン Tree sitter
-(use-package treesit-auto
-  :ensure t
-  :config
-  (setq treesit-auto-install t)
-  (global-treesit-auto-mode))
+(unless (version< emacs-version "29.0")
+  (use-package treesit-auto
+    :ensure t
+    :config
+    (setq treesit-auto-install t)
+    (global-treesit-auto-mode)))
 
 ;; フレームの回転
 (use-package transpose-frame
