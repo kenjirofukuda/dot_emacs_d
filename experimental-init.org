@@ -2065,6 +2065,13 @@ https://protesilaos.com/emacs/logos
   (use-package yasnippet)
   (use-package yasnippet-snippets)
 #+end_src
+* Common Lisp環境
+#+begin_src elisp :tangle yes
+  ;; https://github.com/roswell/roswell
+  (let ((ros-init-path (expand-file-name "~/.roswell/helper.el")))
+     (when (file-exists-p ros-init-path)
+       (load-file ros-init-path)))
+#+end_src
 
 * 末尾
 #+BEGIN_SRC elisp :tangle yes

@@ -723,4 +723,9 @@ middle"
 (use-package yasnippet)
 (use-package yasnippet-snippets)
 
+;; https://github.com/roswell/roswell
+(let ((ros-init-path (expand-file-name "~/.roswell/helper.el")))
+   (when (file-exists-p ros-init-path)
+     (load-file ros-init-path)))
+
 (recentf-open-files)
