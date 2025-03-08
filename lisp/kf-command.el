@@ -45,6 +45,12 @@
              (find-file-other-window filename))))))
 (global-set-key (kbd "\C-c <f3>") 'kf:open-file-thing)
 
+(defun kf:ensure-load-file (file)
+  "ファイルが存在すればロードする"
+  (let ((full-path (expand-file-name file)))
+    (when (file-exists-p full-path)
+      (load-file full-path))))
+
 ;; ウィンドウのバッファを固定する
 ;; Similar to: http://stackoverflow.com/questions/43765/pin-emacs-buffers-to-windows-for-cscope/65992#65992
 

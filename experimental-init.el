@@ -1,7 +1,10 @@
 ;;; Code:
 
 (with-current-buffer "*scratch*"
-  (insert ";;; loading Experminal init.el\n\n"))
+  (insert ";;; loading Experimental init.el\n")
+  (insert ";;; Emacs " emacs-version "\n")
+  (insert "\n")
+  (insert "\n"))
 
 (when (file-directory-p "~/.emacs.d/lisp")
   (push (expand-file-name "~/.emacs.d/lisp") load-path))
@@ -700,9 +703,8 @@ middle"
   (completion-styles '(orderless basic))
   (completion-category-overrides '((file (styles basic partial-completion)))))
 
-(let ((jam-mode-path (expand-file-name "~/.emacs.d/lisp/jam-mode.el")))
-  (when (file-exists-p jam-mode-path)
-    (load-file jam-mode-path)))
+;; Haiku build system
+(kf:ensure-load-file "~/.emacs.d/lisp/jam-mode.el")
 
 (use-package multiple-cursors
   :ensure t)
@@ -724,8 +726,6 @@ middle"
 (use-package yasnippet-snippets)
 
 ;; https://github.com/roswell/roswell
-(let ((ros-init-path (expand-file-name "~/.roswell/helper.el")))
-   (when (file-exists-p ros-init-path)
-     (load-file ros-init-path)))
+(kf:ensure-load-file "~/.roswell/helper.el")
 
 (recentf-open-files)

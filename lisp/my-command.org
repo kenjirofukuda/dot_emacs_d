@@ -116,11 +116,16 @@ C-h C-v にて変数を確認してみましょう。
 	(message "File: %s" (buffer-file-name)))))
 #+end_src
 
+#+RESULTS:
+
 * point とは
 
 #+begin_src elisp
   (point)
 #+end_src
+
+#+RESULTS:
+: 2531
 
 同じバッファーでもウィンドウが異なれば point の返す値は異なる場合があ
 ります。
@@ -159,7 +164,7 @@ C-h C-v にて変数を確認してみましょう。
 
 カーソル上の文字
 #+begin_src elisp
-  (char-after)                            
+  (char-after)
   (char-after (point))
   (char-after (point-min))
 #+end_src
@@ -183,7 +188,7 @@ C-h C-v にて変数を確認してみましょう。
 現在のカーソル位置でテキストを取得する
 
 #+begin_src elisp
-  (thing-at-point 'word)                  
+  (thing-at-point 'word)
   (thing-at-point 'sentence)
   (thing-at-point 'sentence t)
   (thing-at-point 'sexp)
@@ -330,7 +335,7 @@ C-h C-v にて変数を確認してみましょう。
 * ディレクトリの作成
 
 #+begin_src elisp
-  ;; mkdir -p 
+  ;; mkdir -p
   (make-directory "~/Documents/github/kenjirofukuda/sandbox/Tools" t)
 #+end_src
 
@@ -338,7 +343,7 @@ C-h C-v にて変数を確認してみましょう。
 
 - =directory-files= ls
 - =directory-files-recursively= ls -R
-  
+
 #+begin_src elisp
   ;; (directory-files DIRECTORY &optional FULL MATCH NOSORT COUNT)
   ;; ベース名のみの取得

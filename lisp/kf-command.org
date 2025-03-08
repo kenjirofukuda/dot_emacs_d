@@ -90,7 +90,18 @@ C-c <f3>
               (t
                (find-file-other-window filename))))))
   (global-set-key (kbd "\C-c <f3>") 'kf:open-file-thing)
+
 #+END_SRC
+
+
+#+begin_src elisp :tangle yes
+  (defun kf:ensure-load-file (file)
+    "ファイルが存在すればロードする"
+    (let ((full-path (expand-file-name file)))
+      (when (file-exists-p full-path)
+        (load-file full-path))))
+
+#+end_src
 
 ** 以下のパス名で確認
 以下の文字列上にカーソルを移動し、=C-c <f3>= を実行し、開けるか確認すること
@@ -158,13 +169,8 @@ C-c <f3>
 #+RESULTS:
 - ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsFeelCore/GdsArchiver.h
 - ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsFeelCore/GdsArchiver.m
-- ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsFeelCore/GdsBase.h
-- ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsFeelCore/GdsElement+XML.h
-- ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsFeelCore/GdsElement+XML.m
 - ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsFeelCore/GdsElement.h
 - ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsFeelCore/GdsElement.m
-- ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsFeelCore/GdsInform.h
-- ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsFeelCore/GdsInform.m
 - ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsFeelCore/GdsLayer.h
 - ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsFeelCore/GdsLayer.m
 - ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsFeelCore/GdsLibrary.h
@@ -173,10 +179,6 @@ C-c <f3>
 - ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsFeelCore/GdsStructure.m
 - ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsFeelCore/GdsViewport.h
 - ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsFeelCore/GdsViewport.m
-- ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsFeelCore/GdsZipedLibrary.h
-- ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsFeelCore/GdsZipedLibrary.m
-- ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsFeelCore/GdsZipedStructure.h
-- ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsFeelCore/GdsZipedStructure.m
 - ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsFeelCore/NSArray+Elements.h
 - ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsFeelCore/NSArray+Elements.m
 - ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsFeelCore/NSArray+Points.h
@@ -192,7 +194,6 @@ C-c <f3>
 - ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsStructureView.h
 - ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsStructureView.m
 - ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/main.m
-- ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/
 
 * フッタ
 #+BEGIN_SRC elisp :tangle yes

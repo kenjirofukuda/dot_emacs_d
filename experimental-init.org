@@ -48,7 +48,10 @@ C-c C-v C-t
   ;;; Code:
 
   (with-current-buffer "*scratch*"
-    (insert ";;; loading Experminal init.el\n\n"))
+    (insert ";;; loading Experimental init.el\n")
+    (insert ";;; Emacs " emacs-version "\n")
+    (insert "\n")
+    (insert "\n"))
 
   (when (file-directory-p "~/.emacs.d/lisp")
     (push (expand-file-name "~/.emacs.d/lisp") load-path))
@@ -2018,21 +2021,22 @@ https://protesilaos.com/emacs/logos
 #+begin_src elisp :tangle no
   ;; sudo apt install -y emacs-mozc emacs-mozc-bin
   ;; 現在、 cl deprecated で起動エラーが出るため、OFFにしておく
-  (let ((mozc-path "/usr/share/emacs/site-lisp/emacs-mozc/mozc.el"))
-     (when (file-exists-p mozc-path)
-       (load-file mozc-path)
-       (setq default-input-method "japanese-mozc")))
+  (when (kf:ensure-load-file "/usr/share/emacs/site-lisp/emacs-mozc/mozc.el")
+    (setq default-input-method "japanese-mozc"))
+
       #+end_src
+
+#+RESULTS:
+
 ジャパニーズもずく打てますかね？
 入力の感触は良いが、インライン変換できるのは気持ちが良い。
-#+RESULTS:
-: t
+
 * Haiku Support
 ** Setup Jamfile mode
 #+begin_src elisp :tangle yes
-  (let ((jam-mode-path (expand-file-name "~/.emacs.d/lisp/jam-mode.el")))
-    (when (file-exists-p jam-mode-path)
-      (load-file jam-mode-path)))
+  ;; Haiku build system
+  (kf:ensure-load-file "~/.emacs.d/lisp/jam-mode.el")
+
 #+end_src
 
 ** Haiku Format
@@ -2068,9 +2072,8 @@ https://protesilaos.com/emacs/logos
 * Common Lisp環境
 #+begin_src elisp :tangle yes
   ;; https://github.com/roswell/roswell
-  (let ((ros-init-path (expand-file-name "~/.roswell/helper.el")))
-     (when (file-exists-p ros-init-path)
-       (load-file ros-init-path)))
+  (kf:ensure-load-file "~/.roswell/helper.el")
+
 #+end_src
 
 * 末尾
