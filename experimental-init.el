@@ -728,4 +728,7 @@ middle"
 ;; https://github.com/roswell/roswell
 (kf:ensure-load-file "~/.roswell/helper.el")
 
+;; https://github.com/rversteegen/fb-mode
+(kf:ensure-load-file "~/.emacs.d/lisp/fb-mode.el")
+
 (recentf-open-files)

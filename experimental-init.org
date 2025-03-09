@@ -2075,6 +2075,13 @@ https://protesilaos.com/emacs/logos
   (kf:ensure-load-file "~/.roswell/helper.el")
 
 #+end_src
+* Free Basic
+#+begin_src elisp :tangle yes
+  ;; https://github.com/rversteegen/fb-mode
+  (kf:ensure-load-file "~/.emacs.d/lisp/fb-mode.el")
+
+#+end_src
+
 
 * 末尾
 #+BEGIN_SRC elisp :tangle yes
