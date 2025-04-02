@@ -30,7 +30,7 @@
 (eval-when-compile (require 'cl))  ; Using cl-lib doesn't work properly, and I don't know why
 (require 'cc-mode)   ; For c-mode-syntax-table
 
-(defcustom fb-indent-level 4  ;c-basic-offset
+(defcustom fb-indent-level 2  ;c-basic-offset
   "Number of spaces for each indentation step."
   :type 'integer
   :safe 'integerp)

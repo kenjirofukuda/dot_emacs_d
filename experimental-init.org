@@ -2081,7 +2081,11 @@ https://protesilaos.com/emacs/logos
   (kf:ensure-load-file "~/.emacs.d/lisp/fb-mode.el")
 
 #+end_src
-
+* D lang
+#+begin_src elisp :tangle yes
+  (use-package d-mode
+    :ensure t)
+#+end_src
 
 * 末尾
 #+BEGIN_SRC elisp :tangle yes

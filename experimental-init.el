@@ -731,4 +731,7 @@ middle"
 ;; https://github.com/rversteegen/fb-mode
 (kf:ensure-load-file "~/.emacs.d/lisp/fb-mode.el")
 
+(use-package d-mode
+  :ensure t)
+
 (recentf-open-files)
