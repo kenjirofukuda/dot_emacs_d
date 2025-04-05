@@ -726,7 +726,20 @@ middle"
 (use-package yasnippet-snippets)
 
 ;; https://github.com/roswell/roswell
-(kf:ensure-load-file "~/.roswell/helper.el")
+;; (kf:ensure-load-file "~/.roswell/helper.el")
+(use-package slime
+  :if (file-exists-p (expand-file-name "~/.roswell/helper.el"))
+  :ensure slime-company
+  :init (load (expand-file-name "~/.roswell/helper.el"))
+  :custom (inferior-lisp-program "ros -Q run ")
+  :config (slime-setup '(slime-fancy slime-company)))
+
+(defun my-slime-sync-repl ()
+  "現在のバッファのパッケージに移動してからREPLに移行"
+  (slime-sync-package-and-default-directory)
+  (slime-switch-to-output-buffer))
+
+(global-set-key (kbd "C-c C-f") 'slime-sync-package-and-default-directory)
 
 ;; https://github.com/rversteegen/fb-mode
 (kf:ensure-load-file "~/.emacs.d/lisp/fb-mode.el")
