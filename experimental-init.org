@@ -1862,6 +1862,7 @@ lspサーバーとの比較のため導入してみる
       eww-mode
       term-mode
       vterm-mode
+      slime-repl-mode
       twittering-mode))
 
   (mapc
