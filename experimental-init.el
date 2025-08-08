@@ -604,6 +604,8 @@ middle"
     eww-mode
     term-mode
     vterm-mode
+    slime-repl-mode
+    compilation-mode
     twittering-mode))
 
 (mapc
@@ -746,5 +748,10 @@ middle"
 
 (use-package d-mode
   :ensure t)
+
+(add-hook 'c-mode-hook
+          (lambda ()
+            (set (make-local-variable 'compile-command)
+                 (format "gcc -g %s -o %s" (file-name-nondirectory buffer-file-name) (file-name-sans-extension (file-name-nondirectory buffer-file-name))))))
 
 (recentf-open-files)
