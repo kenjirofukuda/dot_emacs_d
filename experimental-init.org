@@ -1702,14 +1702,17 @@ F => Shift-f
 * Eglot導入
 lspサーバーとの比較のため導入してみる
 #+begin_src elisp :tangle yes
-  (use-package eglot
-    :ensure t
-    :hook
-    (c-mode . eglot-ensure)
-    (c++-mode . eglot-ensure)
-    (objc-mode . eglot-ensure)
-    :config
-    (add-to-list 'eglot-server-programs '((c-mode c++-mode objc-mode) "clangd")))
+    (use-package eglot
+      :ensure t
+      :hook
+      (c-mode . eglot-ensure)
+      (c++-mode . eglot-ensure)
+      (objc-mode . eglot-ensure)
+      (dylan-mode . eglot-ensure)
+      :config
+      (add-to-list 'eglot-server-programs '((c-mode c++-mode objc-mode) "clangd"))
+      (add-to-list 'eglot-server-programs '((dylan-mode) "dylan-lsp-server"))
+      )
 #+end_src
 * Tree sitter
 #+begin_src elisp :tangle yes
@@ -1863,6 +1866,7 @@ lspサーバーとの比較のため導入してみる
       term-mode
       vterm-mode
       slime-repl-mode
+      dime-repl-mode
       compilation-mode
       twittering-mode))
 
@@ -2111,7 +2115,29 @@ https://www.reddit.com/r/emacs/comments/17ucbww/passing_current_file_name_to_com
             (lambda ()
               (set (make-local-variable 'compile-command)
                    (format "gcc -g %s -o %s" (file-name-nondirectory buffer-file-name) (file-name-sans-extension (file-name-nondirectory buffer-file-name))))))
+  (defun dylan:exec-name ()
+    (concat (file-name-directory buffer-file-name)
+            "/_build/bin/"
+            (file-name-nondirectory buffer-file-name)))
+  (add-hook 'dylan-mode-hook
+            (lambda ()
+              (set (make-local-variable 'compile-command)
+                   (format "deft build --all && echo '' && %s"
+                           (dylan:exec-name)))))
 #+end_src
+
+* Open Dylan
+#+begin_src elisp :tangle yes
+  (use-package dylan
+    :ensure t)
+  (use-package dime
+    :ensure t)
+  (dime-setup '(dime-repl dime-note-tree))
+  (setq dime-dylan-implementations
+        '((opendylan ("/home/kenjiro/Documents/opendylan/bin/dswank")
+                     :env ("OPEN_DYLAN_USER_REGISTRIES=/home/kenjiro/Nextcloud/sandbox/dylan-room"))))
+#+end_src
+
 * 末尾
 #+BEGIN_SRC elisp :tangle yes
   (recentf-open-files)

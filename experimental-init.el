@@ -469,8 +469,11 @@
   (c-mode . eglot-ensure)
   (c++-mode . eglot-ensure)
   (objc-mode . eglot-ensure)
+  (dylan-mode . eglot-ensure)
   :config
-  (add-to-list 'eglot-server-programs '((c-mode c++-mode objc-mode) "clangd")))
+  (add-to-list 'eglot-server-programs '((c-mode c++-mode objc-mode) "clangd"))
+  (add-to-list 'eglot-server-programs '((dylan-mode) "dylan-lsp-server"))
+  )
 
 ;; 構文解析エンジン Tree sitter
 (unless (version< emacs-version "29.0")
@@ -605,6 +608,7 @@ middle"
     term-mode
     vterm-mode
     slime-repl-mode
+    dime-repl-mode
     compilation-mode
     twittering-mode))
 
@@ -753,5 +757,23 @@ middle"
           (lambda ()
             (set (make-local-variable 'compile-command)
                  (format "gcc -g %s -o %s" (file-name-nondirectory buffer-file-name) (file-name-sans-extension (file-name-nondirectory buffer-file-name))))))
+(defun dylan:exec-name ()
+  (concat (file-name-directory buffer-file-name)
+          "/_build/bin/"
+          (file-name-nondirectory buffer-file-name)))
+(add-hook 'dylan-mode-hook
+          (lambda ()
+            (set (make-local-variable 'compile-command)
+                 (format "deft build --all && echo '' && %s"
+                         (dylan:exec-name)))))
+
+(use-package dylan
+  :ensure t)
+(use-package dime
+  :ensure t)
+(dime-setup '(dime-repl dime-note-tree))
+(setq dime-dylan-implementations
+      '((opendylan ("/home/kenjiro/Documents/opendylan/bin/dswank")
+                   :env ("OPEN_DYLAN_USER_REGISTRIES=/home/kenjiro/Nextcloud/sandbox/dylan-room"))))
 
 (recentf-open-files)
