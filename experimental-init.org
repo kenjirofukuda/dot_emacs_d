@@ -1555,7 +1555,7 @@ Windows の検索パスは別途検討
     (set-fontset-font nil 'japanese-jisx0208 (font-spec :family "Noto Serif CJK JP"))
     ;; (set-fontset-font nil 'japanese-jisx0208 (font-spec :family "Noto Sans CJK JP"))
     )
-  #+end_src
+#+end_src
 
 ** 確認用テーブル
 |----------------------------------+------------------------|
@@ -1968,7 +1968,7 @@ https://protesilaos.com/emacs/logos
   ;;   )
 #+end_src
 
-* ObjC
+* TODO ObjC
 #+begin_src elisp :tangle yes
   (defun kf:c-mode-init ()
     (c-toggle-auto-newline 1)
@@ -1988,7 +1988,8 @@ https://protesilaos.com/emacs/logos
   ;; .hファイルもobjc-modeで開くけるようにする
   (add-to-list 'magic-mode-alist
                `(,(lambda ()
-                    (and (string= (file-name-extension buffer-file-name) "h")
+                    (and (stringp (buffer-file-name))
+                         (string= (file-name-extension (buffer-file-name)) "h")
                          (re-search-forward "@\\<interface\\>"
                                             magic-mode-regexp-match-limit t)))
                  . objc-mode))
