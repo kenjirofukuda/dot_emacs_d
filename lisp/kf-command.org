@@ -1,6 +1,9 @@
 #+TITLE: カスタムコマンド
 #+PROPERTY: tangle ~/.emacs.d/lisp/kf-command.el
 
+Elispのおさらいは
+- ~/.emacs.d/lisp/elisp-examples.org
+
 * このファイルの使用方法
 #+BEGIN_SRC shell :tangle no
   alias emacs2='emacs -Q -l ~/.emacs.d/experminal-init.el'

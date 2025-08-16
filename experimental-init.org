@@ -10,6 +10,9 @@
 - file:///usr/local/share/GNUstep/Documentation/Developer/Base/ProgrammingManual/gs-base/index.html
 - file:///usr/local/share/GNUstep/Documentation/Developer/Base/Reference/Base.html
 
+Elispのおさらいは
+- ~/.emacs.d/lisp/elisp-examples.org
+
 * このファイルの使用方法
 #+BEGIN_SRC shell :tangle no
   alias emacs2='emacs -Q -l ~/.emacs.d/experminal-init.el'
@@ -131,6 +134,10 @@ C-c C-v C-t
 ;; End:
 * より本物に近いターミナルエミュレータ
 https://github.com/akermu/emacs-libvterm
+
+REPL内にいるときは、すでに出力された文字列にアクセスできない。
+よって vterm-copy-mode [C-c C-t] を実行してカーソルがREPL行以外に移動できるようにしなければならない。
+
 ** 前提条件
 Cライブラリをコンパイルして利用するため、コンパイル環境を準備
 *** Debian 系列
@@ -2033,9 +2040,11 @@ https://protesilaos.com/emacs/logos
       #+end_src
 
 #+RESULTS:
+: japanese-mozc
 
 ジャパニーズもずく打てますかね？
 入力の感触は良いが、インライン変換できるのは気持ちが良い。
+これが比較的新しい30.1以降で可能かどうか
 
 * Haiku Support
 ** Setup Jamfile mode
@@ -2136,6 +2145,15 @@ https://www.reddit.com/r/emacs/comments/17ucbww/passing_current_file_name_to_com
   (setq dime-dylan-implementations
         '((opendylan ("/home/kenjiro/Documents/opendylan/bin/dswank")
                      :env ("OPEN_DYLAN_USER_REGISTRIES=/home/kenjiro/Nextcloud/sandbox/dylan-room"))))
+#+end_src
+
+* ソースコードの縦揃え
+#+begin_src elisp :tangle yes
+  (defadvice align-regexp (around align-regexp-with-spaces activate)
+    (let ((old-indent-tabs-mode indent-tabs-mode))
+      (setq indent-tabs-mode nil)
+      ad-do-it
+      (setq indent-tabs-mode old-indent-tabs-mode)))
 #+end_src
 
 * 末尾

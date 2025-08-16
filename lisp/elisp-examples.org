@@ -125,32 +125,45 @@ C-h C-v にて変数を確認してみましょう。
 #+end_src
 
 #+RESULTS:
-: 2531
+: 2532
 
 同じバッファーでもウィンドウが異なれば point の返す値は異なる場合があ
 ります。
 
 #+begin_src elisp
-  (point-min)
-  (point-max)
+  (point-min) ;; e.g => 1
+  (point-max) ;; e.g => 8967
 #+end_src
 
 * point の移動
+** 絶対移動
 #+begin_src elisp
+  ;;; バッファの先頭に移動
   (goto-char 1)
   (goto-char (point-min))
-  (goto-char (point-max))
   (beginning-of-buffer)
+
+  ;;; バッファの最後に移動
+  (goto-char (point-max))
   (end-of-buffer)
 
+#+end_src
+** 相対移動
+一般的な形式は (forward|backward)-(char|word|line) である。
+#+begin_src elisp
+  ;;;カーソルを1つ進める
   (forward-char)
+  ;;;カーソルを5つ進める
   (forward-char 5)
 
+  ;;; カーソルを1つ戻す
   (backward-char)
+  ;;; カーソルを10戻す
   (backward-char 10)
 
   (forward-word)
   (backward-word)
+
 #+end_src
 
 * point の保護
@@ -161,7 +174,6 @@ C-h C-v にて変数を確認してみましょう。
 #+end_src
 
 * バッファテキストの取得
-
 カーソル上の文字
 #+begin_src elisp
   (char-after)
@@ -184,7 +196,6 @@ C-h C-v にて変数を確認してみましょう。
 #+end_src
 
 * Thing
-
 現在のカーソル位置でテキストを取得する
 
 #+begin_src elisp
@@ -201,6 +212,7 @@ C-h C-v にて変数を確認してみましょう。
 #+end_src
 
 * 検索
+一般形式は search-(forward|backward)(-regexp)?
 
 #+begin_src elisp
   (search-foward "file-find")
@@ -415,8 +427,10 @@ C-h C-v にて変数を確認してみましょう。
 
 ** 名称変更/移動
 #+begin_src elisp
+  ;;; 準備中...
 #+end_src
 
 ** 削除
 #+begin_src elisp
+  ;;; 準備中...
 #+end_src

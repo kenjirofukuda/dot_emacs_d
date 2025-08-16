@@ -776,4 +776,10 @@ middle"
       '((opendylan ("/home/kenjiro/Documents/opendylan/bin/dswank")
                    :env ("OPEN_DYLAN_USER_REGISTRIES=/home/kenjiro/Nextcloud/sandbox/dylan-room"))))
 
+(defadvice align-regexp (around align-regexp-with-spaces activate)
+  (let ((old-indent-tabs-mode indent-tabs-mode))
+    (setq indent-tabs-mode nil)
+    ad-do-it
+    (setq indent-tabs-mode old-indent-tabs-mode)))
+
 (recentf-open-files)
