@@ -710,6 +710,17 @@ middle"
   (completion-styles '(orderless basic))
   (completion-category-overrides '((file (styles basic partial-completion)))))
 
+;; sudo apt install -y emacs-mozc emacs-mozc-bin
+(defun kf:mozc-installed-p ()
+  (and
+   (file-exists-p "/usr/share/emacs/site-lisp/emacs-mozc/mozc.el")
+   (file-exists-p "/usr/lib/mozc/mozc_server")
+   (file-exists-p "/usr/bin/mozc_emacs_helper")))
+
+(when (kf:mozc-installed-p)
+  (when (kf:ensure-load-file "/usr/share/emacs/site-lisp/emacs-mozc/mozc.el")
+    (setq default-input-method "japanese-mozc")))
+
 ;; Haiku build system
 (kf:ensure-load-file "~/.emacs.d/lisp/jam-mode.el")
 

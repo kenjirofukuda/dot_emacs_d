@@ -2032,16 +2032,21 @@ https://protesilaos.com/emacs/logos
     (completion-category-overrides '((file (styles basic partial-completion)))))
 #+end_src
 * Mozc
-#+begin_src elisp :tangle no
+#+begin_src elisp :tangle yes
   ;; sudo apt install -y emacs-mozc emacs-mozc-bin
-  ;; 現在、 cl deprecated で起動エラーが出るため、OFFにしておく
-  (when (kf:ensure-load-file "/usr/share/emacs/site-lisp/emacs-mozc/mozc.el")
-    (setq default-input-method "japanese-mozc"))
+  (defun kf:mozc-installed-p ()
+    (and
+     (file-exists-p "/usr/share/emacs/site-lisp/emacs-mozc/mozc.el")
+     (file-exists-p "/usr/lib/mozc/mozc_server")
+     (file-exists-p "/usr/bin/mozc_emacs_helper")))
+
+  (when (kf:mozc-installed-p)
+    (when (kf:ensure-load-file "/usr/share/emacs/site-lisp/emacs-mozc/mozc.el")
+      (setq default-input-method "japanese-mozc")))
 
       #+end_src
 
 #+RESULTS:
-: japanese-mozc
 
 ジャパニーズもずく打てますかね？
 入力の感触は良いが、インライン変換できるのは気持ちが良い。
