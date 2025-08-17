@@ -435,6 +435,7 @@
 
 (use-package org-journal
   :ensure t
+  :defer t
   :config
   (setq org-journal-dir "~/Nextcloud/Org/journal/"))
 

@@ -589,6 +589,7 @@ https://zenn.dev/ebang/articles/231106_emacs-markdown
 #+begin_src elisp :tangle yes
   (use-package org-journal
     :ensure t
+    :defer t
     :config
     (setq org-journal-dir "~/Nextcloud/Org/journal/"))
 #+end_src
