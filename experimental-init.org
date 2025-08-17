@@ -585,6 +585,14 @@ https://zenn.dev/ebang/articles/231106_emacs-markdown
     :hook ((org-mode . org-modern-mode)))
 #+end_src
 
+** 日記
+#+begin_src elisp :tangle yes
+  (use-package org-journal
+    :ensure t
+    :config
+    (setq org-journal-dir "~/Nextcloud/Org/journal/"))
+#+end_src
+
 ** =<s <tab>= でブロック文のテンプレートを挿入
 #+BEGIN_SRC elisp :tangle yes
   ;; <s <tab> でブロック文のテンプレートを挿入
@@ -607,7 +615,7 @@ https://zenn.dev/ebang/articles/231106_emacs-markdown
 #+begin_src
 #+STARTUP: content
 #+end_src
-#+
+
 ** =open-url-at-point= で開かれるブラウザの設定
 #+begin_src elisp :tangle yes
 (setq browse-url-browser-function 'eww-browse-url)

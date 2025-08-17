@@ -433,6 +433,11 @@
   :ensure t
   :hook ((org-mode . org-modern-mode)))
 
+(use-package org-journal
+  :ensure t
+  :config
+  (setq org-journal-dir "~/Nextcloud/Org/journal/"))
+
 ;; <s <tab> でブロック文のテンプレートを挿入
 (require 'org-tempo)
 
