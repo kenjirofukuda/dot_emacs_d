@@ -602,32 +602,21 @@ middle"
        auto-mode-alist))
 
 ;; https://qiita.com/tadsan/items/df73c711f921708facdc
-(setq-default show-trailing-whitespace t)
-(defun my/disable-trailing-mode-hook ()
+(setq-default show-trailing-whitespace nil)
+(defun my/enable-trailing-mode-hook ()
   "Disable show tail whitespace."
-  (setq show-trailing-whitespace nil))
+  (setq show-trailing-whitespace t))
 
-(defvar my/disable-trailing-modes
-  '(comint-mode
-    eshell-mode
-    eww-mode
-    term-mode
-    vterm-mode
-    slime-repl-mode
-    dime-repl-mode
-    compilation-mode
-    twittering-mode))
+(defvar my/enable-trailing-modes
+  '(org-mode
+    c-mode
+    ))
 
 (mapc
  (lambda (mode)
    (add-hook (intern (concat (symbol-name mode) "-hook"))
-             'my/disable-trailing-mode-hook))
- my/disable-trailing-modes)
-
-(use-package doom-modeline
-  :if (and (display-graphic-p) (not (eq system-type 'haiku)))
-  :init
-  (doom-modeline-mode +1))
+             'my/enable-trailing-mode-hook))
+ my/enable-trailing-modes)
 
 ;; TODO この対策は一時的なものであるため、通常のoptionsに戻すのを忘れないこと
 (when (and (display-graphic-p) (kf:font-family-installed-p "iosevka"))
@@ -641,6 +630,11 @@ middle"
          '(default ((t (:family "Iosevka" :foundry "UKWN" :slant normal :weight regular :height font-height :width normal))))
          ))))
 
+(use-package doom-modeline
+  :if (and (display-graphic-p) (not (eq system-type 'haiku)))
+  :init
+  (doom-modeline-mode +1))
+
 ;; デスクトップ環境の保存
 ;; https://www.gnu.org/software/emacs//manual/html_node/emacs/Saving-Emacs-Sessions.html
 (desktop-save-mode (if (display-graphic-p) +1 -1))
@@ -650,7 +644,7 @@ middle"
 (use-package ef-themes
   :ensure t
   :config
-  (ef-themes-select 'ef-cyprus))
+  (ef-themes-select 'ef-dark))
 
 ;; https://agel.readthedocs.io/en/latest/index.html
 (use-package ag

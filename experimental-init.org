@@ -1868,7 +1868,8 @@ lspサーバーとの比較のため導入してみる
          auto-mode-alist))
 #+end_src
 * 末尾のゴミを可視化
-#+begin_src elisp :tangle yes
+** デフォルトを有効にして除外を指定
+#+begin_src elisp :tangle no
   ;; https://qiita.com/tadsan/items/df73c711f921708facdc
   (setq-default show-trailing-whitespace t)
   (defun my/disable-trailing-mode-hook ()
@@ -1884,6 +1885,7 @@ lspサーバーとの比較のため導入してみる
       slime-repl-mode
       dime-repl-mode
       compilation-mode
+      org-journal-mode
       twittering-mode))
 
   (mapc
@@ -1892,13 +1894,26 @@ lspサーバーとの比較のため導入してみる
                'my/disable-trailing-mode-hook))
    my/disable-trailing-modes)
 #+end_src
-* モードラインをシンプル化
+** デフォルトを無効にして対象を指定
 #+begin_src elisp :tangle yes
-  (use-package doom-modeline
-    :if (and (display-graphic-p) (not (eq system-type 'haiku)))
-    :init
-    (doom-modeline-mode +1))
+  ;; https://qiita.com/tadsan/items/df73c711f921708facdc
+  (setq-default show-trailing-whitespace nil)
+  (defun my/enable-trailing-mode-hook ()
+    "Disable show tail whitespace."
+    (setq show-trailing-whitespace t))
+
+  (defvar my/enable-trailing-modes
+    '(org-mode
+      c-mode
+      ))
+
+  (mapc
+   (lambda (mode)
+     (add-hook (intern (concat (symbol-name mode) "-hook"))
+               'my/enable-trailing-mode-hook))
+   my/enable-trailing-modes)
 #+end_src
+
 * Iosevkaを標準フォントに
 #+begin_src elisp :tangle yes
   ;; TODO この対策は一時的なものであるため、通常のoptionsに戻すのを忘れないこと
@@ -1914,6 +1929,13 @@ lspサーバーとの比較のため導入してみる
            ))))
 #+end_src
 
+* モードラインをシンプル化
+#+begin_src elisp :tangle yes
+  (use-package doom-modeline
+    :if (and (display-graphic-p) (not (eq system-type 'haiku)))
+    :init
+    (doom-modeline-mode +1))
+#+end_src
 * デスクトップのサイズを記憶
 #+begin_src elisp :tangle yes
   ;; デスクトップ環境の保存
@@ -1934,7 +1956,7 @@ lspサーバーとの比較のため導入してみる
   (use-package ef-themes
     :ensure t
     :config
-    (ef-themes-select 'ef-cyprus))
+    (ef-themes-select 'ef-dark))
 #+end_src
 
 * グローバル高速検索
@@ -2053,7 +2075,7 @@ https://protesilaos.com/emacs/logos
     (when (kf:ensure-load-file "/usr/share/emacs/site-lisp/emacs-mozc/mozc.el")
       (setq default-input-method "japanese-mozc")))
 
-      #+end_src
+#+end_src
 
 #+RESULTS:
 
