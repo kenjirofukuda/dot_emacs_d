@@ -434,3 +434,132 @@ C-h C-v にて変数を確認してみましょう。
 #+begin_src elisp
   ;;; 準備中...
 #+end_src
+
+* バッファリスト
+
+#+begin_src elisp :results list
+  (buffer-list)
+#+end_src
+
+#+RESULTS:
+- #<buffer elisp-examples.org>
+- #<buffer  *Minibuf-1*>
+- #<buffer experimental-init.org>
+- #<buffer *Bookmark List*>
+- #<buffer *scratch*>
+- #<buffer *vterm*>
+- #<buffer *slime-repl sbcl*>
+- #<buffer *eww*>
+- #<buffer *Shortdoc list*>
+- #<buffer *Shortdoc buffer*>
+- #<buffer agena</usr>>
+- #<buffer schemes>
+- #<buffer README.srglue>
+- #<buffer gdi.agn>
+- #<buffer Agena.org>
+- #<buffer *Packages*>
+- #<buffer example-plot.agn>
+- #<buffer agena<prove>>
+- #<buffer 20250822>
+- #<buffer GdsFeel.org>
+- #<buffer GdsFeelPharo.org>
+- #<buffer OrgMode.org>
+- #<buffer  *Minibuf-0*>
+- #<buffer *Messages*>
+- #<buffer  *Echo Area 0*>
+- #<buffer  *Echo Area 1*>
+- #<buffer  *code-conversion-work*>
+- #<buffer DevNote.org>
+- #<buffer Cuis.org>
+- #<buffer  *org-src-fontification:smalltalk-mode*>
+- #<buffer magit-process: gds>
+- #<buffer  *diff-hl* >
+- #<buffer  *server*>
+- #<buffer magit-diff: gds>
+- #<buffer magit: gds>
+- #<buffer  *org-src-fontification:emacs-lisp-mode*>
+- #<buffer  *org-src-fontification:ruby-mode*>
+- #<buffer  *org-src-fontification:python-mode*>
+- #<buffer *Org Help*>
+- #<buffer *Calendar*>
+- #<buffer *Google Translate*>
+- #<buffer  *code-converting-work*>
+- #<buffer  *org-src-fontification:ag-mode*>
+- #<buffer  *http mstable.elpa.org:443*>
+- #<buffer  *http orgmode.org:443*>
+- #<buffer  *http melpa.org:443*>
+- #<buffer  *corfu*>
+- #<buffer  *eldoc for get-buffer-process*>
+- #<buffer  *DOC*>
+- #<buffer *Async-native-compile-log*>
+- #<buffer Kenjiro2.org>
+- #<buffer Kenjiro3.org>
+- #<buffer  *which-key*>
+- #<buffer *Backtrace*>
+- #<buffer *Shortdoc sequence*>
+- #<buffer  *cl-connection*>
+- #<buffer *slime-events*>
+- #<buffer *inferior-lisp*>
+- #<buffer *Help*>
+- #<buffer  *org-src-fontification:sh-mode*>
+- #<buffer *Buffer List*>
+- #<buffer  *org-src-fontification:javascript-mode*>
+
+
+この中から操作対象を抽出する。
+一般形式は
+#+begin_src
+  (seq-filter PRED LIST)
+#+end_src
+
+** プロセスに結びついたバッファ *vterm*,*slime-repl ...
+  #+begin_src elisp :results list
+  (seq-filter #'get-buffer-process (buffer-list))
+  #+end_src
+
+#+RESULTS:
+- #<buffer *vterm*>
+- #<buffer  *http mstable.elpa.org:443*>
+- #<buffer  *cl-connection*>
+- #<buffer *inferior-lisp*>
+
+** 加工されたバッファ
+  #+begin_src elisp :results list
+  (seq-filter #'buffer-modified-p (buffer-list))
+  #+end_src
+
+#+RESULTS:
+- #<buffer elisp-examples.org>
+- #<buffer  *Minibuf-1*>
+- #<buffer *scratch*>
+- #<buffer *vterm*>
+- #<buffer *slime-repl sbcl*>
+- #<buffer *eww*>
+- #<buffer *Shortdoc list*>
+- #<buffer *Shortdoc buffer*>
+- #<buffer agena<prove>>
+- #<buffer *Messages*>
+- #<buffer  *Echo Area 0*>
+- #<buffer  *Echo Area 1*>
+- #<buffer  *code-conversion-work*>
+- #<buffer  *org-src-fontification:smalltalk-mode*>
+- #<buffer magit-process: gds>
+- #<buffer  *diff-hl* >
+- #<buffer  *org-src-fontification:emacs-lisp-mode*>
+- #<buffer  *org-src-fontification:ruby-mode*>
+- #<buffer  *org-src-fontification:python-mode*>
+- #<buffer  *code-converting-work*>
+- #<buffer  *org-src-fontification:ag-mode*>
+- #<buffer  *http orgmode.org:443*>
+- #<buffer  *http melpa.org:443*>
+- #<buffer  *eldoc for get-buffer-process*>
+- #<buffer  *DOC*>
+- #<buffer *Async-native-compile-log*>
+- #<buffer  *which-key*>
+- #<buffer *Backtrace*>
+- #<buffer *Shortdoc sequence*>
+- #<buffer  *cl-connection*>
+- #<buffer *slime-events*>
+- #<buffer *inferior-lisp*>
+- #<buffer  *org-src-fontification:sh-mode*>
+- #<buffer  *org-src-fontification:javascript-mode*>
