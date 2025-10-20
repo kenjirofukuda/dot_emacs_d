@@ -9,8 +9,8 @@
 (when (file-directory-p "~/.emacs.d/lisp")
   (push (expand-file-name "~/.emacs.d/lisp") load-path))
 
-(setq gc-cons-threshold 100000000)
-(setq read-process-output-max (* 80 1024 1024)) ;; 8mb
+(setq gc-cons-threshold 200000000)
+(setq read-process-output-max (* 10 1024 1024)) ;; 8mb
 ;; カスタムコマンドのロード
 (require 'kf-command)
 (require 'mpascal)
@@ -40,7 +40,7 @@
   (customize-set-variable
    'package-archives '(("org" . "https://orgmode.org/elpa/")
 		       ("melpa" . "https://melpa.org/packages/")
-		       ("melpa-stable" . "https://mstable.elpa.org/packages/")
+		       ;; ("melpa-stable" . "https://mstable.elpa.org/packages/")
 		       ("gnu" . "https://elpa.gnu.org/packages/")))
   (package-initialize)
   (unless package-archive-contents
@@ -62,6 +62,22 @@
   :config
   (auto-package-update-maybe)
   (auto-package-update-at-time "20:00"))
+
+(defvar bootstrap-version)
+(let ((bootstrap-file
+       (expand-file-name
+        "straight/repos/straight.el/bootstrap.el"
+        (or (bound-and-true-p straight-base-dir)
+            user-emacs-directory)))
+      (bootstrap-version 7))
+  (unless (file-exists-p bootstrap-file)
+    (with-current-buffer
+        (url-retrieve-synchronously
+         "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
+         'silent 'inhibit-cookies)
+      (goto-char (point-max))
+      (eval-print-last-sexp)))
+  (load bootstrap-file nil 'nomessage))
 
 ;; Editor Config
 ;; https://editorconfig.org/
@@ -449,6 +465,7 @@
    (shell . t)
    (ruby . t)
    (python . t)
+   (mermaid . t)
    ))
 
 (setq browse-url-browser-function 'eww-browse-url)
@@ -468,6 +485,84 @@
   (set-fontset-font nil 'japanese-jisx0208 (font-spec :family "Noto Serif CJK JP"))
   ;; (set-fontset-font nil 'japanese-jisx0208 (font-spec :family "Noto Sans CJK JP"))
   )
+
+(use-package lsp-mode
+  :diminish "LSP"
+  :ensure t
+  :hook ((lsp-mode . lsp-diagnostics-mode)
+         (lsp-mode . lsp-enable-which-key-integration)
+         ((tsx-ts-mode
+           typescript-ts-mode
+           js-ts-mode) . lsp-deferred))
+  :custom
+  (lsp-keymap-prefix "C-c l")           ; Prefix for LSP actions
+  (lsp-completion-provider :none)       ; Using Corfu as the provider
+  (lsp-diagnostics-provider :flycheck)
+  (lsp-session-file (locate-user-emacs-file ".lsp-session"))
+  (lsp-log-io nil)                      ; IMPORTANT! Use only for debugging! Drastically affects performance
+  (lsp-keep-workspace-alive nil)        ; Close LSP server if all project buffers are closed
+  (lsp-idle-delay 0.5)                  ; Debounce timer for `after-change-function'
+  ;; core
+  (lsp-enable-xref t)                   ; Use xref to find references
+  (lsp-auto-configure t)                ; Used to decide between current active servers
+  (lsp-eldoc-enable-hover t)            ; Display signature information in the echo area
+  (lsp-enable-dap-auto-configure t)     ; Debug support
+  (lsp-enable-file-watchers nil)
+  (lsp-enable-folding nil)              ; I disable folding since I use origami
+  (lsp-enable-imenu t)
+  (lsp-enable-indentation nil)          ; I use prettier
+  (lsp-enable-links nil)                ; No need since we have `browse-url'
+  (lsp-enable-on-type-formatting nil)   ; Prettier handles this
+  (lsp-enable-suggest-server-download t) ; Useful prompt to download LSP providers
+  (lsp-enable-symbol-highlighting t)     ; Shows usages of symbol at point in the current buffer
+  (lsp-enable-text-document-color nil)   ; This is Treesitter's job
+
+  (lsp-ui-sideline-show-hover nil)      ; Sideline used only for diagnostics
+  (lsp-ui-sideline-diagnostic-max-lines 20) ; 20 lines since typescript errors can be quite big
+  ;; completion
+  (lsp-completion-enable t)
+  (lsp-completion-enable-additional-text-edit t) ; Ex: auto-insert an import for a completion candidate
+  (lsp-enable-snippet t)                         ; Important to provide full JSX completion
+  (lsp-completion-show-kind t)                   ; Optional
+  ;; headerline
+  (lsp-headerline-breadcrumb-enable t)  ; Optional, I like the breadcrumbs
+  (lsp-headerline-breadcrumb-enable-diagnostics nil) ; Don't make them red, too noisy
+  (lsp-headerline-breadcrumb-enable-symbol-numbers nil)
+  (lsp-headerline-breadcrumb-icons-enable nil)
+  ;; modeline
+  (lsp-modeline-code-actions-enable nil) ; Modeline should be relatively clean
+  (lsp-modeline-diagnostics-enable nil)  ; Already supported through `flycheck'
+  (lsp-modeline-workspace-status-enable nil) ; Modeline displays "LSP" when lsp-mode is enabled
+  (lsp-signature-doc-lines 1)                ; Don't raise the echo area. It's distracting
+  (lsp-ui-doc-use-childframe t)              ; Show docs for symbol at point
+  (lsp-eldoc-render-all nil)            ; This would be very useful if it would respect `lsp-signature-doc-lines', currently it's distracting
+  ;; lens
+  (lsp-lens-enable nil)                 ; Optional, I don't need it
+  ;; semantic
+  (lsp-semantic-tokens-enable nil)      ; Related to highlighting, and we defer to treesitter
+
+  :init
+  (setq lsp-use-plists t))
+
+;;;; 引用したが、別のブロックとして外に出した。
+;;;; エラー追求にて個別にインストールの可否を選択するため
+;; (use-package lsp-completion
+;;   :no-require
+;;   :hook ((lsp-mode . lsp-completion-mode)))
+
+;; (use-package lsp-ui
+;;   :ensure t
+;;   :commands
+;;   (lsp-ui-doc-show
+;;    lsp-ui-doc-glance)
+;;   :bind (:map lsp-mode-map
+;;               ("C-c C-d" . 'lsp-ui-doc-glance))
+;;   :after (lsp-mode evil)
+;;   :config (setq lsp-ui-doc-enable t
+;;                 evil-lookup-func #'lsp-ui-doc-glance ; Makes K in evil-mode toggle the doc for symbol at point
+;;                 lsp-ui-doc-show-with-cursor nil      ; Don't show doc when cursor is over symbol - too distracting
+;;                 lsp-ui-doc-include-signature t       ; Show signature
+;;                 lsp-ui-doc-position 'at-point))
 
 (use-package eglot
   :ensure t
@@ -740,8 +835,13 @@ middle"
 (define-key global-map (kbd "C-c <f12>") #'org-transclusion-add)
 (define-key global-map (kbd "C-c t") #'org-transclusion-mode)
 
-(use-package yasnippet)
-(use-package yasnippet-snippets)
+(use-package yasnippet
+  :ensure t
+  :config
+  (setq yas-snippet-dirs '("~/Nextcloud/snippets"))
+  (yas-global-mode 1))
+(use-package yasnippet-snippets
+  :ensure t)
 
 ;; https://github.com/roswell/roswell
 ;; (kf:ensure-load-file "~/.roswell/helper.el")
@@ -793,5 +893,43 @@ middle"
     (setq indent-tabs-mode nil)
     ad-do-it
     (setq indent-tabs-mode old-indent-tabs-mode)))
+
+(use-package mermaid-mode
+   :ensure t)
+(use-package ob-mermaid
+   :ensure t)
+(setq ob-mermaid-cli-path "/snap/bin/mmdc")
+
+(use-package pug-mode
+   :ensure t)
+
+(use-package quelpa
+  :init
+  (setq quelpa-self-upgrade-p nil))
+(use-package quelpa-use-package
+  :after (quelpa)
+  :config
+  (quelpa-use-package-activate-advice))
+
+(use-package bookmark+
+  :quelpa (bookmark+ :fetcher github :repo "emacsmirror/bookmark-plus")
+  :after bookmark ; 事前に読み込みたい一般的なブックマークのカスタマイズがあるので、これは必要ないかもしれません
+  ;; [...] your :init and :config
+  )
+
+(use-package lsp-tailwindcss
+  :straight '(lsp-tailwindcss :type git :host github :repo "merrickluo/lsp-tailwindcss")
+  :init (setq lsp-tailwindcss-add-on-mode t)
+  :config
+  (dolist (tw-major-mode
+           '(css-mode
+             css-ts-mode
+             typescript-mode
+             typescript-ts-mode
+             tsx-ts-mode
+             js2-mode
+             js-ts-mode
+             clojure-mode))
+    (add-to-list 'lsp-tailwindcss-major-modes tw-major-mode)))
 
 (recentf-open-files)
