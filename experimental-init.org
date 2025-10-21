@@ -501,6 +501,47 @@ Cライブラリをコンパイルして利用するため、コンパイル環�
     ;; useful beyond Corfu.
     (read-extended-command-predicate #'command-completion-default-include-p))
 #+end_src
+** Corf more
+- @see https://www.ovistoica.com/blog/2024-7-05-modern-emacs-typescript-web-tsx-config#org95be3b8
+以下は導入検討中のものであり、まだ採用しない
+#+begin_src elisp :tangle no
+  ;;;; Code Completion
+  (use-package corfu
+    :ensure t
+    ;; Optional customizations
+    :custom
+    (corfu-cycle t)                 ; Allows cycling through candidates
+    (corfu-auto t)                  ; Enable auto completion
+    (corfu-auto-prefix 2)           ; Minimum length of prefix for completion
+    (corfu-auto-delay 0)            ; No delay for completion
+    (corfu-popupinfo-delay '(0.5 . 0.2))  ; Automatically update info popup after that numver of seconds
+    (corfu-preview-current 'insert) ; insert previewed candidate
+    (corfu-preselect 'prompt)
+    (corfu-on-exact-match nil)      ; Don't auto expand tempel snippets
+    ;; Optionally use TAB for cycling, default is `corfu-complete'.
+    :bind (:map corfu-map
+                ("M-SPC"      . corfu-insert-separator)
+                ("TAB"        . corfu-next)
+                ([tab]        . corfu-next)
+                ("S-TAB"      . corfu-previous)
+                ([backtab]    . corfu-previous)
+                ("S-<return>" . corfu-insert)
+                ("RET"        . corfu-insert))
+
+    :init
+    (global-corfu-mode)
+    (corfu-history-mode)
+    (corfu-popupinfo-mode) ; Popup completion info
+    :config
+    (add-hook 'eshell-mode-hook
+              (lambda () (setq-local corfu-quit-at-boundary t
+                                     corfu-quit-no-match t
+                                     corfu-auto nil)
+                (corfu-mode))
+              nil
+              t))
+#+end_src
+
 * ディレクトリ表示の簡素化
 https://emacs.stackexchange.com/questions/27912/dired-sort-and-hide-by-default
 #+begin_src elisp
@@ -1739,85 +1780,131 @@ F => Shift-f
 一度は設定したものの削除してしまった経緯がある。が復活させた。
 - @see https://www.ovistoica.com/blog/2024-7-05-modern-emacs-typescript-web-tsx-config#org0c47228
 膨大な設定の大半は、無効化させるものらしい。
+** flycheck
+- @see https://www.ovistoica.com/blog/2024-7-05-modern-emacs-typescript-web-tsx-config#org014ff07
+#+begin_src elisp :tangle yes
+  (use-package flycheck
+    :ensure t
+    :init (global-flycheck-mode)
+    :bind (:map flycheck-mode-map
+                ("M-n" . flycheck-next-error) ; optional but recommended error navigation
+                ("M-p" . flycheck-previous-error)))
+#+end_src
 ** 基本編
 #+begin_src elisp :tangle yes
-    (use-package lsp-mode
-      :diminish "LSP"
-      :ensure t
-      :hook ((lsp-mode . lsp-diagnostics-mode)
-             (lsp-mode . lsp-enable-which-key-integration)
-             ((tsx-ts-mode
-               typescript-ts-mode
-               js-ts-mode) . lsp-deferred))
-      :custom
-      (lsp-keymap-prefix "C-c l")           ; Prefix for LSP actions
-      (lsp-completion-provider :none)       ; Using Corfu as the provider
-      (lsp-diagnostics-provider :flycheck)
-      (lsp-session-file (locate-user-emacs-file ".lsp-session"))
-      (lsp-log-io nil)                      ; IMPORTANT! Use only for debugging! Drastically affects performance
-      (lsp-keep-workspace-alive nil)        ; Close LSP server if all project buffers are closed
-      (lsp-idle-delay 0.5)                  ; Debounce timer for `after-change-function'
-      ;; core
-      (lsp-enable-xref t)                   ; Use xref to find references
-      (lsp-auto-configure t)                ; Used to decide between current active servers
-      (lsp-eldoc-enable-hover t)            ; Display signature information in the echo area
-      (lsp-enable-dap-auto-configure t)     ; Debug support
-      (lsp-enable-file-watchers nil)
-      (lsp-enable-folding nil)              ; I disable folding since I use origami
-      (lsp-enable-imenu t)
-      (lsp-enable-indentation nil)          ; I use prettier
-      (lsp-enable-links nil)                ; No need since we have `browse-url'
-      (lsp-enable-on-type-formatting nil)   ; Prettier handles this
-      (lsp-enable-suggest-server-download t) ; Useful prompt to download LSP providers
-      (lsp-enable-symbol-highlighting t)     ; Shows usages of symbol at point in the current buffer
-      (lsp-enable-text-document-color nil)   ; This is Treesitter's job
+  (use-package lsp-mode
+    :diminish "LSP"
+    :ensure t
+    :hook ((lsp-mode . lsp-diagnostics-mode)
+           (lsp-mode . lsp-enable-which-key-integration)
+           ((tsx-ts-mode
+             typescript-ts-mode
+             js-ts-mode) . lsp-deferred))
+    :custom
+    (lsp-keymap-prefix "C-c l")           ; Prefix for LSP actions
+    (lsp-completion-provider :none)       ; Using Corfu as the provider
+    (lsp-diagnostics-provider :flycheck)
+    (lsp-session-file (locate-user-emacs-file ".lsp-session"))
+    (lsp-log-io nil)                      ; IMPORTANT! Use only for debugging! Drastically affects performance
+    (lsp-keep-workspace-alive nil)        ; Close LSP server if all project buffers are closed
+    (lsp-idle-delay 0.5)                  ; Debounce timer for `after-change-function'
+    ;; core
+    (lsp-enable-xref t)                   ; Use xref to find references
+    (lsp-auto-configure t)                ; Used to decide between current active servers
+    (lsp-eldoc-enable-hover t)            ; Display signature information in the echo area
+    (lsp-enable-dap-auto-configure t)     ; Debug support
+    (lsp-enable-file-watchers nil)
+    (lsp-enable-folding nil)              ; I disable folding since I use origami
+    (lsp-enable-imenu t)
+    (lsp-enable-indentation nil)          ; I use prettier
+    (lsp-enable-links nil)                ; No need since we have `browse-url'
+    (lsp-enable-on-type-formatting nil)   ; Prettier handles this
+    (lsp-enable-suggest-server-download t) ; Useful prompt to download LSP providers
+    (lsp-enable-symbol-highlighting t)     ; Shows usages of symbol at point in the current buffer
+    (lsp-enable-text-document-color nil)   ; This is Treesitter's job
 
-      (lsp-ui-sideline-show-hover nil)      ; Sideline used only for diagnostics
-      (lsp-ui-sideline-diagnostic-max-lines 20) ; 20 lines since typescript errors can be quite big
-      ;; completion
-      (lsp-completion-enable t)
-      (lsp-completion-enable-additional-text-edit t) ; Ex: auto-insert an import for a completion candidate
-      (lsp-enable-snippet t)                         ; Important to provide full JSX completion
-      (lsp-completion-show-kind t)                   ; Optional
-      ;; headerline
-      (lsp-headerline-breadcrumb-enable t)  ; Optional, I like the breadcrumbs
-      (lsp-headerline-breadcrumb-enable-diagnostics nil) ; Don't make them red, too noisy
-      (lsp-headerline-breadcrumb-enable-symbol-numbers nil)
-      (lsp-headerline-breadcrumb-icons-enable nil)
-      ;; modeline
-      (lsp-modeline-code-actions-enable nil) ; Modeline should be relatively clean
-      (lsp-modeline-diagnostics-enable nil)  ; Already supported through `flycheck'
-      (lsp-modeline-workspace-status-enable nil) ; Modeline displays "LSP" when lsp-mode is enabled
-      (lsp-signature-doc-lines 1)                ; Don't raise the echo area. It's distracting
-      (lsp-ui-doc-use-childframe t)              ; Show docs for symbol at point
-      (lsp-eldoc-render-all nil)            ; This would be very useful if it would respect `lsp-signature-doc-lines', currently it's distracting
-      ;; lens
-      (lsp-lens-enable nil)                 ; Optional, I don't need it
-      ;; semantic
-      (lsp-semantic-tokens-enable nil)      ; Related to highlighting, and we defer to treesitter
+    (lsp-ui-sideline-show-hover nil)      ; Sideline used only for diagnostics
+    (lsp-ui-sideline-diagnostic-max-lines 20) ; 20 lines since typescript errors can be quite big
+    ;; completion
+    (lsp-completion-enable t)
+    (lsp-completion-enable-additional-text-edit t) ; Ex: auto-insert an import for a completion candidate
+    (lsp-enable-snippet t)                         ; Important to provide full JSX completion
+    (lsp-completion-show-kind t)                   ; Optional
+    ;; headerline
+    (lsp-headerline-breadcrumb-enable t)  ; Optional, I like the breadcrumbs
+    (lsp-headerline-breadcrumb-enable-diagnostics nil) ; Don't make them red, too noisy
+    (lsp-headerline-breadcrumb-enable-symbol-numbers nil)
+    (lsp-headerline-breadcrumb-icons-enable nil)
+    ;; modeline
+    (lsp-modeline-code-actions-enable nil) ; Modeline should be relatively clean
+    (lsp-modeline-diagnostics-enable nil)  ; Already supported through `flycheck'
+    (lsp-modeline-workspace-status-enable nil) ; Modeline displays "LSP" when lsp-mode is enabled
+    (lsp-signature-doc-lines 1)                ; Don't raise the echo area. It's distracting
+    (lsp-ui-doc-use-childframe t)              ; Show docs for symbol at point
+    (lsp-eldoc-render-all nil)            ; This would be very useful if it would respect `lsp-signature-doc-lines', currently it's distracting
+    ;; lens
+    (lsp-lens-enable nil)                 ; Optional, I don't need it
+    ;; semantic
+    (lsp-semantic-tokens-enable nil)      ; Related to highlighting, and we defer to treesitter
 
-      :init
-      (setq lsp-use-plists t))
+    :preface
+    ;; ここから :preface パートに張り込む部分
+    (defun lsp-booster--advice-json-parse (old-fn &rest args)
+      "Try to parse bytecode instead of json."
+      (or
+       (when (equal (following-char) ?#)
 
-    ;;;; 引用したが、別のブロックとして外に出した。
-    ;;;; エラー追求にて個別にインストールの可否を選択するため
-    ;; (use-package lsp-completion
-    ;;   :no-require
-    ;;   :hook ((lsp-mode . lsp-completion-mode)))
+         (let ((bytecode (read (current-buffer))))
+           (when (byte-code-function-p bytecode)
+             (funcall bytecode))))
+       (apply old-fn args)))
+    (defun lsp-booster--advice-final-command (old-fn cmd &optional test?)
+      "Prepend emacs-lsp-booster command to lsp CMD."
+      (let ((orig-result (funcall old-fn cmd test?)))
+        (if (and (not test?)                             ;; for check lsp-server-present?
+                 (not (file-remote-p default-directory)) ;; see lsp-resolve-final-command, it would add extra shell wrapper
+                 lsp-use-plists
+                 (not (functionp 'json-rpc-connection))  ;; native json-rpc
+                 (executable-find "emacs-lsp-booster"))
+            (progn
+              (message "Using emacs-lsp-booster for %s!" orig-result)
+              (cons "emacs-lsp-booster" orig-result))
+          orig-result)))
+    ;; ここまで :preface パートに張り込む部分
 
-    ;; (use-package lsp-ui
-    ;;   :ensure t
-    ;;   :commands
-    ;;   (lsp-ui-doc-show
-    ;;    lsp-ui-doc-glance)
-    ;;   :bind (:map lsp-mode-map
-    ;;               ("C-c C-d" . 'lsp-ui-doc-glance))
-    ;;   :after (lsp-mode evil)
-    ;;   :config (setq lsp-ui-doc-enable t
-    ;;                 evil-lookup-func #'lsp-ui-doc-glance ; Makes K in evil-mode toggle the doc for symbol at point
-    ;;                 lsp-ui-doc-show-with-cursor nil      ; Don't show doc when cursor is over symbol - too distracting
-    ;;                 lsp-ui-doc-include-signature t       ; Show signature
-    ;;                 lsp-ui-doc-position 'at-point))
+    :init
+    ;; ここから :init パートに張り込む部分
+    (setq lsp-use-plists t)
+    ;; Initiate https://github.com/blahgeek/emacs-lsp-booster for performance
+    (advice-add (if (progn (require 'json)
+                           (fboundp 'json-parse-buffer))
+                    'json-parse-buffer
+                  'json-read)
+                :around
+                #'lsp-booster--advice-json-parse)
+    (advice-add 'lsp-resolve-final-command :around #'lsp-booster--advice-final-command)
+    ;; ここまで :init パートに張り込む部分
+    )
+
+        ;;;; 引用したが、別のブロックとして外に出した。
+        ;;;; エラー追求にて個別にインストールの可否を選択するため
+  ;; (use-package lsp-completion
+  ;;   :no-require
+  ;;   :hook ((lsp-mode . lsp-completion-mode)))
+
+  ;; (use-package lsp-ui
+  ;;   :ensure t
+  ;;   :commands
+  ;;   (lsp-ui-doc-show
+  ;;    lsp-ui-doc-glance)
+  ;;   :bind (:map lsp-mode-map
+  ;;               ("C-c C-d" . 'lsp-ui-doc-glance))
+  ;;   :after (lsp-mode evil)
+  ;;   :config (setq lsp-ui-doc-enable t
+  ;;                 evil-lookup-func #'lsp-ui-doc-glance ; Makes K in evil-mode toggle the doc for symbol at point
+  ;;                 lsp-ui-doc-show-with-cursor nil      ; Don't show doc when cursor is over symbol - too distracting
+  ;;                 lsp-ui-doc-include-signature t       ; Show signature
+  ;;                 lsp-ui-doc-position 'at-point))
 #+end_src
 
 ** lsp-completion
@@ -1917,6 +2004,17 @@ lspサーバーとの比較のため導入してみる
       )
 #+end_src
 * Tree sitter
+#+begin_src elisp :tangle yes
+  (use-package tree-sitter
+    :if (version< emacs-version "29.0")
+    :ensure t)
+#+end_src
+
+#+begin_src elisp :tangle yes
+  (use-package tree-sitter-langs
+    :ensure t)
+#+end_src
+
 #+begin_src elisp :tangle yes
   ;; 構文解析エンジン Tree sitter
   (unless (version< emacs-version "29.0")

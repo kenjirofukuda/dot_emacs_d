@@ -486,6 +486,13 @@
   ;; (set-fontset-font nil 'japanese-jisx0208 (font-spec :family "Noto Sans CJK JP"))
   )
 
+(use-package flycheck
+  :ensure t
+  :init (global-flycheck-mode)
+  :bind (:map flycheck-mode-map
+              ("M-n" . flycheck-next-error) ; optional but recommended error navigation
+              ("M-p" . flycheck-previous-error)))
+
 (use-package lsp-mode
   :diminish "LSP"
   :ensure t
@@ -541,11 +548,47 @@
   ;; semantic
   (lsp-semantic-tokens-enable nil)      ; Related to highlighting, and we defer to treesitter
 
-  :init
-  (setq lsp-use-plists t))
+  :preface
+  ;; ここから :preface パートに張り込む部分
+  (defun lsp-booster--advice-json-parse (old-fn &rest args)
+    "Try to parse bytecode instead of json."
+    (or
+     (when (equal (following-char) ?#)
 
-;;;; 引用したが、別のブロックとして外に出した。
-;;;; エラー追求にて個別にインストールの可否を選択するため
+       (let ((bytecode (read (current-buffer))))
+         (when (byte-code-function-p bytecode)
+           (funcall bytecode))))
+     (apply old-fn args)))
+  (defun lsp-booster--advice-final-command (old-fn cmd &optional test?)
+    "Prepend emacs-lsp-booster command to lsp CMD."
+    (let ((orig-result (funcall old-fn cmd test?)))
+      (if (and (not test?)                             ;; for check lsp-server-present?
+               (not (file-remote-p default-directory)) ;; see lsp-resolve-final-command, it would add extra shell wrapper
+               lsp-use-plists
+               (not (functionp 'json-rpc-connection))  ;; native json-rpc
+               (executable-find "emacs-lsp-booster"))
+          (progn
+            (message "Using emacs-lsp-booster for %s!" orig-result)
+            (cons "emacs-lsp-booster" orig-result))
+        orig-result)))
+  ;; ここまで :preface パートに張り込む部分
+
+  :init
+  ;; ここから :init パートに張り込む部分
+  (setq lsp-use-plists t)
+  ;; Initiate https://github.com/blahgeek/emacs-lsp-booster for performance
+  (advice-add (if (progn (require 'json)
+                         (fboundp 'json-parse-buffer))
+                  'json-parse-buffer
+                'json-read)
+              :around
+              #'lsp-booster--advice-json-parse)
+  (advice-add 'lsp-resolve-final-command :around #'lsp-booster--advice-final-command)
+  ;; ここまで :init パートに張り込む部分
+  )
+
+      ;;;; 引用したが、別のブロックとして外に出した。
+      ;;;; エラー追求にて個別にインストールの可否を選択するため
 ;; (use-package lsp-completion
 ;;   :no-require
 ;;   :hook ((lsp-mode . lsp-completion-mode)))
@@ -575,6 +618,13 @@
   (add-to-list 'eglot-server-programs '((c-mode c++-mode objc-mode) "clangd"))
   (add-to-list 'eglot-server-programs '((dylan-mode) "dylan-lsp-server"))
   )
+
+(use-package tree-sitter
+  :if (version< emacs-version "29.0")
+  :ensure t)
+
+(use-package tree-sitter-langs
+  :ensure t)
 
 ;; 構文解析エンジン Tree sitter
 (unless (version< emacs-version "29.0")
