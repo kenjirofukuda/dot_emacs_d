@@ -76,12 +76,15 @@ viper
 **/#.*#
 
 experimental-init.*
-!experminal-init.org
-!experminal-init.el
-/lisp/kf-command.html
+!experimental-init.org
+!experimental-init.el
+/lisp/*.html
 /bookmarks
 /kkcrc
 /projects
 /quelpa/
 /straight/
 /.cache/
+/.lsp-session
+/.mc-lists.el
+/lsp-cache/

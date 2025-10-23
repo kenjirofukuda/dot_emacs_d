@@ -1003,16 +1003,26 @@ middle"
 
 (add-hook 'org-mode-hook (lambda () (setq-local tab-width 8)))
 
-(use-package dap-mode :ensure t)
+(setq package-selected-packages '(lsp-mode yasnippet lsp-treemacs flycheck company which-key dap-mode php-mode))
 
-(use-package php-mode
-  :ensure t
-  :init
+(when (cl-find-if-not #'package-installed-p package-selected-packages)
+  (package-refresh-contents)
+  (mapc #'package-install package-selected-packages))
+
+(which-key-mode)
+(add-hook 'php-mode-hook 'lsp)
+
+(setq gc-cons-threshold (* 100 1024 1024)
+      read-process-output-max (* 10 1024 1024)
+      treemacs-space-between-root-nodes nil
+      company-idle-delay 0.0
+      company-minimum-prefix-length 1
+      lsp-idle-delay 0.5)  ;; clangd is fast
+
+(with-eval-after-load 'lsp-mode
+  (add-hook 'lsp-mode-hook #'lsp-enable-which-key-integration)
   (require 'dap-php)
-  (yas-global-mode)
-  :hook
-  (php-mode . 'lsp))
-(use-package phpactor :ensure t)
+  (yas-global-mode))
 
 (recentf-open-files)
 (provide 'init)
