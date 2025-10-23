@@ -1,5 +1,5 @@
 #+TITLE: Experimental init.el
-#+PROPERTY: tangle "~/.emacs.d/experminal-init.el"
+#+PROPERTY: header-args :tangle "~/.emacs.d/experminal-init.el"
 #+STARTUP: content
 
 * 参考
@@ -20,9 +20,9 @@ Elispのおさらいは
 #+END_SRC
 
 * ファイルの生成方法
-#+BEGIN_SRC :tangle no
+#+BEGIN_EXAMPLE
 C-c C-v C-t
-#+END_SRC
+#+END_EXAMPLE
 
 * Script Runner
 
@@ -48,6 +48,12 @@ C-c C-v C-t
 
 * スタートアップメッセージ
 #+BEGIN_SRC elisp :tangle yes
+  ;;; init.el --- Initialization. -*- lexical-binding: t; -*-
+  ;;; Commentary:
+  ;;
+  ;; Emacs 27+ introduces init.el, which is run before init.el,
+  ;; before package and UI initialization happens.
+  ;;
   ;;; Code:
 
   (with-current-buffer "*scratch*"
@@ -137,6 +143,23 @@ C-c C-v C-t
         (eval-print-last-sexp)))
     (load bootstrap-file nil 'nomessage))
 #+end_src
+
+#+begin_src elisp :tangle "./early-init.el"
+  ;;; early-init.el --- Early Initialization. -*- lexical-binding: t; -*-
+  ;;; Commentary:
+  ;;
+  ;; Emacs 27+ introduces early-init.el, which is run before init.el,
+  ;; before package and UI initialization happens.
+  ;;
+  ;;; Code:
+  (setq package-enable-at-startup nil)
+  ;;; @see https://emacs-lsp.github.io/lsp-mode/page/performance/#use-plists-for-deserialization
+  (setenv "LSP_USE_PLISTS" "true")
+  (provide 'early-init)
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;; early-init.el ends here
+#+end_src
+
 * EditorConfig
 #+begin_src elisp :tangle yes
   ;; Editor Config
@@ -639,11 +662,15 @@ https://zenn.dev/ebang/articles/231106_emacs-markdown
 
 * Org
 ** 近代化
+ただし、-nw 時は行わない。
 #+begin_src elisp :tangle yes
   (use-package org-modern
+    :if (display-graphic-p)
     :ensure t
     :hook ((org-mode . org-modern-mode)))
+  (global-set-key "\C-cl" 'org-toggle-link-display)
 #+end_src
+
 
 ** 日記
 #+begin_src elisp :tangle yes
@@ -669,14 +696,14 @@ https://zenn.dev/ebang/articles/231106_emacs-markdown
      (shell . t)
      (ruby . t)
      (python . t)
-     (mermaid . t)
+;;     (mermaid . t)
      ))
 #+end_src
 ** DONE 起動時に、自動で折りたたむ設定はどうだったっけ
 参考: https://takaxp.github.io/org-ja.html
-#+begin_src
+#+begin_example
 #+STARTUP: content
-#+end_src
+#+end_example
 
 ** =open-url-at-point= で開かれるブラウザの設定
 #+begin_src elisp :tangle yes
@@ -1770,11 +1797,11 @@ https://github.com/be5invis/Iosevka
 #+end_src
 
 * ewwのフォントが汚い件
-#+begin_src
+#+begin_example
 M-x eww-toggle-fonts
 または
 F => Shift-f
-#+end_src
+#+end_example
 
 * LSP導入
 一度は設定したものの削除してしまった経緯がある。が復活させた。
@@ -1915,7 +1942,7 @@ F => Shift-f
 #+end_src
 
 ** lsp-ui
-#+begin_src elisp :tangle no
+#+begin_src elisp :tangle yes
   (use-package lsp-ui
     :ensure t
     :commands
@@ -2384,6 +2411,12 @@ https://protesilaos.com/emacs/logos
 #+RESULTS:
 | kf:objc-mode-init | er/add-cc-mode-expansions | eglot-ensure |
 
+* Smalltalk
+#+begin_src elisp :tangle yes
+  (use-package smalltalk-mode
+    :ensure t)
+#+end_src
+
 * ClangFormat
 #+begin_src elisp :tangle yes
 (use-package clang-format
@@ -2554,7 +2587,7 @@ https://www.reddit.com/r/emacs/comments/17ucbww/passing_current_file_name_to_com
 #+end_src
 
 * mermaid
-#+begin_src elisp :tangle yes
+#+begin_src elisp :tangle no
   (use-package mermaid-mode
      :ensure t)
   (use-package ob-mermaid
@@ -2590,7 +2623,6 @@ https://github.com/hlissner/emacs-pug-mode
     )
 #+end_src
 
-
 * TailwindCSS
 #+begin_src elisp :tangle yes
   (use-package lsp-tailwindcss
@@ -2608,7 +2640,38 @@ https://github.com/hlissner/emacs-pug-mode
                clojure-mode))
       (add-to-list 'lsp-tailwindcss-major-modes tw-major-mode)))
 #+end_src
+
+* タブ幅の補修
+- @ see https://www.google.com/search?q=org-mode+tab+width+must+be+8
+
+#+begin_src elisp :tangle yes
+(add-hook 'org-mode-hook (lambda () (setq-local tab-width 8)))
+#+end_src
+
+* PHP
+#+begin_src elisp :tangle yes
+  (use-package dap-mode :ensure t)
+#+end_src
+
+#+RESULTS:
+
+#+begin_src elisp :tangle yes
+  (use-package php-mode
+    :ensure t
+    :init
+    (require 'dap-php)
+    (yas-global-mode)
+    :hook
+    (php-mode . 'lsp))
+  (use-package phpactor :ensure t)
+#+end_src
+
+#+RESULTS:
+
 * 末尾
 #+BEGIN_SRC elisp :tangle yes
   (recentf-open-files)
+  (provide 'init)
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;; init.el ends here
 #+END_SRC

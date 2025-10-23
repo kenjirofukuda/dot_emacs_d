@@ -19,3 +19,6 @@ insert_final_newline = false
 [**.md]
 trim_trailing_whitespace = true
 x-soft-wrap-text = true
+
+[*.org]
+indent_size = 8

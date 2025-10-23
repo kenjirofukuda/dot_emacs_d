@@ -75,7 +75,9 @@ url
 viper
 **/#.*#
 
-/experminal-init.html
+experimental-init.*
+!experminal-init.org
+!experminal-init.el
 /lisp/kf-command.html
 /bookmarks
 /kkcrc

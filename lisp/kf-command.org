@@ -4,17 +4,6 @@
 Elispのおさらいは
 - ~/.emacs.d/lisp/elisp-examples.org
 
-* このファイルの使用方法
-#+BEGIN_SRC shell :tangle no
-  alias emacs2='emacs -Q -l ~/.emacs.d/experminal-init.el'
-  # then use: emacs2 <Enter>
-#+END_SRC
-
-* ファイルの生成方法
-#+BEGIN_SRC :tangle no
-;; org-babel-tangle
-C-c C-v C-t
-#+END_SRC
 
 * 式の評価結果を出力する
 #+BEGIN_SRC :tangle no

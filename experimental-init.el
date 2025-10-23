@@ -1,3 +1,9 @@
+;;; init.el --- Initialization. -*- lexical-binding: t; -*-
+;;; Commentary:
+;;
+;; Emacs 27+ introduces init.el, which is run before init.el,
+;; before package and UI initialization happens.
+;;
 ;;; Code:
 
 (with-current-buffer "*scratch*"
@@ -39,9 +45,9 @@
   (require 'package)
   (customize-set-variable
    'package-archives '(("org" . "https://orgmode.org/elpa/")
-		       ("melpa" . "https://melpa.org/packages/")
-		       ;; ("melpa-stable" . "https://mstable.elpa.org/packages/")
-		       ("gnu" . "https://elpa.gnu.org/packages/")))
+			 ("melpa" . "https://melpa.org/packages/")
+			 ;; ("melpa-stable" . "https://mstable.elpa.org/packages/")
+			 ("gnu" . "https://elpa.gnu.org/packages/")))
   (package-initialize)
   (unless package-archive-contents
     (package-refresh-contents))
@@ -446,8 +452,10 @@
   :hook (visual-line-mode . adaptive-wrap-prefix-mode))
 
 (use-package org-modern
+  :if (display-graphic-p)
   :ensure t
   :hook ((org-mode . org-modern-mode)))
+(global-set-key "\C-cl" 'org-toggle-link-display)
 
 (use-package org-journal
   :ensure t
@@ -459,14 +467,14 @@
 (require 'org-tempo)
 
 ;; デフォルトのbabelではシェルは禁止されているの使えるようにする
-(org-babel-do-load-languages
- 'org-babel-load-languages
- '(
-   (shell . t)
-   (ruby . t)
-   (python . t)
-   (mermaid . t)
-   ))
+  (org-babel-do-load-languages
+   'org-babel-load-languages
+   '(
+     (shell . t)
+     (ruby . t)
+     (python . t)
+;;     (mermaid . t)
+     ))
 
 (setq browse-url-browser-function 'eww-browse-url)
 
@@ -606,6 +614,20 @@
 ;;                 lsp-ui-doc-show-with-cursor nil      ; Don't show doc when cursor is over symbol - too distracting
 ;;                 lsp-ui-doc-include-signature t       ; Show signature
 ;;                 lsp-ui-doc-position 'at-point))
+
+(use-package lsp-ui
+  :ensure t
+  :commands
+  (lsp-ui-doc-show
+   lsp-ui-doc-glance)
+  :bind (:map lsp-mode-map
+              ("C-c C-d" . 'lsp-ui-doc-glance))
+  :after (lsp-mode evil)
+  :config (setq lsp-ui-doc-enable t
+                evil-lookup-func #'lsp-ui-doc-glance ; Makes K in evil-mode toggle the doc for symbol at point
+                lsp-ui-doc-show-with-cursor nil      ; Don't show doc when cursor is over symbol - too distracting
+                lsp-ui-doc-include-signature t       ; Show signature
+                lsp-ui-doc-position 'at-point))
 
 (use-package eglot
   :ensure t
@@ -836,6 +858,9 @@ middle"
                                           magic-mode-regexp-match-limit t)))
                . objc-mode))
 
+(use-package smalltalk-mode
+  :ensure t)
+
 (use-package clang-format
   :ensure t)
 
@@ -944,12 +969,6 @@ middle"
     ad-do-it
     (setq indent-tabs-mode old-indent-tabs-mode)))
 
-(use-package mermaid-mode
-   :ensure t)
-(use-package ob-mermaid
-   :ensure t)
-(setq ob-mermaid-cli-path "/snap/bin/mmdc")
-
 (use-package pug-mode
    :ensure t)
 
@@ -982,4 +1001,20 @@ middle"
              clojure-mode))
     (add-to-list 'lsp-tailwindcss-major-modes tw-major-mode)))
 
+(add-hook 'org-mode-hook (lambda () (setq-local tab-width 8)))
+
+(use-package dap-mode :ensure t)
+
+(use-package php-mode
+  :ensure t
+  :init
+  (require 'dap-php)
+  (yas-global-mode)
+  :hook
+  (php-mode . 'lsp))
+(use-package phpactor :ensure t)
+
 (recentf-open-files)
+(provide 'init)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; init.el ends here
