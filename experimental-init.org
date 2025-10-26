@@ -697,7 +697,7 @@ https://zenn.dev/ebang/articles/231106_emacs-markdown
      (shell . t)
      (ruby . t)
      (python . t)
-     (mermaid . t)
+     (mermaid . (executable-find "mmdc"))
      ))
 #+end_src
 ** DONE 起動時に、自動で折りたたむ設定はどうだったっけ
@@ -2618,10 +2618,11 @@ https://www.reddit.com/r/emacs/comments/17ucbww/passing_current_file_name_to_com
 * mermaid
 #+begin_src elisp :tangle yes
   (use-package mermaid-mode
-     :ensure t)
+    :ensure t
+    :when (executable-find("mmdc")))
   (use-package ob-mermaid
-     :ensure t)
-  (setq ob-mermaid-cli-path "/snap/bin/mmdc")
+    :ensure t
+    :when (executable-find("mmdc")))
 #+end_src
 
 #+RESULTS:

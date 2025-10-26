@@ -473,7 +473,7 @@
    (shell . t)
    (ruby . t)
    (python . t)
-   (mermaid . t)
+   (mermaid . (executable-find "mmdc"))
    ))
 
 (setq browse-url-browser-function 'eww-browse-url)
@@ -981,10 +981,11 @@ middle"
     (setq indent-tabs-mode old-indent-tabs-mode)))
 
 (use-package mermaid-mode
-   :ensure t)
+  :ensure t
+  :when (executable-find("mmdc")))
 (use-package ob-mermaid
-   :ensure t)
-(setq ob-mermaid-cli-path "/snap/bin/mmdc")
+  :ensure t
+  :when (executable-find("mmdc")))
 
 (use-package pug-mode
    :ensure t)
