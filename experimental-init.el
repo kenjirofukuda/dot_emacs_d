@@ -469,11 +469,11 @@
 ;; デフォルトのbabelではシェルは禁止されているの使えるようにする
 (org-babel-do-load-languages
  'org-babel-load-languages
- '(
-   (shell . t)
-   (ruby . t)
-   (python . t)
-   (mermaid . (executable-find "mmdc"))
+ (list
+   '(shell . t)
+   '(ruby . t)
+   '(python . t)
+   (cons 'mermaid  (executable-find "mmdc"))
    ))
 
 (setq browse-url-browser-function 'eww-browse-url)

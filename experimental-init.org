@@ -693,13 +693,16 @@ https://zenn.dev/ebang/articles/231106_emacs-markdown
   ;; デフォルトのbabelではシェルは禁止されているの使えるようにする
   (org-babel-do-load-languages
    'org-babel-load-languages
-   '(
-     (shell . t)
-     (ruby . t)
-     (python . t)
-     (mermaid . (executable-find "mmdc"))
+   (list
+     '(shell . t)
+     '(ruby . t)
+     '(python . t)
+     (cons 'mermaid  (executable-find "mmdc"))
      ))
 #+end_src
+
+#+RESULTS:
+
 ** DONE 起動時に、自動で折りたたむ設定はどうだったっけ
 参考: https://takaxp.github.io/org-ja.html
 #+begin_example
