@@ -982,10 +982,10 @@ middle"
 
 (use-package mermaid-mode
   :ensure t
-  :when (executable-find("mmdc")))
+  :when (executable-find "mmdc"))
 (use-package ob-mermaid
   :ensure t
-  :when (executable-find("mmdc")))
+  :when (executable-find "mmdc"))
 
 (use-package pug-mode
    :ensure t)

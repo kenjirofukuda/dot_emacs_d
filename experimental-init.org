@@ -2619,10 +2619,10 @@ https://www.reddit.com/r/emacs/comments/17ucbww/passing_current_file_name_to_com
 #+begin_src elisp :tangle yes
   (use-package mermaid-mode
     :ensure t
-    :when (executable-find("mmdc")))
+    :when (executable-find "mmdc"))
   (use-package ob-mermaid
     :ensure t
-    :when (executable-find("mmdc")))
+    :when (executable-find "mmdc"))
 #+end_src
 
 #+RESULTS:
