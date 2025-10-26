@@ -125,6 +125,7 @@ C-c C-v C-t
     (auto-package-update-at-time "20:00"))
 #+END_SRC
 ** straight
+use-packageに含まれているため
 - @see https://github.com/radian-software/straight.el?tab=readme-ov-file#getting-started
 #+begin_src elisp :tangle yes
   (defvar bootstrap-version)
@@ -567,7 +568,7 @@ Cライブラリをコンパイルして利用するため、コンパイル環�
 
 * ディレクトリ表示の簡素化
 https://emacs.stackexchange.com/questions/27912/dired-sort-and-hide-by-default
-#+begin_src elisp
+#+begin_src elisp :tangle no
   ;; ディレクトリ表示の簡素化
   ;; https://emacs.stackexchange.com/questions/27912/dired-sort-and-hide-by-default
   (add-hook 'dired-mode-hook
@@ -696,13 +697,13 @@ https://zenn.dev/ebang/articles/231106_emacs-markdown
      (shell . t)
      (ruby . t)
      (python . t)
-;;     (mermaid . t)
+     (mermaid . t)
      ))
 #+end_src
 ** DONE 起動時に、自動で折りたたむ設定はどうだったっけ
 参考: https://takaxp.github.io/org-ja.html
 #+begin_example
-#+STARTUP: content
+,#+STARTUP: content
 #+end_example
 
 ** =open-url-at-point= で開かれるブラウザの設定
@@ -713,7 +714,7 @@ https://zenn.dev/ebang/articles/231106_emacs-markdown
 * お遊び
 ** TODO ポモドーロタイマに使用する音源を物色中
 Windows の検索パスは別途検討
-#+begin_src elisp :results list
+#+begin_src elisp :tangle no :results list
   (let ((all-sounds
          (directory-files-recursively "/usr/share/sounds/sound-icons/" "\\.wav$" nil)))
     (dolist (snd all-sounds)
@@ -721,7 +722,7 @@ Windows の検索パスは別途検討
     all-sounds)
 #+end_src
 
-#+begin_src elisp :results list
+#+begin_src elisp :tangle no :results list
   (let ((all-sounds
          (directory-files-recursively "C:/Windows" "\\.wav$" nil)))
     ;; (dolist (snd all-sounds)
@@ -967,12 +968,12 @@ Windows の検索パスは別途検討
 - /usr/share/sounds/sound-icons/xylofon.wav
 
 ** eww がローカルのファイルを開けるか
-#+begin_src elisp
+#+begin_src elisp :tangle no
 (eww-browse-url "file:///usr/local/share/GNUstep/Documentation/Developer/Base/ProgrammingManual/gs-base/index.html")
 #+end_src
 
 ** string-matchの実験
-#+begin_src elisp
+#+begin_src elisp :tangle no
   (string-match-p "\\.wav$"
 		  "/usr/share/sounds/sound-icons/canary-long.wav")
   (string-match-p "^file:///"
@@ -999,7 +1000,7 @@ Windows の検索パスは別途検討
 #+end_src
 * 日本語フォントの設定
 ** 使用できるフォント名の確認
-#+begin_src elisp :results list
+#+begin_src elisp :tangle no :results list
   (seq-uniq (sort (font-family-list) 'string<) 'string=)
 #+end_src
 
@@ -2014,6 +2015,32 @@ F => Shift-f
     :after lsp-mode)
 #+end_src
 
+* Typescript
+- @see https://www.reddit.com/r/emacs/comments/s6zkb6/how_do_i_autostart_lsp_and_typescriptmode_for_ts/?tl=ja
+#+begin_src elisp :tangle yes
+  (use-package typescript-mode :ensure t)
+#+end_src
+
+#+RESULTS:
+
+#+begin_src elisp :tangle yes
+  (use-package jtsx :ensure t)
+#+end_src
+
+#+begin_src elisp :tangle yes
+  (use-package ob-deno :ensure t)
+#+end_src
+
+#+RESULTS:
+
+#+begin_src elisp :tangle yes
+  (use-package ob-ts-node :ensure t)
+#+end_src
+
+#+begin_src elisp :tangle yes
+  (use-package tide :ensure t)
+#+end_src
+
 
 * Eglot導入
 lspサーバーとの比較のため導入してみる
@@ -2327,7 +2354,7 @@ https://www.ovistoica.com/blog/2024-7-05-modern-emacs-typescript-web-tsx-config#
   (setq desktop-base-file-name (concat "." (safe-host-name-string) "-emacs.desktop"))
 #+end_src
 
-#+begin_src elisp :results output
+#+begin_src elisp :tangle no  :results output
   desktop-path
   desktop-base-file-name
   (safe-host-name-string)
@@ -2337,8 +2364,9 @@ https://www.ovistoica.com/blog/2024-7-05-modern-emacs-typescript-web-tsx-config#
 #+begin_src elisp :tangle yes
   (use-package ef-themes
     :ensure t
-    :config
-    (ef-themes-select 'ef-dark))
+    ;; :config
+    ;; (ef-themes-select 'ef-dark)
+    )
 #+end_src
 
 * グローバル高速検索
@@ -2358,8 +2386,8 @@ frame-geometry関数のouter-sizeで判定すること
 #+end_src
 * TODO 導入予定
 ** TODO narrow時にツリー間の移動を用意にし、プレゼンテーションも行える
-https://protesilaos.com/emacs/logos
-** TODO モードラインに IME 情報が載せられないか?
+https://protesilaos.com/emacs/logos*
+* TODO モードラインに IME 情報が載せられないか?
 
 * Projectile
 #+begin_src elisp :tangle yes
@@ -2470,6 +2498,7 @@ https://protesilaos.com/emacs/logos
 ジャパニーズもずく打てますかね？
 入力の感触は良いが、インライン変換できるのは気持ちが良い。
 これが比較的新しい30.1以降で可能かどうか
+
 
 * Haiku Support
 ** Setup Jamfile mode
@@ -2587,13 +2616,16 @@ https://www.reddit.com/r/emacs/comments/17ucbww/passing_current_file_name_to_com
 #+end_src
 
 * mermaid
-#+begin_src elisp :tangle no
+#+begin_src elisp :tangle yes
   (use-package mermaid-mode
      :ensure t)
   (use-package ob-mermaid
      :ensure t)
   (setq ob-mermaid-cli-path "/snap/bin/mmdc")
 #+end_src
+
+#+RESULTS:
+: /snap/bin/mmdc
 
 * pug-mode
 https://github.com/hlissner/emacs-pug-mode
@@ -2636,6 +2668,7 @@ https://github.com/hlissner/emacs-pug-mode
                typescript-ts-mode
                tsx-ts-mode
                js2-mode
+               web-mode
                js-ts-mode
                clojure-mode))
       (add-to-list 'lsp-tailwindcss-major-modes tw-major-mode)))
@@ -2649,42 +2682,66 @@ https://github.com/hlissner/emacs-pug-mode
 #+end_src
 
 * PHP
-#+begin_src elisp :tangle no
-  (use-package dap-mode :ensure t)
-#+end_src
-
-#+begin_src elisp :tangle no
-  (use-package php-mode
-    :ensure t
-    :init
-    (require 'dap-php)
-    (yas-global-mode)
-    :hook
-    (php-mode . 'lsp))
+#+begin_src elisp :tangle yes
+  (use-package web-mode :ensure t)
 #+end_src
 
 #+begin_src elisp :tangle yes
-(setq package-selected-packages '(lsp-mode yasnippet lsp-treemacs flycheck company which-key dap-mode php-mode))
-
-(when (cl-find-if-not #'package-installed-p package-selected-packages)
-  (package-refresh-contents)
-  (mapc #'package-install package-selected-packages))
-
-(which-key-mode)
-(add-hook 'php-mode-hook 'lsp)
-
-(setq gc-cons-threshold (* 100 1024 1024)
-      read-process-output-max (* 10 1024 1024)
-      treemacs-space-between-root-nodes nil
-      company-idle-delay 0.0
-      company-minimum-prefix-length 1
-      lsp-idle-delay 0.5)  ;; clangd is fast
-
-(with-eval-after-load 'lsp-mode
-  (add-hook 'lsp-mode-hook #'lsp-enable-which-key-integration)
-  (require 'dap-php)
-  (yas-global-mode))
+  (use-package auto-rename-tag :ensure t)
 #+end_src
+
+#+begin_src elisp :tangle yes
+  (use-package projectile-laravel
+    :straight (projectile-laravel :type git :host github :repo "strikerlulu/projectile-laravel"))
+#+end_src
+
+#+begin_src elisp :tangle yes
+  (setq package-selected-packages '(lsp-mode yasnippet lsp-treemacs flycheck company which-key dap-mode php-mode))
+
+  (when (cl-find-if-not #'package-installed-p package-selected-packages)
+    (package-refresh-contents)
+    (mapc #'package-install package-selected-packages))
+
+  (which-key-mode)
+  (add-hook 'php-mode-hook 'lsp)
+
+  (setq gc-cons-threshold (* 100 1024 1024)
+        read-process-output-max (* 10 1024 1024)
+        treemacs-space-between-root-nodes nil
+        company-idle-delay 0.0
+        company-minimum-prefix-length 1
+        lsp-idle-delay 0.5)  ;; clangd is fast
+
+  (with-eval-after-load 'lsp-mode
+    (add-hook 'lsp-mode-hook #'lsp-enable-which-key-integration)
+    (require 'dap-php)
+    (yas-global-mode))
+#+end_src
+* IBus
+- @see https://w.atwiki.jp/s-irie/pages/21.html
+#+begin_src elisp :tangle yes
+(when (eq system-type 'gnu/linux)
+  (require 'ibus)
+  (add-hook 'after-init-hook 'ibus-mode-on)
+  ;; C-SPC は Set Mark に使う
+  (ibus-define-common-key ?\C-\s nil)
+  ;; C-/ は Undo に使う
+  (ibus-define-common-key ?\C-/ nil)
+  ;; IBusの状態によってカーソル色を変化させる
+  (setq ibus-cursor-color '("red" "blue" "limegreen"))
+  ;; C-j で半角英数モードをトグルする
+  (ibus-define-common-key ?\C-j t)
+  ;; カーソルの位置に予測候補を表示
+  (setq ibus-prediction-window-position t)
+  ;; Undo の時に確定した位置まで戻る
+  (setq ibus-undo-by-committed-string t)
+  ;; インクリメンタル検索中のカーソル形状を変更する
+  (setq ibus-isearch-cursor-type 'hollow)
+  )
+#+end_src
+
+#+RESULTS:
+: hollow
 
 * 末尾
 #+BEGIN_SRC elisp :tangle yes

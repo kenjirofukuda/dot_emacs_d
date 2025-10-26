@@ -467,14 +467,14 @@
 (require 'org-tempo)
 
 ;; デフォルトのbabelではシェルは禁止されているの使えるようにする
-  (org-babel-do-load-languages
-   'org-babel-load-languages
-   '(
-     (shell . t)
-     (ruby . t)
-     (python . t)
-;;     (mermaid . t)
-     ))
+(org-babel-do-load-languages
+ 'org-babel-load-languages
+ '(
+   (shell . t)
+   (ruby . t)
+   (python . t)
+   (mermaid . t)
+   ))
 
 (setq browse-url-browser-function 'eww-browse-url)
 
@@ -628,6 +628,16 @@
                 lsp-ui-doc-show-with-cursor nil      ; Don't show doc when cursor is over symbol - too distracting
                 lsp-ui-doc-include-signature t       ; Show signature
                 lsp-ui-doc-position 'at-point))
+
+(use-package typescript-mode :ensure t)
+
+(use-package jtsx :ensure t)
+
+(use-package ob-deno :ensure t)
+
+(use-package ob-ts-node :ensure t)
+
+(use-package tide :ensure t)
 
 (use-package eglot
   :ensure t
@@ -810,8 +820,9 @@ middle"
 
 (use-package ef-themes
   :ensure t
-  :config
-  (ef-themes-select 'ef-dark))
+  ;; :config
+  ;; (ef-themes-select 'ef-dark)
+  )
 
 ;; https://agel.readthedocs.io/en/latest/index.html
 (use-package ag
@@ -969,6 +980,12 @@ middle"
     ad-do-it
     (setq indent-tabs-mode old-indent-tabs-mode)))
 
+(use-package mermaid-mode
+   :ensure t)
+(use-package ob-mermaid
+   :ensure t)
+(setq ob-mermaid-cli-path "/snap/bin/mmdc")
+
 (use-package pug-mode
    :ensure t)
 
@@ -997,11 +1014,19 @@ middle"
              typescript-ts-mode
              tsx-ts-mode
              js2-mode
+             web-mode
              js-ts-mode
              clojure-mode))
     (add-to-list 'lsp-tailwindcss-major-modes tw-major-mode)))
 
 (add-hook 'org-mode-hook (lambda () (setq-local tab-width 8)))
+
+(use-package web-mode :ensure t)
+
+(use-package auto-rename-tag :ensure t)
+
+(use-package projectile-laravel
+  :straight (projectile-laravel :type git :host github :repo "strikerlulu/projectile-laravel"))
 
 (setq package-selected-packages '(lsp-mode yasnippet lsp-treemacs flycheck company which-key dap-mode php-mode))
 
@@ -1023,6 +1048,25 @@ middle"
   (add-hook 'lsp-mode-hook #'lsp-enable-which-key-integration)
   (require 'dap-php)
   (yas-global-mode))
+
+(when (eq system-type 'gnu/linux)
+  (require 'ibus)
+  (add-hook 'after-init-hook 'ibus-mode-on)
+  ;; C-SPC は Set Mark に使う
+  (ibus-define-common-key ?\C-\s nil)
+  ;; C-/ は Undo に使う
+  (ibus-define-common-key ?\C-/ nil)
+  ;; IBusの状態によってカーソル色を変化させる
+  (setq ibus-cursor-color '("red" "blue" "limegreen"))
+  ;; C-j で半角英数モードをトグルする
+  (ibus-define-common-key ?\C-j t)
+  ;; カーソルの位置に予測候補を表示
+  (setq ibus-prediction-window-position t)
+  ;; Undo の時に確定した位置まで戻る
+  (setq ibus-undo-by-committed-string t)
+  ;; インクリメンタル検索中のカーソル形状を変更する
+  (setq ibus-isearch-cursor-type 'hollow)
+  )
 
 (recentf-open-files)
 (provide 'init)
