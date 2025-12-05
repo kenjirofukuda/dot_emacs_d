@@ -629,7 +629,11 @@
                 lsp-ui-doc-include-signature t       ; Show signature
                 lsp-ui-doc-position 'at-point))
 
-(use-package typescript-mode :ensure t)
+(use-package typescript-ts-mode
+  :mode (("\\\\.tsx\\\\'" . tsx-ts-mode)
+         ("\\\\.ts\\\\'" . tsx-ts-mode))
+  :config
+  (setq typescript-ts-mode-indent-offset 2))
 
 (use-package jtsx :ensure t)
 
@@ -637,7 +641,19 @@
 
 (use-package ob-ts-node :ensure t)
 
-(use-package tide :ensure t)
+(use-package tide
+  :ensure t
+  :hook (tsx-ts-mode . setup-tide-mode)
+  :config
+  (defun setup-tide-mode ()
+    (interactive)
+    (tide-setup)
+    (flycheck-mode +1)
+    (setq flycheck-check-syntax-automatically '(save mode-enabled))
+    (eldoc-mode +1)
+    (tide-hl-identifier-mode +1)
+    (company-mode +1))
+  (setq company-tooltip-align-annotations t))
 
 (use-package eglot
   :ensure t
@@ -656,7 +672,11 @@
   :ensure t)
 
 (use-package tree-sitter-langs
-  :ensure t)
+  :ensure t
+  :after tree-sitter
+  :config
+  (tree-sitter-require 'tsx)
+  (add-to-list 'tree-sitter-major-mode-language-alist '(tsx-ts-mode . tsx)))
 
 ;; 構文解析エンジン Tree sitter
 (unless (version< emacs-version "29.0")

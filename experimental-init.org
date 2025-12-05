@@ -2020,8 +2020,18 @@ F => Shift-f
 
 * Typescript
 - @see https://www.reddit.com/r/emacs/comments/s6zkb6/how_do_i_autostart_lsp_and_typescriptmode_for_ts/?tl=ja
-#+begin_src elisp :tangle yes
+Deprecated:
+#+begin_src elisp :tangle no
   (use-package typescript-mode :ensure t)
+#+end_src
+
+- @see https://joppot.info/posts/c05e989a-e642-4c84-a5b8-a0e0c3178941
+#+begin_src elisp :tangle yes
+  (use-package typescript-ts-mode
+    :mode (("\\\\.tsx\\\\'" . tsx-ts-mode)
+           ("\\\\.ts\\\\'" . tsx-ts-mode))
+    :config
+    (setq typescript-ts-mode-indent-offset 2))
 #+end_src
 
 #+RESULTS:
@@ -2041,7 +2051,19 @@ F => Shift-f
 #+end_src
 
 #+begin_src elisp :tangle yes
-  (use-package tide :ensure t)
+  (use-package tide
+    :ensure t
+    :hook (tsx-ts-mode . setup-tide-mode)
+    :config
+    (defun setup-tide-mode ()
+      (interactive)
+      (tide-setup)
+      (flycheck-mode +1)
+      (setq flycheck-check-syntax-automatically '(save mode-enabled))
+      (eldoc-mode +1)
+      (tide-hl-identifier-mode +1)
+      (company-mode +1))
+    (setq company-tooltip-align-annotations t))  
 #+end_src
 
 
@@ -2061,6 +2083,8 @@ lspサーバーとの比較のため導入してみる
       )
 #+end_src
 * Tree sitter
+- https://joppot.info/posts/c05e989a-e642-4c84-a5b8-a0e0c3178941
+
 #+begin_src elisp :tangle yes
   (use-package tree-sitter
     :if (version< emacs-version "29.0")
@@ -2069,7 +2093,11 @@ lspサーバーとの比較のため導入してみる
 
 #+begin_src elisp :tangle yes
   (use-package tree-sitter-langs
-    :ensure t)
+    :ensure t
+    :after tree-sitter
+    :config
+    (tree-sitter-require 'tsx)
+    (add-to-list 'tree-sitter-major-mode-language-alist '(tsx-ts-mode . tsx)))
 #+end_src
 
 #+begin_src elisp :tangle yes
@@ -2105,7 +2133,7 @@ https://www.ovistoica.com/blog/2024-7-05-modern-emacs-typescript-web-tsx-config#
                '((css . ("https://github.com/tree-sitter/tree-sitter-css" "v0.20.0"))
                  (bash "https://github.com/tree-sitter/tree-sitter-bash")
                  (html . ("https://github.com/tree-sitter/tree-sitter-html" "v0.20.1"))
-                 (javascript . ("https://github.com/tree-sitter/tree-sitter-javascript" "v0.21.2" "src"))
+                 (javascript . ("https://github.com/tree-sitter/tree-sitter-javascript" "v0.20.0" "src"))
                  (json . ("https://github.com/tree-sitter/tree-sitter-json" "v0.20.2"))
                  (python . ("https://github.com/tree-sitter/tree-sitter-python" "v0.20.4"))
                  (go "https://github.com/tree-sitter/tree-sitter-go" "v0.20.0")
@@ -2150,6 +2178,7 @@ https://www.ovistoica.com/blog/2024-7-05-modern-emacs-typescript-web-tsx-config#
                (sh-base-mode . bash-ts-mode)))
       (add-to-list 'major-mode-remap-alist mapping))
     :config
+    (setq treesit-font-lock-level 4)
     (os/setup-install-grammars))
 #+end_src
 * フレームの回転
