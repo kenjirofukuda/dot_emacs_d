@@ -1,3 +1,25 @@
+(defun kf:dired-buffers ()
+  (loop for buf in (buffer-list)
+        for m = (with-current-buffer buf major-mode)
+        when (eq m 'dired-mode)
+        collect (buffer-name buf)))
+
+(defun kf:close-dired-buffers ()
+  (interactive)
+  (dolist (buff (kf:dired-buffers))
+    (kill-buffer buff)))
+
+(defun kf:saved-file-buffers ()
+  (seq-filter (lambda (b)
+		(and (buffer-file-name b)
+		     (not (buffer-modified-p b))))
+	      (buffer-list)))
+
+(defun kf:close-saved-buffers ()
+  (interactive)
+  (dolist (buff (kf:saved-file-buffers))
+    (kill-buffer buff)))
+
 (defun kf:font-family-installed-p (fontname)
   ;; フォントがインストールされているかを調べる
   (seq-some (lambda (elt)
@@ -8,24 +30,40 @@
 (defun kf:insert-shell-command (start end command)
   "シェルコマンドの結果を挿入"
   (interactive (let (string)
-		 (setq string (read-shell-command "Shell command on region(and insert): "))
-		 (list (point) (point) string)))
+		   (setq string (read-shell-command "Shell command on region(and insert): "))
+		   (list (point) (point) string)))
   (let ((output-buffer t)
-	(replace t))
+	  (replace t))
     (shell-command-on-region start end command output-buffer replace)))
 
+(defun kf:vterm-opend ()
+  (seq-find (lambda (b) (string= "*vterm*" (buffer-name b)))
+  	    (buffer-list)))
+
 (defun kf:vterm-cd (dir)
+  (interactive)
   (with-current-buffer "*vterm*"
     (vterm-send-string (concat "cd " dir))
     (vterm-send-return)))
 
 (defun kf:vterm-visit (dir)
+  (interactive)
   (kf:vterm-cd dir)
   (switch-to-buffer-other-window "*vterm*"))
 
 (defun kf:vterm-quit ()
-  (with-current-buffer "*vterm*"
-    (vterm-send-C-d)))
+  (interactive)
+  (if (kf:vterm-opend)
+      (with-current-buffer "*vterm*"
+  	(vterm-send-C-d))))
+
+(defun kf:quit-emacs ()
+  (interactive)
+  (kf:close-saved-buffers)
+  (kf:close-dired-buffers)
+  (kf:vterm-quit)
+  (save-buffers-kill-terminal)
+  t)
 
 (defun kf:open-file-thing ()
   "カーソル行のファイルを開く"
@@ -66,7 +104,7 @@
 (defun kf:valid-project-file (path)
   "ファイルが適切なソースコードか?"
   (not (or (string-match-p ".*/\\.ccls-cache/.*" path)
-	   (string-match-p ".*/\\.git/.*" path))))
+	     (string-match-p ".*/\\.git/.*" path))))
 
 (message "kf-command loaded...")
 (provide 'kf-command)

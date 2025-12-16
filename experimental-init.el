@@ -897,14 +897,6 @@ middle"
 
 (add-to-list 'auto-mode-alist '("\\.gsmarkup$" . xml-mode))
 
-;; NeoTree
-;; https://tsuu32.hatenablog.com/entry/2020/08/19/004306
-(use-package neotree
-  :ensure t
-  :config
-  (setq neo-show-hidden-files t) ; dot-fileも表示する
-  (setq neo-theme 'icons) )
-
 (use-package orderless
   :ensure t
   :custom
@@ -1090,6 +1082,8 @@ middle"
   )
 
 (recentf-open-files)
+;; (add-hook 'kill-emacs-query-functions 'kf:quit-query-function)
+(global-set-key "\C-x\ \C-c" 'kf:quit-emacs)
 (provide 'init)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; init.el ends here

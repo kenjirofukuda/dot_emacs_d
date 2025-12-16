@@ -88,3 +88,4 @@ experimental-init.*
 /.lsp-session
 /.mc-lists.el
 /lsp-cache/
+/.dap-breakpoints

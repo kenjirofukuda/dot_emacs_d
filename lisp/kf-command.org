@@ -12,6 +12,52 @@ C-c C-v C-e
 C-c C-c ;; が簡単かも
 #+END_SRC
 
+* dired buffer list
+- https://qiita.com/zonkyy/items/35616785f9194ca00ec1
+#+begin_src elisp :tangle yes
+  (defun kf:dired-buffers ()
+    (loop for buf in (buffer-list)
+          for m = (with-current-buffer buf major-mode)
+          when (eq m 'dired-mode)
+          collect (buffer-name buf)))
+#+end_src
+
+#+RESULTS:
+
+* dired バッファーを閉じる
+#+begin_src elisp :tangle yes
+  (defun kf:close-dired-buffers ()
+    (interactive)
+    (dolist (buff (kf:dired-buffers))
+      (kill-buffer buff)))
+#+end_src
+
+
+
+* 保存済みのバッファー群
+#+begin_src elisp :tangle yes
+  (defun kf:saved-file-buffers ()
+    (seq-filter (lambda (b)
+  		(and (buffer-file-name b)
+  		     (not (buffer-modified-p b))))
+  	      (buffer-list)))
+#+end_src
+
+#+begin_src elisp :results list
+  (kf:saved-file-buffers)
+#+end_src
+
+#+RESULTS:
+- #<buffer kf-command.org>
+
+* 保存済みのバッファーを閉じる
+#+begin_src elisp :tangle yes
+  (defun kf:close-saved-buffers ()
+    (interactive)
+    (dolist (buff (kf:saved-file-buffers))
+      (kill-buffer buff)))
+#+end_src
+
 * フォントがインストールされているかを調べる
 #+begin_src elisp :tangle yes
   (defun kf:font-family-installed-p (fontname)
@@ -27,6 +73,9 @@ C-c C-c ;; が簡単かも
   (kf:font-family-installed-p "noto serif cjk")
 #+end_src
 
+#+RESULTS:
+: t
+
 * シェルコマンドの挿入
 #+BEGIN_SRC elisp :tangle yes
   ;; シェルコマンドの結果を挿入
@@ -41,20 +90,52 @@ C-c C-c ;; が簡単かも
 
 #+END_SRC
 
+
 * VTERM
 #+begin_src elisp :tangle yes
+  (defun kf:vterm-opend ()
+    (seq-find (lambda (b) (string= "*vterm*" (buffer-name b)))
+    	    (buffer-list)))
+
   (defun kf:vterm-cd (dir)
+    (interactive)
     (with-current-buffer "*vterm*"
       (vterm-send-string (concat "cd " dir))
       (vterm-send-return)))
 
   (defun kf:vterm-visit (dir)
+    (interactive)
     (kf:vterm-cd dir)
     (switch-to-buffer-other-window "*vterm*"))
 
   (defun kf:vterm-quit ()
-    (with-current-buffer "*vterm*"
-      (vterm-send-C-d)))
+    (interactive)
+    (if (kf:vterm-opend)
+        (with-current-buffer "*vterm*"
+    	(vterm-send-C-d))))
+#+end_src
+
+#+RESULTS:
+: kf:vterm-opend
+
+#+begin_src elisp
+  (kf:vterm-opend)
+#+end_src
+
+#+RESULTS:
+
+
+
+* Quit Function
+
+#+begin_src elisp :tangle yes
+  (defun kf:quit-emacs ()
+    (interactive)
+    (kf:close-saved-buffers)
+    (kf:close-dired-buffers)
+    (kf:vterm-quit)
+    (save-buffers-kill-terminal)
+    t)
 #+end_src
 
 
