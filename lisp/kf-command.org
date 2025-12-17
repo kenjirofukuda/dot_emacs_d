@@ -268,6 +268,17 @@ C-c <f3>
 - ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsStructureView.m
 - ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/main.m
 
+* 行の複製
+#+begin_src elisp :tangle yes
+  (defun kf:duplicate-line ()
+    (interactive)
+    (duplicate-line)
+    (forward-line))
+
+  ;; Bind C-c d to duplicate-line
+  (global-set-key (kbd "C-c j") 'kf:duplicate-line)
+#+end_src
+
 * フッタ
 #+BEGIN_SRC elisp :tangle yes
   (message "kf-command loaded...")

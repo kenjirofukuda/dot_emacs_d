@@ -106,5 +106,13 @@
   (not (or (string-match-p ".*/\\.ccls-cache/.*" path)
 	     (string-match-p ".*/\\.git/.*" path))))
 
+(defun kf:duplicate-line ()
+  (interactive)
+  (duplicate-line)
+  (forward-line))
+
+;; Bind C-c d to duplicate-line
+(global-set-key (kbd "C-c j") 'kf:duplicate-line)
+
 (message "kf-command loaded...")
 (provide 'kf-command)
