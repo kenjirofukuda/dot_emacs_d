@@ -68,8 +68,12 @@
 (defun kf:open-file-thing ()
   "カーソル行のファイルを開く"
   (interactive)
-  (let ((filename (thing-at-point 'filename t))
-        (url (thing-at-point 'url t)))
+  (let* ((url-part (kf:get-org-url-part-in-caption))
+	 (filename (or (thing-at-point 'filename t)
+		       (and url-part
+			    (string-match-p "^file:///" url-part))))
+	 (url (or (thing-at-point 'url t)
+		  url-part)))
     (when url
       (cond ((string-match-p "^file:///" url)
              (eww-browse-url url)
@@ -111,8 +115,21 @@
   (duplicate-line)
   (forward-line))
 
-;; Bind C-c d to duplicate-line
+;; Bind C-c j to duplicate-line
 (global-set-key (kbd "C-c j") 'kf:duplicate-line)
+
+(defun kf:get-org-url-part-in-caption ()
+  ;;; (interactive)
+  (defun point-in-range-p (range)
+    (and (>= (current-column) (car range)) (< (current-column) (cdr range))))
+  (let* ((thing (thing-at-point 'line))
+	 (matched (string-match  "\\[\\[\\(.+\\)\\]\\[\\(.+\\)\\]\\]" thing)))
+    (if matched
+	(let ((url-range (cons (match-beginning 1) (match-end 1)) )
+	      (caption-range (cons (match-beginning 2) (match-end 2))))
+	  (if (point-in-range-p caption-range)
+	      ;;(list url-range caption-range)
+	      (substring thing (car url-range) (cdr url-range)))))))
 
 (message "kf-command loaded...")
 (provide 'kf-command)

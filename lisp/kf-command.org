@@ -4,7 +4,6 @@
 Elispのおさらいは
 - ~/.emacs.d/lisp/elisp-examples.org
 
-
 * 式の評価結果を出力する
 #+BEGIN_SRC :tangle no
 ;; org-babel-execute-maybe
@@ -31,8 +30,6 @@ C-c C-c ;; が簡単かも
     (dolist (buff (kf:dired-buffers))
       (kill-buffer buff)))
 #+end_src
-
-
 
 * 保存済みのバッファー群
 #+begin_src elisp :tangle yes
@@ -90,7 +87,6 @@ C-c C-c ;; が簡単かも
 
 #+END_SRC
 
-
 * VTERM
 #+begin_src elisp :tangle yes
   (defun kf:vterm-opend ()
@@ -124,8 +120,6 @@ C-c C-c ;; が簡単かも
 
 #+RESULTS:
 
-
-
 * Quit Function
 
 #+begin_src elisp :tangle yes
@@ -138,7 +132,6 @@ C-c C-c ;; が簡単かも
     t)
 #+end_src
 
-
 * カーソル行のファイルを開く
 
 #+begin_src
@@ -149,8 +142,12 @@ C-c <f3>
   (defun kf:open-file-thing ()
     "カーソル行のファイルを開く"
     (interactive)
-    (let ((filename (thing-at-point 'filename t))
-          (url (thing-at-point 'url t)))
+    (let* ((url-part (kf:get-org-url-part-in-caption))
+  	 (filename (or (thing-at-point 'filename t)
+  		       (and url-part
+  			    (string-match-p "^file:///" url-part))))
+  	 (url (or (thing-at-point 'url t)
+  		  url-part)))
       (when url
         (cond ((string-match-p "^file:///" url)
                (eww-browse-url url)
@@ -178,10 +175,13 @@ C-c <f3>
 
 ** 以下のパス名で確認
 以下の文字列上にカーソルを移動し、=C-c <f3>= を実行し、開けるか確認すること
+#+begin_example
 - https://systemcrafters.net/emacs-shorts/pomodoro-timer/
 - file:///usr/local/share/GNUstep/Documentation/Developer/Base/ProgrammingManual/gs-base/index.html
 - /usr/share/sounds/sound-icons/canary-long.wav
 - ~/Documents/github/kenjirofukuda/gdsfeel-gnustep/GdsFeelCore/GdsInform.m
+- [[https://github.com/kenjirofukuda/gdsfeel-js.git][gdsfeel-js]]
+#+end_example
 
 * ウィンドウのバッファを固定する
 #+begin_src elisp :tangle yes
@@ -275,9 +275,39 @@ C-c <f3>
     (duplicate-line)
     (forward-line))
 
-  ;; Bind C-c d to duplicate-line
+  ;; Bind C-c j to duplicate-line
   (global-set-key (kbd "C-c j") 'kf:duplicate-line)
 #+end_src
+
+* ORGリンクのURLパート取得
+#+begin_example
+[[urlパート][キャプションパート]]
+             ________^_________
+#+end_example
+カーソルがキャプションパートのレンジにある時、のみurlパートを取得。
+
+#+begin_src elisp :tangle yes
+  (defun kf:get-org-url-part-in-caption ()
+    ;;; (interactive)
+    (defun point-in-range-p (range)
+      (and (>= (current-column) (car range)) (< (current-column) (cdr range))))
+    (let* ((thing (thing-at-point 'line))
+  	 (matched (string-match  "\\[\\[\\(.+\\)\\]\\[\\(.+\\)\\]\\]" thing)))
+      (if matched
+  	(let ((url-range (cons (match-beginning 1) (match-end 1)) )
+  	      (caption-range (cons (match-beginning 2) (match-end 2))))
+  	  (if (point-in-range-p caption-range)
+  	      ;;(list url-range caption-range)
+  	      (substring thing (car url-range) (cdr url-range)))))))
+#+end_src
+
+#+begin_src elisp :results raw
+  (kf:get-org-url-part-in-caption)
+  ;;; [[https://github.com/kenjirofukuda/gdsfeel-js.git][gdsfeel-js]]
+#+end_src
+
+#+RESULTS:
+https://github.com/kenjirofukuda/gdsfeel-js.git
 
 * フッタ
 #+BEGIN_SRC elisp :tangle yes
