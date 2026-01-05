@@ -1081,6 +1081,11 @@ middle"
   (setq ibus-isearch-cursor-type 'hollow)
   )
 
+(setq auto-mode-alist
+      (append
+       '(("\\.mak\\'" . makefile-gmake-mode))
+       auto-mode-alist))
+
 (recentf-open-files)
 ;; (add-hook 'kill-emacs-query-functions 'kf:quit-query-function)
 (global-set-key "\C-x\ \C-c" 'kf:quit-emacs)
