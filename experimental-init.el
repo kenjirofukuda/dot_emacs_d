@@ -45,9 +45,9 @@
   (require 'package)
   (customize-set-variable
    'package-archives '(("org" . "https://orgmode.org/elpa/")
-		       ("melpa" . "https://melpa.org/packages/")
-		       ;; ("melpa-stable" . "https://mstable.elpa.org/packages/")
-		       ("gnu" . "https://elpa.gnu.org/packages/")))
+			 ("melpa" . "https://melpa.org/packages/")
+			 ;; ("melpa-stable" . "https://mstable.elpa.org/packages/")
+			 ("gnu" . "https://elpa.gnu.org/packages/")))
   (package-initialize)
   (unless package-archive-contents
     (package-refresh-contents))
@@ -473,6 +473,7 @@
    '(shell . t)
    '(ruby . t)
    '(python . t)
+   '(lua . t)
    (cons 'mermaid  (executable-find "mmdc"))
    ))
 
@@ -1089,6 +1090,8 @@ middle"
 (use-package google-translate :ensure t)
 
 (server-start)
+
+(use-package ob-async :ensure t)
 
 (recentf-open-files)
 ;; (add-hook 'kill-emacs-query-functions 'kf:quit-query-function)

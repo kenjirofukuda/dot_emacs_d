@@ -697,6 +697,7 @@ https://zenn.dev/ebang/articles/231106_emacs-markdown
      '(shell . t)
      '(ruby . t)
      '(python . t)
+     '(lua . t)
      (cons 'mermaid  (executable-find "mmdc"))
      ))
 #+end_src
@@ -2792,6 +2793,11 @@ https://github.com/hlissner/emacs-pug-mode
 #+begin_src elisp :tangle yes
   (server-start)
 #+end_src
+* 非同期実行
+#+begin_src elisp :tangle yes
+  (use-package ob-async :ensure t)
+#+end_src
+
 * 末尾
 #+BEGIN_SRC elisp :tangle yes
   (recentf-open-files)
