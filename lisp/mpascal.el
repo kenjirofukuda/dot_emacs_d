@@ -135,10 +135,10 @@ That is, regardless of where in the line point is at the time."
      of object on or out package packed procedure program property
      raise record repeat requires result self set shl shr then threadvar
      to try type unit uses until var while with xor
-		 
+
 		 ;; MPW Pascal/THINKC Pascal
-		 leave univ
-		 
+		 leave univ cycle
+
      ;; These routines should be keywords, if Borland had the balls.
      break exit)
 

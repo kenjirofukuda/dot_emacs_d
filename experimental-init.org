@@ -73,6 +73,12 @@ C-c C-v C-t
 
   (add-to-list 'auto-mode-alist
                '("\\.\\(p\\|pas\\|dpr\\|dpk\\)\\'" . mpascal-mode))
+
+  (add-hook 'mpascal-mode-hook
+          (lambda ()
+            (setq tab-width 4)
+            (setq c-basic-offset 4)))
+
 #+END_SRC
 * 基本設定
 #+begin_src elisp :tangle yes
@@ -672,7 +678,6 @@ https://zenn.dev/ebang/articles/231106_emacs-markdown
   (global-set-key "\C-cl" 'org-toggle-link-display)
 #+end_src
 
-
 ** 日記
 #+begin_src elisp :tangle yes
   (use-package org-journal
@@ -698,6 +703,7 @@ https://zenn.dev/ebang/articles/231106_emacs-markdown
      '(ruby . t)
      '(python . t)
      '(lua . t)
+     '(lisp . t)
      (cons 'mermaid  (executable-find "mmdc"))
      ))
 #+end_src
@@ -2798,8 +2804,110 @@ https://github.com/hlissner/emacs-pug-mode
   (use-package ob-async :ensure t)
 #+end_src
 
+* ObjectLisp シンタックス対応
+#+begin_src elisp :tangle yes
+  (with-eval-after-load 'lisp-mode
+    ;; 1. ObjectLispのキーワードリスト（単語をここに追加するだけで反映されます）
+    (defvar my-objectlisp-keywords
+      '("defobject"
+        "defobfun"
+        "defrecord"
+        "variant"
+        "ask"
+        "oneof"
+        "kindof"
+        ))
+
+    ;; 2. リストを正規表現に変換してフォントロック（構文強調）に追加
+    (let ((pattern (concat "(\\(" (regexp-opt my-objectlisp-keywords) "\\)\\>")))
+      (font-lock-add-keywords 'lisp-mode `((,pattern . 1))))
+
+    (font-lock-add-keywords
+     'lisp-mode
+     '(("(\\(usual-\\(\\w\\|\\s_\\)+\\)\\>" . (1 font-lock-builtin-face))))
+      
+    ;; 3. 各マクロのインデント設定
+    (put 'defobject     'lisp-indent-function 1)
+    (put 'defobfun      'lisp-indent-function 2)
+    (put 'ask           'lisp-indent-function 1)
+    (put 'oneof         'lisp-indent-function 1)
+    (put 'kindof        'lisp-indent-function 1)
+    )
+#+end_src
+
+* Scheme環境
+
+
+#+begin_src elisp :tangle yes
+  (use-package ob-scheme
+    :ensure t
+    :config
+    (add-to-list 'org-babel-load-languages '(scheme . t))
+    (org-babel-do-load-languages 'org-babel-load-languages org-babel-load-languages)
+    :when (or (executable-find "gosh")
+  	    (executable-find "guile")))
+#+end_src
+
+** Gauche
+#+begin_src elisp :tangle yes
+  (use-package geiser-gauche
+      ;; :init (add-to-list 'geiser-active-implementations 'gauche))
+      :after geiser)
+
+  (defun gosh-path ()
+      (if (eq system-type 'windows-nt)
+          "c:/Users/kenjiro/scoop/shims/gosh.exe"
+        "/usr/bin/gosh"))
+
+  (setq geiser-gauche-binary (gosh-path))
+
+  #+end_src
+
+** Guile
+#+begin_src elisp :tangle yes
+  (use-package geiser-guile
+    :after geiser)
+
+  (defun guile-path ()
+    (if (eq system-type 'windows-nt)
+        "c:/Users/kenjiro/scoop/shims/guile.exe"
+      "/usr/bin/guile"))
+
+  (setq geiser-guile-binary (guile-path))
+  #+end_src
+  
+** Racket
+#+begin_src elisp :tangle no
+  (defun racket-path ()
+    (if (eq system-type 'windows-nt)
+        "c:/Users/kenjiro/scoop/shims/racket.exe"
+      "/usr/bin/racket"))
+
+  ;; Racket
+  ;; racket-mode にて、拡張子判定が行われても、scheme-mode が優先されてしまうので
+  ;; 予め、除外しておく
+  (setq auto-mode-alist (cl-remove-if
+  		       (lambda (e)
+  			 (equal "\\.rkt\\'" (car e)))
+  		       auto-mode-alist))
+  (use-package racket-mode
+    :ensure t)
+
+  (eval-after-load 'racket-mode
+    '(progn
+       (add-hook 'racket-mode-hook 'racket-xp-mode)
+       (add-hook 'racket-mode-hook 'subword-mode)
+       ;;(add-hook 'racket-mode-hook 'paredit-mode)
+       (add-hook 'racket-mode-hook 'smartparens-strict-mode)
+       (add-hook 'racket-mode-hook 'rainbow-delimiters-mode)
+       ;;(add-hook 'racket-mode-hook 'aggressive-indent-mode)
+       ))
+
+  #+end_src
+
 * 末尾
 #+BEGIN_SRC elisp :tangle yes
+  (setq org-startup-folded t)
   (recentf-open-files)
   ;; (add-hook 'kill-emacs-query-functions 'kf:quit-query-function)
   (global-set-key "\C-x\ \C-c" 'kf:quit-emacs)

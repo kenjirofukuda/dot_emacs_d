@@ -24,6 +24,11 @@
 (add-to-list 'auto-mode-alist
              '("\\.\\(p\\|pas\\|dpr\\|dpk\\)\\'" . mpascal-mode))
 
+(add-hook 'mpascal-mode-hook
+        (lambda ()
+          (setq tab-width 4)
+          (setq c-basic-offset 4)))
+
 (setq inhibit-startup-message t)
 
 (scroll-bar-mode -1)        ; Disable visible scrollbar
@@ -474,6 +479,7 @@
    '(ruby . t)
    '(python . t)
    '(lua . t)
+   '(lisp . t)
    (cons 'mermaid  (executable-find "mmdc"))
    ))
 
@@ -1093,6 +1099,64 @@ middle"
 
 (use-package ob-async :ensure t)
 
+(with-eval-after-load 'lisp-mode
+  ;; 1. ObjectLispのキーワードリスト（単語をここに追加するだけで反映されます）
+  (defvar my-objectlisp-keywords
+    '("defobject"
+      "defobfun"
+      "defrecord"
+      "variant"
+      "ask"
+      "oneof"
+      "kindof"
+      ))
+
+  ;; 2. リストを正規表現に変換してフォントロック（構文強調）に追加
+  (let ((pattern (concat "(\\(" (regexp-opt my-objectlisp-keywords) "\\)\\>")))
+    (font-lock-add-keywords 'lisp-mode `((,pattern . 1))))
+
+  (font-lock-add-keywords
+   'lisp-mode
+   '(("(\\(usual-\\(\\w\\|\\s_\\)+\\)\\>" . (1 font-lock-builtin-face))))
+    
+  ;; 3. 各マクロのインデント設定
+  (put 'defobject     'lisp-indent-function 1)
+  (put 'defobfun      'lisp-indent-function 2)
+  (put 'ask           'lisp-indent-function 1)
+  (put 'oneof         'lisp-indent-function 1)
+  (put 'kindof        'lisp-indent-function 1)
+  )
+
+(use-package ob-scheme
+  :ensure t
+  :config
+  (add-to-list 'org-babel-load-languages '(scheme . t))
+  (org-babel-do-load-languages 'org-babel-load-languages org-babel-load-languages)
+  :when (or (executable-find "gosh")
+	    (executable-find "guile")))
+
+(use-package geiser-gauche
+    ;; :init (add-to-list 'geiser-active-implementations 'gauche))
+    :after geiser)
+
+(defun gosh-path ()
+    (if (eq system-type 'windows-nt)
+        "c:/Users/kenjiro/scoop/shims/gosh.exe"
+      "/usr/bin/gosh"))
+
+(setq geiser-gauche-binary (gosh-path))
+
+(use-package geiser-guile
+  :after geiser)
+
+(defun guile-path ()
+  (if (eq system-type 'windows-nt)
+      "c:/Users/kenjiro/scoop/shims/guile.exe"
+    "/usr/bin/guile"))
+
+(setq geiser-guile-binary (guile-path))
+
+(setq org-startup-folded t)
 (recentf-open-files)
 ;; (add-hook 'kill-emacs-query-functions 'kf:quit-query-function)
 (global-set-key "\C-x\ \C-c" 'kf:quit-emacs)
