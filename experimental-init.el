@@ -200,12 +200,9 @@
   :config
   (marginalia-mode 1))
 
-;; https://github.com/minad/consult
-(use-package consult
-  :ensure t)
-
 ;; Example configuration for Consult
 (use-package consult
+  :ensure t
   ;; Replace bindings. Lazily loaded by `use-package'.
   :bind (;; C-c bindings in `mode-specific-map'
          ("C-c M-x" . consult-mode-command)
@@ -410,12 +407,13 @@
   (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh))
 
 ;; Lisp ファミリ基本設定
+;; paredit フックから org-mode を除外することで、アロー演算子の誤判定を除外する。
 (show-paren-mode t)
 (use-package paredit
   :ensure t
   :commands enable-paredit-mode
   :hook ((emacs-lisp-mode
-          org-mode)
+          )
          . enable-paredit-mode))
 
 (use-package smartparens :ensure t)
@@ -503,10 +501,15 @@
 
 (use-package flycheck
   :ensure t
-  :init (global-flycheck-mode)
+  :hook ((after-init . global-flycheck-mode)
+         ;; Show diagnostics inline, next to the code (Error Lens style)
+         (after-init . global-flycheck-annotate-mode))
   :bind (:map flycheck-mode-map
               ("M-n" . flycheck-next-error) ; optional but recommended error navigation
-              ("M-p" . flycheck-previous-error)))
+              ("M-p" . flycheck-previous-error))
+  :config
+  ;; Report Eglot's LSP diagnostics through Flycheck
+  (global-flycheck-eglot-mode 1))
 
 (use-package lsp-mode
   :diminish "LSP"
@@ -1118,7 +1121,7 @@ middle"
   (font-lock-add-keywords
    'lisp-mode
    '(("(\\(usual-\\(\\w\\|\\s_\\)+\\)\\>" . (1 font-lock-builtin-face))))
-    
+
   ;; 3. 各マクロのインデント設定
   (put 'defobject     'lisp-indent-function 1)
   (put 'defobfun      'lisp-indent-function 2)
@@ -1155,6 +1158,17 @@ middle"
     "/usr/bin/guile"))
 
 (setq geiser-guile-binary (guile-path))
+
+(use-package kotlin-mode
+  :ensure t)
+(add-hook 'kotlin-mode-hook 'eglot-ensure)
+
+(add-hook 'org-mode-hook #'font-lock-ensure)
+(with-eval-after-load 'org
+  ;; ソースブロック内のシンタックスハイライトを有効化
+  (setq org-src-fontify-natively t)
+  ;; ネイティブのタブやインデントを維持して構造をわかりやすくする
+  (setq org-src-tab-acts-natively t))
 
 (setq org-startup-folded t)
 (recentf-open-files)
