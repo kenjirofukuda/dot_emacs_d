@@ -29,6 +29,7 @@
           (setq tab-width 4)
           (setq c-basic-offset 4)))
 
+
 (setq inhibit-startup-message t)
 
 (scroll-bar-mode -1)        ; Disable visible scrollbar
@@ -46,34 +47,11 @@
 
 ;; パッケージアーカイブ
 (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
-(eval-and-compile
-  (require 'package)
-  (customize-set-variable
-   'package-archives '(("org" . "https://orgmode.org/elpa/")
-			 ("melpa" . "https://melpa.org/packages/")
-			 ;; ("melpa-stable" . "https://mstable.elpa.org/packages/")
-			 ("gnu" . "https://elpa.gnu.org/packages/")))
-  (package-initialize)
-  (unless package-archive-contents
-    (package-refresh-contents))
 
-  ;; Initialize use-package on non-Linux platforms
-  (unless (package-installed-p 'use-package)
-    (package-install 'use-package))
+;; straight.el を use-package に統合する設定
+(setq straight-use-package-by-default t)
 
-  (require 'use-package)
-  (setq use-package-always-ensure t))
-
-;; パッケージ自動アップデート
-(use-package auto-package-update
-  :custom
-  (auto-package-update-interval 7)
-  (auto-package-update-prompt-before-update t)
-  (auto-package-update-hide-results t)
-  :config
-  (auto-package-update-maybe)
-  (auto-package-update-at-time "20:00"))
-
+;; --- ここで先に straight.el をブートストラップ（初期化）する ---
 (defvar bootstrap-version)
 (let ((bootstrap-file
        (expand-file-name
@@ -89,6 +67,16 @@
       (goto-char (point-max))
       (eval-print-last-sexp)))
   (load bootstrap-file nil 'nomessage))
+
+;; straightの初期化が終わったので、安全にuse-packageが使える
+(use-package auto-package-update
+  :custom
+  (auto-package-update-interval 7)
+  (auto-package-update-prompt-before-update t)
+  (auto-package-update-hide-results t)
+  :config
+  (auto-package-update-maybe)
+  (auto-package-update-at-time "20:00"))
 
 ;; Editor Config
 ;; https://editorconfig.org/
@@ -386,10 +374,9 @@
   ;; useful beyond Corfu.
   (read-extended-command-predicate #'command-completion-default-include-p))
 
-;; Magit 設定
+;; Magit 設定 (straight.el 向けに最適化)
 (use-package magit
-  :ensure t
-  :pin melpa)
+  :ensure t)
 
 ;; https://joppot.info/posts/f3007a42-5ba2-4060-90d4-496697413cf9
 (use-package diff-hl
@@ -431,6 +418,7 @@
      (add-hook 'ielm-mode-hook 'paredit-mode)
      (define-key paredit-mode-map (kbd "RET") nil)
      (define-key paredit-mode-map (kbd "C-j") 'paredit-newline)))
+
 
 (use-package markdown-mode
   :mode ("\\.md\\'" . markdown-mode)
@@ -772,8 +760,7 @@ middle"
 (global-set-key [C-s-right] 'win-resize-minimize-vert)
 
 (use-package sudo-edit
-  :ensure t
-  :pin melpa)
+  :ensure t)
 
 (use-package which-key
   :defer 0
@@ -924,8 +911,10 @@ middle"
   (when (kf:ensure-load-file "/usr/share/emacs/site-lisp/emacs-mozc/mozc.el")
     (setq default-input-method "japanese-mozc")))
 
+
 ;; Haiku build system
 (kf:ensure-load-file "~/.emacs.d/lisp/jam-mode.el")
+
 
 (use-package multiple-cursors
   :ensure t)
@@ -955,10 +944,17 @@ middle"
 ;; (kf:ensure-load-file "~/.roswell/helper.el")
 (use-package slime
   :if (file-exists-p (expand-file-name "~/.roswell/helper.el"))
-  :ensure slime-company
+  :ensure t
   :init (load (expand-file-name "~/.roswell/helper.el"))
   :custom (inferior-lisp-program "ros -Q run ")
-  :config (slime-setup '(slime-fancy slime-company)))
+  :config (slime-setup '(slime-fancy)))
+
+;; SLIME用のCompany補完拡張を個別に紐付ける
+(use-package slime-company
+  :ensure t
+  :after (slime company)
+  :config
+  (slime-setup '(slime-fancy slime-company)))
 
 (defun my-slime-sync-repl ()
   "現在のバッファのパッケージに移動してからREPLに移行"
@@ -967,8 +963,10 @@ middle"
 
 (global-set-key (kbd "C-c C-f") 'slime-sync-package-and-default-directory)
 
+
 ;; https://github.com/rversteegen/fb-mode
 (kf:ensure-load-file "~/.emacs.d/lisp/fb-mode.el")
+
 
 (use-package d-mode
   :ensure t)
@@ -1045,32 +1043,26 @@ middle"
 (add-hook 'org-mode-hook (lambda () (setq-local tab-width 8)))
 
 (use-package web-mode :ensure t)
-
 (use-package auto-rename-tag :ensure t)
-
 (use-package projectile-laravel
   :straight (projectile-laravel :type git :host github :repo "strikerlulu/projectile-laravel"))
 
-(setq package-selected-packages '(lsp-mode yasnippet lsp-treemacs flycheck company which-key dap-mode php-mode))
+;; PHP環境とDAPモードの設定をuse-packageに統合
+(use-package php-mode
+  :ensure t
+  :hook (php-mode-hook . lsp)
+  :config
+  (with-eval-after-load 'lsp-mode
+    (require 'dap-php)
+    (yas-global-mode 1)))
 
-(when (cl-find-if-not #'package-installed-p package-selected-packages)
-  (package-refresh-contents)
-  (mapc #'package-install package-selected-packages))
-
-(which-key-mode)
-(add-hook 'php-mode-hook 'lsp)
-
+;; LSP関連のパフォーマンス調整（ここに一括退避）
 (setq gc-cons-threshold (* 100 1024 1024)
       read-process-output-max (* 10 1024 1024)
       treemacs-space-between-root-nodes nil
       company-idle-delay 0.0
       company-minimum-prefix-length 1
-      lsp-idle-delay 0.5)  ;; clangd is fast
-
-(with-eval-after-load 'lsp-mode
-  (add-hook 'lsp-mode-hook #'lsp-enable-which-key-integration)
-  (require 'dap-php)
-  (yas-global-mode))
+      lsp-idle-delay 0.5)
 
 (when (eq system-type 'gnu/linux)
   (require 'ibus)
@@ -1130,8 +1122,11 @@ middle"
   (put 'kindof        'lisp-indent-function 1)
   )
 
+;; ob-scheme は Org 内蔵機能のため、straightによるダウンロードを完全に無効化する
 (use-package ob-scheme
-  :ensure t
+  :ensure nil
+  :straight nil
+  :after org
   :config
   (add-to-list 'org-babel-load-languages '(scheme . t))
   (org-babel-do-load-languages 'org-babel-load-languages org-babel-load-languages)
@@ -1148,6 +1143,7 @@ middle"
       "/usr/bin/gosh"))
 
 (setq geiser-gauche-binary (gosh-path))
+
 
 (use-package geiser-guile
   :after geiser)

@@ -111,38 +111,11 @@ C-c C-v C-t
 #+BEGIN_SRC elisp :tangle yes
   ;; パッケージアーカイブ
   (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
-  (eval-and-compile
-    (require 'package)
-    (customize-set-variable
-     'package-archives '(("org" . "https://orgmode.org/elpa/")
-			 ("melpa" . "https://melpa.org/packages/")
-			 ;; ("melpa-stable" . "https://mstable.elpa.org/packages/")
-			 ("gnu" . "https://elpa.gnu.org/packages/")))
-    (package-initialize)
-    (unless package-archive-contents
-      (package-refresh-contents))
 
-    ;; Initialize use-package on non-Linux platforms
-    (unless (package-installed-p 'use-package)
-      (package-install 'use-package))
+  ;; straight.el を use-package に統合する設定
+  (setq straight-use-package-by-default t)
 
-    (require 'use-package)
-    (setq use-package-always-ensure t))
-
-  ;; パッケージ自動アップデート
-  (use-package auto-package-update
-    :custom
-    (auto-package-update-interval 7)
-    (auto-package-update-prompt-before-update t)
-    (auto-package-update-hide-results t)
-    :config
-    (auto-package-update-maybe)
-    (auto-package-update-at-time "20:00"))
-#+END_SRC
-** straight
-use-packageに含まれているため
-- @see https://github.com/radian-software/straight.el?tab=readme-ov-file#getting-started
-#+begin_src elisp :tangle yes
+  ;; --- ここで先に straight.el をブートストラップ（初期化）する ---
   (defvar bootstrap-version)
   (let ((bootstrap-file
          (expand-file-name
@@ -158,6 +131,19 @@ use-packageに含まれているため
         (goto-char (point-max))
         (eval-print-last-sexp)))
     (load bootstrap-file nil 'nomessage))
+#+END_SRC
+
+** パッケージ自動アップデート
+#+begin_src elisp :tangle yes
+  ;; straightの初期化が終わったので、安全にuse-packageが使える
+  (use-package auto-package-update
+    :custom
+    (auto-package-update-interval 7)
+    (auto-package-update-prompt-before-update t)
+    (auto-package-update-hide-results t)
+    :config
+    (auto-package-update-maybe)
+    (auto-package-update-at-time "20:00"))
 #+end_src
 
 #+begin_src elisp :tangle "./early-init.el"
@@ -591,10 +577,9 @@ https://emacs.stackexchange.com/questions/27912/dired-sort-and-hide-by-default
 #+end_src
 * Magit 設定
 #+BEGIN_SRC elisp :tangle yes
-  ;; Magit 設定
+  ;; Magit 設定 (straight.el 向けに最適化)
   (use-package magit
-    :ensure t
-    :pin melpa)
+    :ensure t)
 
   ;; https://joppot.info/posts/f3007a42-5ba2-4060-90d4-496697413cf9
   (use-package diff-hl
@@ -2289,8 +2274,7 @@ https://www.ovistoica.com/blog/2024-7-05-modern-emacs-typescript-web-tsx-config#
 * sudo編集
 #+begin_src elisp :tangle yes
   (use-package sudo-edit
-    :ensure t
-    :pin melpa)
+    :ensure t)
 #+end_src
 * Which Key
  [[https://github.com/justbur/emacs-which-key][which-key]] is a useful UI panel that appears when you start pressing any key binding in Emacs to offer you all possible completions for the prefix.  For example, if you press =C-c= (hold control and press the letter =c=), a panel will appear at the bottom of the frame displaying all of the bindings under that prefix and which command they run.  This is very useful for learning the possible key bindings in the mode of your current buffer.
@@ -2604,10 +2588,17 @@ https://protesilaos.com/emacs/logos*
   ;; (kf:ensure-load-file "~/.roswell/helper.el")
   (use-package slime
     :if (file-exists-p (expand-file-name "~/.roswell/helper.el"))
-    :ensure slime-company
+    :ensure t
     :init (load (expand-file-name "~/.roswell/helper.el"))
     :custom (inferior-lisp-program "ros -Q run ")
-    :config (slime-setup '(slime-fancy slime-company)))
+    :config (slime-setup '(slime-fancy)))
+
+  ;; SLIME用のCompany補完拡張を個別に紐付ける
+  (use-package slime-company
+    :ensure t
+    :after (slime company)
+    :config
+    (slime-setup '(slime-fancy slime-company)))
 
   (defun my-slime-sync-repl ()
     "現在のバッファのパッケージに移動してからREPLに移行"
@@ -2740,38 +2731,26 @@ https://github.com/hlissner/emacs-pug-mode
 * PHP
 #+begin_src elisp :tangle yes
   (use-package web-mode :ensure t)
-#+end_src
-
-#+begin_src elisp :tangle yes
   (use-package auto-rename-tag :ensure t)
-#+end_src
-
-#+begin_src elisp :tangle yes
   (use-package projectile-laravel
     :straight (projectile-laravel :type git :host github :repo "strikerlulu/projectile-laravel"))
-#+end_src
 
-#+begin_src elisp :tangle yes
-  (setq package-selected-packages '(lsp-mode yasnippet lsp-treemacs flycheck company which-key dap-mode php-mode))
+  ;; PHP環境とDAPモードの設定をuse-packageに統合
+  (use-package php-mode
+    :ensure t
+    :hook (php-mode-hook . lsp)
+    :config
+    (with-eval-after-load 'lsp-mode
+      (require 'dap-php)
+      (yas-global-mode 1)))
 
-  (when (cl-find-if-not #'package-installed-p package-selected-packages)
-    (package-refresh-contents)
-    (mapc #'package-install package-selected-packages))
-
-  (which-key-mode)
-  (add-hook 'php-mode-hook 'lsp)
-
+  ;; LSP関連のパフォーマンス調整（ここに一括退避）
   (setq gc-cons-threshold (* 100 1024 1024)
         read-process-output-max (* 10 1024 1024)
         treemacs-space-between-root-nodes nil
         company-idle-delay 0.0
         company-minimum-prefix-length 1
-        lsp-idle-delay 0.5)  ;; clangd is fast
-
-  (with-eval-after-load 'lsp-mode
-    (add-hook 'lsp-mode-hook #'lsp-enable-which-key-integration)
-    (require 'dap-php)
-    (yas-global-mode))
+        lsp-idle-delay 0.5)
 #+end_src
 * IBus
 - @see https://w.atwiki.jp/s-irie/pages/21.html
@@ -2855,8 +2834,11 @@ https://github.com/hlissner/emacs-pug-mode
 * Scheme環境
 
 #+begin_src elisp :tangle yes
+  ;; ob-scheme は Org 内蔵機能のため、straightによるダウンロードを完全に無効化する
   (use-package ob-scheme
-    :ensure t
+    :ensure nil
+    :straight nil
+    :after org
     :config
     (add-to-list 'org-babel-load-languages '(scheme . t))
     (org-babel-do-load-languages 'org-babel-load-languages org-babel-load-languages)
