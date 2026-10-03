@@ -15,8 +15,8 @@ Elispのおさらいは
 
 * このファイルの使用方法
 #+BEGIN_SRC shell :tangle no
-  alias emacs2='emacs -Q -l ~/.emacs.d/experimental-init.el'
-  # then use: emacs2 <Enter>
+alias emacs2='emacs -Q -l ~/.emacs.d/experimental-init.el'
+# then use: emacs2 <Enter>
 #+END_SRC
 
 * ファイルの生成方法
@@ -27,54 +27,54 @@ C-c C-v C-t
 * Script Runner
 
 これはブラウザの拡張機能であり、以下のソースを GNU Manuals というタイトルのもとに貼り付けて利用すれば、おかしな翻訳を避けることができる。
-** TODO あれ、javascript で C-M-\ =indent-region= すると、4space のインデントになってしまう。どこかで見直そう。
+** TODO COMMENT あれ、javascript で C-M-\ =indent-region= すると、4space のインデントになってしまう。どこかで見直そう。
 
 #+begin_src javascript :tangle no
-  const classes = [
-      "example",
-      "category-def",
-      "def-name",
-      "def-var-arguments"
-  ]
+const classes = [
+  "example",
+  "category-def",
+  "def-name",
+  "def-var-arguments"
+]
 
-  const qclasses = classes.map((v) => "." + v).join(",")
+const qclasses = classes.map((v) => "." + v).join(",")
 
-  document.querySelectorAll(qclasses).forEach((el) => {
-      if (!el.hasAttribute("translate")) {
-          el.setAttribute("translate", "no");
-      }
-  });
+document.querySelectorAll(qclasses).forEach((el) => {
+  if (!el.hasAttribute("translate")) {
+    el.setAttribute("translate", "no");
+  }
+});
 #+end_src
 
 * スタートアップメッセージ
 #+BEGIN_SRC elisp :tangle yes
-  ;;; init.el --- Initialization. -*- lexical-binding: t; -*-
-  ;;; Commentary:
-  ;;
-  ;; Emacs 27+ introduces init.el, which is run before init.el,
-  ;; before package and UI initialization happens.
-  ;;
-  ;;; Code:
+;;; init.el --- Initialization. -*- lexical-binding: t; -*-
+;;; Commentary:
+;;
+;; Emacs 27+ introduces init.el, which is run before init.el,
+;; before package and UI initialization happens.
+;;
+;;; Code:
 
-  (with-current-buffer "*scratch*"
-    (insert ";;; loading Experimental init.el\n")
-    (insert ";;; Emacs " emacs-version "\n")
-    (insert "\n")
-    (insert "\n"))
+(with-current-buffer "*scratch*"
+  (insert ";;; loading Experimental init.el\n")
+  (insert ";;; Emacs " emacs-version "\n")
+  (insert "\n")
+  (insert "\n"))
 
-  (when (file-directory-p "~/.emacs.d/lisp")
-    (push (expand-file-name "~/.emacs.d/lisp") load-path))
+(when (file-directory-p "~/.emacs.d/lisp")
+  (push (expand-file-name "~/.emacs.d/lisp") load-path))
 
-  (setq gc-cons-threshold 200000000)
-  (setq read-process-output-max (* 10 1024 1024)) ;; 8mb
-  ;; カスタムコマンドのロード
-  (require 'kf-command)
-  (require 'mpascal)
+(setq gc-cons-threshold 200000000)
+(setq read-process-output-max (* 10 1024 1024)) ;; 8mb
+;; カスタムコマンドのロード
+(require 'kf-command)
+(require 'mpascal)
 
-  (add-to-list 'auto-mode-alist
-               '("\\.\\(p\\|pas\\|dpr\\|dpk\\)\\'" . mpascal-mode))
+(add-to-list 'auto-mode-alist
+             '("\\.\\(p\\|pas\\|dpr\\|dpk\\)\\'" . mpascal-mode))
 
-  (add-hook 'mpascal-mode-hook
+(add-hook 'mpascal-mode-hook
           (lambda ()
             (setq tab-width 4)
             (setq c-basic-offset 4)))
@@ -82,94 +82,101 @@ C-c C-v C-t
 #+END_SRC
 * 基本設定
 #+begin_src elisp :tangle yes
-  (setq inhibit-startup-message t)
+(setq inhibit-startup-message t)
 
-  (scroll-bar-mode -1)        ; Disable visible scrollbar
-  (tool-bar-mode -1)          ; Disable the toolbar
-  (tooltip-mode -1)           ; Disable tooltips
-  (set-fringe-mode 10)        ; Give some breathing room
+(scroll-bar-mode -1)        ; Disable visible scrollbar
+(tool-bar-mode -1)          ; Disable the toolbar
+(tooltip-mode -1)           ; Disable tooltips
+(set-fringe-mode 10)        ; Give some breathing room
 
-  (menu-bar-mode -1)            ; Disable the menu bar
+(menu-bar-mode -1)            ; Disable the menu bar
 
-  ;; Set up the visible bell
-  (setq visible-bell t)
+;; Set up the visible bell
+(setq visible-bell t)
 
-  (column-number-mode)
-  (global-display-line-numbers-mode -1)
+(column-number-mode)
+(global-display-line-numbers-mode -1)
+
+;; 【追記】ネイティブコンパイルの警告バッファを自動ポップアップさせない（無音化）
+(setq native-comp-async-report-warnings-errors 'silent)
+(setq warning-minimum-level :error)
 #+end_src
 ** +check-parens 対策+
 対策そのものは不要であるが、備忘録として残しておく。
 アロー関数が引っかかってエラーを起す原因が check-paren にあると思っていた頃の対策。
 実際は paredit-mode が org-mode に作用していたのが問題であった。
 #+begin_src elisp :tangle no
-  ;; 括弧チェック関数が検査する対象を ( )、[ ]、{ } の3つだけに限定する
-  (setq check-parens-syntax-vector [?\( ?\[ ?\{])
+;; 括弧チェック関数が検査する対象を ( )、[ ]、{ } の3つだけに限定する
+(setq check-parens-syntax-vector [?\( ?\[ ?\{])
 #+end_src
 
 * パッケージ自動アップデート
 ** use-package
 #+BEGIN_SRC elisp :tangle yes
-  ;; パッケージアーカイブ
-  (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
+;; パッケージアーカイブ
+(setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
 
-  ;; straight.el を use-package に統合する設定
-  (setq straight-use-package-by-default t)
+;; straight.el を use-package に統合する設定
+(setq straight-use-package-by-default t)
 
-  ;; --- ここで先に straight.el をブートストラップ（初期化）する ---
-  (defvar bootstrap-version)
-  (let ((bootstrap-file
-         (expand-file-name
-          "straight/repos/straight.el/bootstrap.el"
-          (or (bound-and-true-p straight-base-dir)
-              user-emacs-directory)))
-        (bootstrap-version 7))
-    (unless (file-exists-p bootstrap-file)
-      (with-current-buffer
-          (url-retrieve-synchronously
-           "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
-           'silent 'inhibit-cookies)
-        (goto-char (point-max))
-        (eval-print-last-sexp)))
-    (load bootstrap-file nil 'nomessage))
+;; --- ここで先に straight.el をブートストラップ（初期化）する ---
+(defvar bootstrap-version)
+(let ((bootstrap-file
+       (expand-file-name
+        "straight/repos/straight.el/bootstrap.el"
+        (or (bound-and-true-p straight-base-dir)
+            user-emacs-directory)))
+      (bootstrap-version 7))
+  (unless (file-exists-p bootstrap-file)
+    (with-current-buffer
+        (url-retrieve-synchronously
+         "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
+         'silent 'inhibit-cookies)
+      (goto-char (point-max))
+      (eval-print-last-sexp)))
+  (load bootstrap-file nil 'nomessage))
 #+END_SRC
 
 ** パッケージ自動アップデート
 #+begin_src elisp :tangle yes
-  ;; straightの初期化が終わったので、安全にuse-packageが使える
-  (use-package auto-package-update
-    :custom
-    (auto-package-update-interval 7)
-    (auto-package-update-prompt-before-update t)
-    (auto-package-update-hide-results t)
-    :config
-    (auto-package-update-maybe)
-    (auto-package-update-at-time "20:00"))
+;; straightの初期化が終わったので、安全にuse-packageが使える
+(use-package auto-package-update
+  :custom
+  (auto-package-update-interval 7)
+  (auto-package-update-prompt-before-update t)
+  (auto-package-update-hide-results t)
+  :config
+  (auto-package-update-maybe)
+  (auto-package-update-at-time "20:00"))
 #+end_src
 
 #+begin_src elisp :tangle "./early-init.el"
-  ;;; early-init.el --- Early Initialization. -*- lexical-binding: t; -*-
-  ;;; Commentary:
-  ;;
-  ;; Emacs 27+ introduces early-init.el, which is run before init.el,
-  ;; before package and UI initialization happens.
-  ;;
+;;; early-init.el --- Early Initialization. -*- lexical-binding: t; -*-
+;;; Commentary:
+;;
+;; Emacs 27+ introduces early-init.el, which is run before init.el,
+;; before package and UI initialization happens.
+;;
   ;;; Code:
-  (setq package-enable-at-startup nil)
+(setq package-enable-at-startup nil)
   ;;; @see https://emacs-lsp.github.io/lsp-mode/page/performance/#use-plists-for-deserialization
-  (setenv "LSP_USE_PLISTS" "true")
-  (provide 'early-init)
+(setenv "LSP_USE_PLISTS" "true")
+(provide 'early-init)
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;;; early-init.el ends here
 #+end_src
 
 * EditorConfig
 #+begin_src elisp :tangle yes
-  ;; Editor Config
-  ;; https://editorconfig.org/
-  (use-package editorconfig
-    :ensure t
-    :config
-    (editorconfig-mode 1))
+;; Editor Config
+;; https://editorconfig.org/
+(use-package editorconfig
+  :ensure t
+  :config
+  (editorconfig-mode 1)
+  ;; 【追加】Org-modeのソースブロック（Babel）内にも、親ファイルの .editorconfig を強制適用する
+  (add-hook 'org-src-mode-hook #'editorconfig-apply)
+)
 #+end_src
 
 ;; Local Variables:
@@ -186,92 +193,92 @@ REPL内にいるときは、すでに出力された文字列にアクセスで�
 Cライブラリをコンパイルして利用するため、コンパイル環境を準備
 *** Debian 系列
 #+begin_src sh :tangle no
-  sudo apt install libtool
-  sudo apt install libtool-bin
+sudo apt install libtool
+sudo apt install libtool-bin
 #+end_src
 *** Haiku
 #+begin_src sh :tangle no
-  pkgman install cmake
-  pkgman install libtool
+pkgman install cmake
+pkgman install libtool
 #+end_src
 ** パッケージ導入
 #+begin_src elisp :tangle yes
-  ;; より本物に近いターミナルエミュレータ
-  (use-package vterm
-    :unless (eq system-type 'windows-nt)
-    :ensure t)
+;; より本物に近いターミナルエミュレータ
+(use-package vterm
+  :unless (eq system-type 'windows-nt)
+  :ensure t)
 #+end_src
 * 基本関数
 #+BEGIN_SRC elisp :tangle yes
-  ;; 基本関数
-  (defun replace-in-string (what with in)
-    (replace-regexp-in-string (regexp-quote what) with in nil 'literal))
+;; 基本関数
+(defun replace-in-string (what with in)
+  (replace-regexp-in-string (regexp-quote what) with in nil 'literal))
 
-  (defun safe-system-type-string ()
-    (replace-in-string "/" "_" (prin1-to-string system-type)))
+(defun safe-system-type-string ()
+  (replace-in-string "/" "_" (prin1-to-string system-type)))
 
-  (defun safe-host-name-string ()
-    (replace-in-string "/" "_" (downcase (system-name))))
+(defun safe-host-name-string ()
+  (replace-in-string "/" "_" (downcase (system-name))))
 
-  (defun sys-base-name (prefix suffix)
-    (concat prefix "-" (safe-system-type-string) suffix ))
+(defun sys-base-name (prefix suffix)
+  (concat prefix "-" (safe-system-type-string) suffix ))
 
-  (defun host-base-name (prefix suffix)
-    (concat prefix "-" (safe-host-name-string) suffix ))
+(defun host-base-name (prefix suffix)
+  (concat prefix "-" (safe-host-name-string) suffix ))
 #+END_SRC
 
 * 外部プロセス更新ファイルのバッファ同期
 #+BEGIN_SRC elisp :tangle yes
-  ;; 外部プロセス更新ファイルのバッファ同期
-  (setq make-backup-files nil)
-  ;; https://takaxp.github.io/init.html#orgc2257142
-  (when (require 'auto-save-buffers nil t)
+;; 外部プロセス更新ファイルのバッファ同期
+(setq make-backup-files nil)
+;; https://takaxp.github.io/init.html#orgc2257142
+(when (require 'auto-save-buffers nil t)
 
-    (defun my-ox-hugo-auto-saving-p ()
+  (defun my-ox-hugo-auto-saving-p ()
+    (when (eq major-mode 'org-mode)
+      (or (bound-and-true-p org-capture-mode) ;; when activating org-capture
+          (and (fboundp 'org-entry-get)
+               (equal "" (org-entry-get (point) "EXPORT_FILE_NAME"))))))
+
+  (defun my-auto-save-buffers ()
+    (cond ((memq major-mode '(undo-tree-visualizer-mode diff-mode)) nil)
+          ((string-match "Org Src" (buffer-name)) nil)
+          ((let ((pt (point)))
+             (and (string-match ".gpg" (buffer-name))
+                  (not (eq pt 1))
+                  (string-match (buffer-substring (- pt 1) pt) " "))) nil) ;; .gpg で半角スペースの後ろのブリッツでは自動保存しない．FIXME 半角スペース+行末
+          ((my-ox-hugo-auto-saving-p) nil)
+          (t
+           (auto-save-buffers))))
+
+  (run-with-idle-timer 1.6 t #'my-auto-save-buffers))
+
+(unless noninteractive
+  (global-auto-revert-mode 1)
+  ;; revert されるのが org バッファのとき，自動的にドロワをたたむ
+  ;; カーソルが (point-max) に移動してしまう場合は非推奨
+  (with-eval-after-load "org"
+    (defun my-org-hide-drawers-all ()
       (when (eq major-mode 'org-mode)
-        (or (bound-and-true-p org-capture-mode) ;; when activating org-capture
-            (and (fboundp 'org-entry-get)
-                 (equal "" (org-entry-get (point) "EXPORT_FILE_NAME"))))))
-
-    (defun my-auto-save-buffers ()
-      (cond ((memq major-mode '(undo-tree-visualizer-mode diff-mode)) nil)
-            ((string-match "Org Src" (buffer-name)) nil)
-            ((let ((pt (point)))
-               (and (string-match ".gpg" (buffer-name))
-                    (not (eq pt 1))
-                    (string-match (buffer-substring (- pt 1) pt) " "))) nil) ;; .gpg で半角スペースの後ろのブリッツでは自動保存しない．FIXME 半角スペース+行末
-            ((my-ox-hugo-auto-saving-p) nil)
-            (t
-             (auto-save-buffers))))
-
-    (run-with-idle-timer 1.6 t #'my-auto-save-buffers))
-
-  (unless noninteractive
-    (global-auto-revert-mode 1)
-    ;; revert されるのが org バッファのとき，自動的にドロワをたたむ
-    ;; カーソルが (point-max) に移動してしまう場合は非推奨
-    (with-eval-after-load "org"
-      (defun my-org-hide-drawers-all ()
-        (when (eq major-mode 'org-mode)
-          (org-cycle-hide-drawers 'all)))
-      (add-hook 'after-revert-hook 'my-org-hide-drawers-all)))
+        (org-cycle-hide-drawers 'all)))
+    (add-hook 'after-revert-hook 'my-org-hide-drawers-all)))
 #+END_SRC
 
 * 最近訪れたファイル対応
 #+BEGIN_SRC elisp :tangle yes
-  ;; 最近訪れたファイル対応
-  (defun recentf-base-name ()
-    (host-base-name "recentf" ".dat"))
+;; 最近訪れたファイル対応
+(defun recentf-base-name ()
+  (host-base-name "recentf" ".dat"))
 
-  (defun recentf-file-name ()
-    (expand-file-name (locate-user-emacs-file (recentf-base-name))))
+(defun recentf-file-name ()
+  (expand-file-name (locate-user-emacs-file (recentf-base-name))))
 
-  (setq recentf-save-file (recentf-file-name))
+(setq recentf-save-file (recentf-file-name))
 
-  (recentf-mode 1)
-  (setq recentf-max-menu-items 25)
-  (setq recentf-max-saved-items 25)
-  (global-set-key "\C-x\ \C-r" 'recentf-open-files)
+(recentf-mode 1)
+(setq recentf-max-menu-items 25)
+(setq recentf-max-saved-items 25)
+(global-set-key "\C-x\ \C-r" 'recentf-open-files)
 #+END_SRC
 * ido
 * オプション
@@ -279,15 +286,15 @@ Cライブラリをコンパイルして利用するため、コンパイル環�
 これは、emacs の起動引数の役割を私が理解していないためである。
 
 #+begin_src elisp :tangle yes
-  (defun options-base-name ()
-    (sys-base-name "options-experimental" ".el"))
+(defun options-base-name ()
+  (sys-base-name "options-experimental" ".el"))
 
-  (defun options-file-name ()
-    (expand-file-name (locate-user-emacs-file (options-base-name))))
+(defun options-file-name ()
+  (expand-file-name (locate-user-emacs-file (options-base-name))))
 
-  (setq custom-file (options-file-name))
-  (if (file-exists-p custom-file)
-      (load custom-file t nil nil))
+(setq custom-file (options-file-name))
+(if (file-exists-p custom-file)
+    (load custom-file t nil nil))
 #+end_src
 
 *** DONE 他のホストと、衝突する恐れがある
@@ -296,337 +303,333 @@ Cライブラリをコンパイルして利用するため、コンパイル環�
 ホスト名を付加して衝突回避できるか要検討。
 * 拡張選択範囲
 #+BEGIN_SRC elisp :tangle yes
-  ;; 拡張選択範囲
-  (use-package expand-region
-    :ensure t)
-  (global-set-key (kbd "C-q") 'er/expand-region)
+;; 拡張選択範囲
+(use-package expand-region
+  :ensure t)
+(global-set-key (kbd "C-q") 'er/expand-region)
 #+END_SRC
 
 * コード補完
 #+BEGIN_SRC elisp :tangle yes
-  ;; コード補完
-  (use-package company
-    :ensure t)
+;; コード補完
+(use-package company
+  :ensure t)
 #+END_SRC
 
 * ミニバッファーの改善
 詳しい解説は次のビデオにある https://www.youtube.com/watch?v=d3aaxOqwHhI
 ** vertico, marginalia
 #+begin_src elisp :tangle yes
-  ;; ミニバッファーの改善
-  ;; https://github.com/minad/vertico
-  (use-package vertico
-    :ensure t
-    :config
-    (setq vertico-cycle t)
-    (setq vertico-resize nil)
-    (vertico-mode 1))
+;; ミニバッファーの改善
+;; https://github.com/minad/vertico
+(use-package vertico
+  :ensure t
+  :config
+  (setq vertico-cycle t)
+  (setq vertico-resize nil)
+  (vertico-mode 1))
 
-  ;; https://github.com/minad/marginalia
-  (use-package marginalia
-    :ensure t
-    :config
-    (marginalia-mode 1))
-#+end_src
+;; https://github.com/minad/marginalia
+(use-package marginalia
+  :ensure t
+  :config
+  (marginalia-mode 1))
 
-** consult
-https://github.com/minad/consult
-#+begin_src elisp :tangle yes
-  ;; Example configuration for Consult
-  (use-package consult
-    :ensure t
-    ;; Replace bindings. Lazily loaded by `use-package'.
-    :bind (;; C-c bindings in `mode-specific-map'
-           ("C-c M-x" . consult-mode-command)
-           ("C-c h" . consult-history)
-           ("C-c k" . consult-kmacro)
-           ("C-c m" . consult-man)
-           ("C-c i" . consult-info)
-           ([remap Info-search] . consult-info)
-           ;; C-x bindings in `ctl-x-map'
-           ("C-x M-:" . consult-complex-command)     ;; orig. repeat-complex-command
-           ("C-x b" . consult-buffer)                ;; orig. switch-to-buffer
-           ("C-x 4 b" . consult-buffer-other-window) ;; orig. switch-to-buffer-other-window
-           ("C-x 5 b" . consult-buffer-other-frame)  ;; orig. switch-to-buffer-other-frame
-           ("C-x t b" . consult-buffer-other-tab)    ;; orig. switch-to-buffer-other-tab
-           ("C-x r b" . consult-bookmark)            ;; orig. bookmark-jump
-           ("C-x p b" . consult-project-buffer)      ;; orig. project-switch-to-buffer
-           ;; Custom M-# bindings for fast register access
-           ("M-#" . consult-register-load)
-           ("M-'" . consult-register-store)          ;; orig. abbrev-prefix-mark (unrelated)
-           ("C-M-#" . consult-register)
-           ;; Other custom bindings
-           ("M-y" . consult-yank-pop)                ;; orig. yank-pop
-           ;; M-g bindings in `goto-map'
-           ("M-g e" . consult-compile-error)
-           ("M-g f" . consult-flymake)               ;; Alternative: consult-flycheck
-           ("M-g g" . consult-goto-line)             ;; orig. goto-line
-           ("M-g M-g" . consult-goto-line)           ;; orig. goto-line
-           ("M-g o" . consult-outline)               ;; Alternative: consult-org-heading
-           ("M-g m" . consult-mark)
-           ("M-g k" . consult-global-mark)
-           ("M-g i" . consult-imenu)
-           ("M-g I" . consult-imenu-multi)
-           ;; M-s bindings in `search-map'
-           ("M-s d" . consult-find)                  ;; Alternative: consult-fd
-           ("M-s c" . consult-locate)
-           ("M-s g" . consult-grep)
-           ("M-s G" . consult-git-grep)
-           ("M-s r" . consult-ripgrep)
-           ("M-s l" . consult-line)
-           ("M-s L" . consult-line-multi)
-           ("M-s k" . consult-keep-lines)
-           ("M-s u" . consult-focus-lines)
-           ;; Isearch integration
-           ("M-s e" . consult-isearch-history)
-           :map isearch-mode-map
-           ("M-e" . consult-isearch-history)         ;; orig. isearch-edit-string
-           ("M-s e" . consult-isearch-history)       ;; orig. isearch-edit-string
-           ("M-s l" . consult-line)                  ;; needed by consult-line to detect isearch
-           ("M-s L" . consult-line-multi)            ;; needed by consult-line to detect isearch
-           ;; Minibuffer history
-           :map minibuffer-local-map
-           ("M-s" . consult-history)                 ;; orig. next-matching-history-element
-           ("M-r" . consult-history))                ;; orig. previous-matching-history-element
+;; Example configuration for Consult
+(use-package consult
+  :ensure t
+  ;; Replace bindings. Lazily loaded by `use-package'.
+  :bind (;; C-c bindings in `mode-specific-map'
+         ("C-c M-x" . consult-mode-command)
+         ("C-c h" . consult-history)
+         ("C-c k" . consult-kmacro)
+         ("C-c m" . consult-man)
+         ("C-c i" . consult-info)
+         ([remap Info-search] . consult-info)
+         ;; C-x bindings in `ctl-x-map'
+         ("C-x M-:" . consult-complex-command)     ;; orig. repeat-complex-command
+         ("C-x b" . consult-buffer)                ;; orig. switch-to-buffer
+         ("C-x 4 b" . consult-buffer-other-window) ;; orig. switch-to-buffer-other-window
+         ("C-x 5 b" . consult-buffer-other-frame)  ;; orig. switch-to-buffer-other-frame
+         ("C-x t b" . consult-buffer-other-tab)    ;; orig. switch-to-buffer-other-tab
+         ("C-x r b" . consult-bookmark)            ;; orig. bookmark-jump
+         ("C-x p b" . consult-project-buffer)      ;; orig. project-switch-to-buffer
+         ;; Custom M-# bindings for fast register access
+         ("M-#" . consult-register-load)
+         ("M-'" . consult-register-store)          ;; orig. abbrev-prefix-mark (unrelated)
+         ("C-M-#" . consult-register)
+         ;; Other custom bindings
+         ("M-y" . consult-yank-pop)                ;; orig. yank-pop
+         ;; M-g bindings in `goto-map'
+         ("M-g e" . consult-compile-error)
+         ("M-g f" . consult-flymake)               ;; Alternative: consult-flycheck
+         ("M-g g" . consult-goto-line)             ;; orig. goto-line
+         ("M-g M-g" . consult-goto-line)           ;; orig. goto-line
+         ("M-g o" . consult-outline)               ;; Alternative: consult-org-heading
+         ("M-g m" . consult-mark)
+         ("M-g k" . consult-global-mark)
+         ("M-g i" . consult-imenu)
+         ("M-g I" . consult-imenu-multi)
+         ;; M-s bindings in `search-map'
+         ("M-s d" . consult-find)                  ;; Alternative: consult-fd
+         ("M-s c" . consult-locate)
+         ("M-s g" . consult-grep)
+         ("M-s G" . consult-git-grep)
+         ("M-s r" . consult-ripgrep)
+         ("M-s l" . consult-line)
+         ("M-s L" . consult-line-multi)
+         ("M-s k" . consult-keep-lines)
+         ("M-s u" . consult-focus-lines)
+         ;; Isearch integration
+         ("M-s e" . consult-isearch-history)
+         :map isearch-mode-map
+         ("M-e" . consult-isearch-history)         ;; orig. isearch-edit-string
+         ("M-s e" . consult-isearch-history)       ;; orig. isearch-edit-string
+         ("M-s l" . consult-line)                  ;; needed by consult-line to detect isearch
+         ("M-s L" . consult-line-multi)            ;; needed by consult-line to detect isearch
+         ;; Minibuffer history
+         :map minibuffer-local-map
+         ("M-s" . consult-history)                 ;; orig. next-matching-history-element
+         ("M-r" . consult-history))                ;; orig. previous-matching-history-element
 
-    ;; Enable automatic preview at point in the *Completions* buffer. This is
-    ;; relevant when you use the default completion UI.
-    :hook (completion-list-mode . consult-preview-at-point-mode)
+  ;; Enable automatic preview at point in the *Completions* buffer. This is
+  ;; relevant when you use the default completion UI.
+  :hook (completion-list-mode . consult-preview-at-point-mode)
 
-    ;; The :init configuration is always executed (Not lazy)
-    :init
+  ;; The :init configuration is always executed (Not lazy)
+  :init
 
-    ;; Optionally configure the register formatting. This improves the register
-    ;; preview for `consult-register', `consult-register-load',
-    ;; `consult-register-store' and the Emacs built-ins.
-    (setq register-preview-delay 0.5
-          register-preview-function #'consult-register-format)
+  ;; Optionally configure the register formatting. This improves the register
+  ;; preview for `consult-register', `consult-register-load',
+  ;; `consult-register-store' and the Emacs built-ins.
+  (setq register-preview-delay 0.5
+        register-preview-function #'consult-register-format)
 
-    ;; Optionally tweak the register preview window.
-    ;; This adds thin lines, sorting and hides the mode line of the window.
-    (advice-add #'register-preview :override #'consult-register-window)
+  ;; Optionally tweak the register preview window.
+  ;; This adds thin lines, sorting and hides the mode line of the window.
+  (advice-add #'register-preview :override #'consult-register-window)
 
-    ;; Use Consult to select xref locations with preview
-    (setq xref-show-xrefs-function #'consult-xref
-          xref-show-definitions-function #'consult-xref)
+  ;; Use Consult to select xref locations with preview
+  (setq xref-show-xrefs-function #'consult-xref
+        xref-show-definitions-function #'consult-xref)
 
-    ;; Configure other variables and modes in the :config section,
-    ;; after lazily loading the package.
-    :config
+  ;; Configure other variables and modes in the :config section,
+  ;; after lazily loading the package.
+  :config
 
-    ;; Optionally configure preview. The default value
-    ;; is 'any, such that any key triggers the preview.
-    ;; (setq consult-preview-key 'any)
-    ;; (setq consult-preview-key "M-.")
-    ;; (setq consult-preview-key '("S-<down>" "S-<up>"))
-    ;; For some commands and buffer sources it is useful to configure the
-    ;; :preview-key on a per-command basis using the `consult-customize' macro.
-    (consult-customize
-     consult-theme :preview-key '(:debounce 0.2 any)
-     consult-ripgrep consult-git-grep consult-grep
-     consult-bookmark consult-recent-file consult-xref
-     consult--source-bookmark consult--source-file-register
-     consult--source-recent-file consult--source-project-recent-file
-     ;; :preview-key "M-."
-     :preview-key '(:debounce 0.4 any))
+  ;; Optionally configure preview. The default value
+  ;; is 'any, such that any key triggers the preview.
+  ;; (setq consult-preview-key 'any)
+  ;; (setq consult-preview-key "M-.")
+  ;; (setq consult-preview-key '("S-<down>" "S-<up>"))
+  ;; For some commands and buffer sources it is useful to configure the
+  ;; :preview-key on a per-command basis using the `consult-customize' macro.
+  (consult-customize
+   consult-theme :preview-key '(:debounce 0.2 any)
+   consult-ripgrep consult-git-grep consult-grep
+   consult-bookmark consult-recent-file consult-xref
+   consult-source-bookmark consult-source-file-register
+   consult-source-recent-file consult-source-project-recent-file
+   ;; :preview-key "M-."
+   :preview-key '(:debounce 0.4 any))
 
-    ;; Optionally configure the narrowing key.
-    ;; Both < and C-+ work reasonably well.
-    (setq consult-narrow-key "<") ;; "C-+"
+  ;; Optionally configure the narrowing key.
+  ;; Both < and C-+ work reasonably well.
+  (setq consult-narrow-key "<") ;; "C-+"
 
-    ;; Optionally make narrowing help available in the minibuffer.
-    ;; You may want to use `embark-prefix-help-command' or which-key instead.
-    ;; (keymap-set consult-narrow-map (concat consult-narrow-key " ?") #'consult-narrow-help)
-    )
+  ;; Optionally make narrowing help available in the minibuffer.
+  ;; You may want to use `embark-prefix-help-command' or which-key instead.
+  ;; (keymap-set consult-narrow-map (concat consult-narrow-key " ?") #'consult-narrow-help)
+  )
 #+end_src
 
 ** embark
 #+begin_src elisp :tangle yes
-  ;; https://github.com/oantolin/embark/
-  (use-package embark
-    :ensure t
+;; https://github.com/oantolin/embark/
+(use-package embark
+  :ensure t
 
-    :bind
-    (("C-." . embark-act)         ;; pick some comfortable binding
-     ("C-;" . embark-dwim)        ;; good alternative: M-.
-     ("C-h B" . embark-bindings)) ;; alternative for `describe-bindings'
+  :bind
+  (("C-." . embark-act)         ;; pick some comfortable binding
+   ("C-;" . embark-dwim)        ;; good alternative: M-.
+   ("C-h B" . embark-bindings)) ;; alternative for `describe-bindings'
 
-    :init
+  :init
 
-    ;; Optionally replace the key help with a completing-read interface
-    (setq prefix-help-command #'embark-prefix-help-command)
+  ;; Optionally replace the key help with a completing-read interface
+  (setq prefix-help-command #'embark-prefix-help-command)
 
-    ;; Show the Embark target at point via Eldoc. You may adjust the
-    ;; Eldoc strategy, if you want to see the documentation from
-    ;; multiple providers. Beware that using this can be a little
-    ;; jarring since the message shown in the minibuffer can be more
-    ;; than one line, causing the modeline to move up and down:
+  ;; Show the Embark target at point via Eldoc. You may adjust the
+  ;; Eldoc strategy, if you want to see the documentation from
+  ;; multiple providers. Beware that using this can be a little
+  ;; jarring since the message shown in the minibuffer can be more
+  ;; than one line, causing the modeline to move up and down:
 
-    ;; (add-hook 'eldoc-documentation-functions #'embark-eldoc-first-target)
-    ;; (setq eldoc-documentation-strategy #'eldoc-documentation-compose-eagerly)
+  ;; (add-hook 'eldoc-documentation-functions #'embark-eldoc-first-target)
+  ;; (setq eldoc-documentation-strategy #'eldoc-documentation-compose-eagerly)
 
-    :config
+  :config
 
-    ;; Hide the mode line of the Embark live/completions buffers
-    (add-to-list 'display-buffer-alist
-                 '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
-                   nil
-                   (window-parameters (mode-line-format . none)))))
+  ;; Hide the mode line of the Embark live/completions buffers
+  (add-to-list 'display-buffer-alist
+               '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
+                 nil
+                 (window-parameters (mode-line-format . none)))))
 
-  ;; Consult users will also want the embark-consult package.
-  (use-package embark-consult
-    :ensure t ; only need to install it, embark loads it after consult if found
-    :hook
-    (embark-collect-mode . consult-preview-at-point-mode))
+;; Consult users will also want the embark-consult package.
+(use-package embark-consult
+  :ensure t ; only need to install it, embark loads it after consult if found
+  :hook
+  (embark-collect-mode . consult-preview-at-point-mode))
 #+end_src
 
 * Corf
 #+begin_src elisp :tangle yes
-  ;; https://github.com/minad/corfu
-  (use-package corfu
-    ;; Optional customizations
-    ;; :custom
-    ;; (corfu-cycle t)                ;; Enable cycling for `corfu-next/previous'
-    ;; (corfu-auto t)                 ;; Enable auto completion
-    ;; (corfu-quit-at-boundary nil)   ;; Never quit at completion boundary
-    ;; (corfu-quit-no-match nil)      ;; Never quit, even if there is no match
-    ;; (corfu-preview-current nil)    ;; Disable current candidate preview
-    ;; (corfu-preselect 'prompt)      ;; Preselect the prompt
-    ;; (corfu-on-exact-match nil)     ;; Configure handling of exact matches
+;; https://github.com/minad/corfu
+(use-package corfu
+  ;; Optional customizations
+  ;; :custom
+  ;; (corfu-cycle t)                ;; Enable cycling for `corfu-next/previous'
+  ;; (corfu-auto t)                 ;; Enable auto completion
+  ;; (corfu-quit-at-boundary nil)   ;; Never quit at completion boundary
+  ;; (corfu-quit-no-match nil)      ;; Never quit, even if there is no match
+  ;; (corfu-preview-current nil)    ;; Disable current candidate preview
+  ;; (corfu-preselect 'prompt)      ;; Preselect the prompt
+  ;; (corfu-on-exact-match nil)     ;; Configure handling of exact matches
 
-    ;; Enable Corfu only for certain modes. See also `global-corfu-modes'.
-    ;; :hook ((prog-mode . corfu-mode)
-    ;;        (shell-mode . corfu-mode)
-    ;;        (eshell-mode . corfu-mode))
+  ;; Enable Corfu only for certain modes. See also `global-corfu-modes'.
+  ;; :hook ((prog-mode . corfu-mode)
+  ;;        (shell-mode . corfu-mode)
+  ;;        (eshell-mode . corfu-mode))
 
-    ;; Recommended: Enable Corfu globally.  This is recommended since Dabbrev can
-    ;; be used globally (M-/).  See also the customization variable
-    ;; `global-corfu-modes' to exclude certain modes.
-    :init
-    (global-corfu-mode))
+  ;; Recommended: Enable Corfu globally.  This is recommended since Dabbrev can
+  ;; be used globally (M-/).  See also the customization variable
+  ;; `global-corfu-modes' to exclude certain modes.
+  :init
+  (global-corfu-mode))
 
-  ;; A few more useful configurations...
-  (use-package emacs
-    :custom
-    ;; TAB cycle if there are only few candidates
-    ;; (completion-cycle-threshold 3)
+;; A few more useful configurations...
+(use-package emacs
+  :custom
+  ;; TAB cycle if there are only few candidates
+  ;; (completion-cycle-threshold 3)
 
-    ;; Enable indentation+completion using the TAB key.
-    ;; `completion-at-point' is often bound to M-TAB.
-    (tab-always-indent 'complete)
+  ;; Enable indentation+completion using the TAB key.
+  ;; `completion-at-point' is often bound to M-TAB.
+  (tab-always-indent 'complete)
 
-    ;; Emacs 30 and newer: Disable Ispell completion function.
-    ;; Try `cape-dict' as an alternative.
-    (text-mode-ispell-word-completion nil)
+  ;; Emacs 30 and newer: Disable Ispell completion function.
+  ;; Try `cape-dict' as an alternative.
+  (text-mode-ispell-word-completion nil)
 
-    ;; Hide commands in M-x which do not apply to the current mode.  Corfu
-    ;; commands are hidden, since they are not used via M-x. This setting is
-    ;; useful beyond Corfu.
-    (read-extended-command-predicate #'command-completion-default-include-p))
+  ;; Hide commands in M-x which do not apply to the current mode.  Corfu
+  ;; commands are hidden, since they are not used via M-x. This setting is
+  ;; useful beyond Corfu.
+  (read-extended-command-predicate #'command-completion-default-include-p))
 #+end_src
 ** Corf more
 - @see https://www.ovistoica.com/blog/2024-7-05-modern-emacs-typescript-web-tsx-config#org95be3b8
 以下は導入検討中のものであり、まだ採用しない
 #+begin_src elisp :tangle no
   ;;;; Code Completion
-  (use-package corfu
-    :ensure t
-    ;; Optional customizations
-    :custom
-    (corfu-cycle t)                 ; Allows cycling through candidates
-    (corfu-auto t)                  ; Enable auto completion
-    (corfu-auto-prefix 2)           ; Minimum length of prefix for completion
-    (corfu-auto-delay 0)            ; No delay for completion
-    (corfu-popupinfo-delay '(0.5 . 0.2))  ; Automatically update info popup after that numver of seconds
-    (corfu-preview-current 'insert) ; insert previewed candidate
-    (corfu-preselect 'prompt)
-    (corfu-on-exact-match nil)      ; Don't auto expand tempel snippets
-    ;; Optionally use TAB for cycling, default is `corfu-complete'.
-    :bind (:map corfu-map
-                ("M-SPC"      . corfu-insert-separator)
-                ("TAB"        . corfu-next)
-                ([tab]        . corfu-next)
-                ("S-TAB"      . corfu-previous)
-                ([backtab]    . corfu-previous)
-                ("S-<return>" . corfu-insert)
-                ("RET"        . corfu-insert))
+(use-package corfu
+  :ensure t
+  ;; Optional customizations
+  :custom
+  (corfu-cycle t)                 ; Allows cycling through candidates
+  (corfu-auto t)                  ; Enable auto completion
+  (corfu-auto-prefix 2)           ; Minimum length of prefix for completion
+  (corfu-auto-delay 0)            ; No delay for completion
+  (corfu-popupinfo-delay '(0.5 . 0.2))  ; Automatically update info popup after that numver of seconds
+  (corfu-preview-current 'insert) ; insert previewed candidate
+  (corfu-preselect 'prompt)
+  (corfu-on-exact-match nil)      ; Don't auto expand tempel snippets
+  ;; Optionally use TAB for cycling, default is `corfu-complete'.
+  :bind (:map corfu-map
+              ("M-SPC"      . corfu-insert-separator)
+              ("TAB"        . corfu-next)
+              ([tab]        . corfu-next)
+              ("S-TAB"      . corfu-previous)
+              ([backtab]    . corfu-previous)
+              ("S-<return>" . corfu-insert)
+              ("RET"        . corfu-insert))
 
-    :init
-    (global-corfu-mode)
-    (corfu-history-mode)
-    (corfu-popupinfo-mode) ; Popup completion info
-    :config
-    (add-hook 'eshell-mode-hook
-              (lambda () (setq-local corfu-quit-at-boundary t
-                                     corfu-quit-no-match t
-                                     corfu-auto nil)
-                (corfu-mode))
-              nil
-              t))
+  :init
+  (global-corfu-mode)
+  (corfu-history-mode)
+  (corfu-popupinfo-mode) ; Popup completion info
+  :config
+  (add-hook 'eshell-mode-hook
+            (lambda () (setq-local corfu-quit-at-boundary t
+                                   corfu-quit-no-match t
+                                   corfu-auto nil)
+              (corfu-mode))
+            nil
+            t))
 #+end_src
 
 * ディレクトリ表示の簡素化
 https://emacs.stackexchange.com/questions/27912/dired-sort-and-hide-by-default
 #+begin_src elisp :tangle no
-  ;; ディレクトリ表示の簡素化
-  ;; https://emacs.stackexchange.com/questions/27912/dired-sort-and-hide-by-default
-  (add-hook 'dired-mode-hook
-            (lambda ()
-              (dired-hide-details-mode 1)
-              (dired-sort-toggle-or-edit)))
+;; ディレクトリ表示の簡素化
+;; https://emacs.stackexchange.com/questions/27912/dired-sort-and-hide-by-default
+(add-hook 'dired-mode-hook
+          (lambda ()
+            (dired-hide-details-mode 1)
+            (dired-sort-toggle-or-edit)))
 #+end_src
 * Magit 設定
 #+BEGIN_SRC elisp :tangle yes
-  ;; Magit 設定 (straight.el 向けに最適化)
-  (use-package magit
-    :ensure t)
+;; Magit 設定 (straight.el 向けに最適化)
+(use-package magit
+  :ensure t)
 
-  ;; https://joppot.info/posts/f3007a42-5ba2-4060-90d4-496697413cf9
-  (use-package diff-hl
-    :ensure t
-    :init
-    (global-diff-hl-mode)
-    (add-hook 'dired-mode-hook 'diff-hl-dired-mode)
-    (unless (window-system) (diff-hl-margin-mode))
-    :custom-face
-    (diff-hl-change ((t (:background "#8adf80"))))
-    (diff-hl-delete ((t (:background "#ff8f88"))))
-    (diff-hl-insert ((t (:background "#bfc9ff"))))
-    :config
-    (add-hook 'magit-pre-refresh-hook 'diff-hl-magit-pre-refresh)
-    (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh))
+;; https://joppot.info/posts/f3007a42-5ba2-4060-90d4-496697413cf9
+(use-package diff-hl
+  :ensure t
+  :init
+  (global-diff-hl-mode)
+  (add-hook 'dired-mode-hook 'diff-hl-dired-mode)
+  (unless (window-system) (diff-hl-margin-mode))
+  :custom-face
+  (diff-hl-change ((t (:background "#8adf80"))))
+  (diff-hl-delete ((t (:background "#ff8f88"))))
+  (diff-hl-insert ((t (:background "#bfc9ff"))))
+  :config
+  (add-hook 'magit-pre-refresh-hook 'diff-hl-magit-pre-refresh)
+  (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh))
 #+END_SRC
 
 * Lisp ファミリ基本設定
 #+BEGIN_SRC elisp :tangle yes
-  ;; Lisp ファミリ基本設定
-  ;; paredit フックから org-mode を除外することで、アロー演算子の誤判定を除外する。
-  (show-paren-mode t)
-  (use-package paredit
-    :ensure t
-    :commands enable-paredit-mode
-    :hook ((emacs-lisp-mode
-            )
-           . enable-paredit-mode))
+;; Lisp ファミリ基本設定
+;; paredit フックから org-mode を除外することで、アロー演算子の誤判定を除外する。
+(show-paren-mode t)
+(use-package paredit
+  :ensure t
+  :commands enable-paredit-mode
+  :hook ((emacs-lisp-mode
+          )
+         . enable-paredit-mode))
 
-  (use-package smartparens :ensure t)
-  (use-package rainbow-delimiters :ensure t)
+(use-package smartparens :ensure t)
+(use-package rainbow-delimiters :ensure t)
 #+END_SRC
 
 ** emacs lisp
 #+BEGIN_SRC elisp :tangle yes
-  ;; emacs lisp
-  (add-hook 'emacs-lisp-mode-hook 'paredit-mode)
-  (add-hook 'emacs-lisp-mode-hook 'rainbow-delimiters-mode)
-  ;; (add-hook 'emacs-lisp-mode-hook 'company-mode)
-  ;; (add-hook 'emacs-lisp-mode-hook 'subword-mode)
-  ;; (add-hook 'emacs-lisp-mode-hook 'aggressive-indent-mode)
+;; emacs lisp
+(add-hook 'emacs-lisp-mode-hook 'paredit-mode)
+(add-hook 'emacs-lisp-mode-hook 'rainbow-delimiters-mode)
+;; (add-hook 'emacs-lisp-mode-hook 'company-mode)
+;; (add-hook 'emacs-lisp-mode-hook 'subword-mode)
+;; (add-hook 'emacs-lisp-mode-hook 'aggressive-indent-mode)
 
-  (eval-after-load 'inferior-emacs-lisp-mode
-    '(progn
-       (add-hook 'ielm-mode-hook 'paredit-mode)
-       (define-key paredit-mode-map (kbd "RET") nil)
-       (define-key paredit-mode-map (kbd "C-j") 'paredit-newline)))
+(eval-after-load 'inferior-emacs-lisp-mode
+  '(progn
+     (add-hook 'ielm-mode-hook 'paredit-mode)
+     (define-key paredit-mode-map (kbd "RET") nil)
+     (define-key paredit-mode-map (kbd "C-j") 'paredit-newline)))
 
 #+END_SRC
 
@@ -637,68 +640,68 @@ https://emacs.stackexchange.com/questions/27912/dired-sort-and-hide-by-default
 そこで次の記事を参考にしてみた。
 https://zenn.dev/ebang/articles/231106_emacs-markdown
 #+begin_src elisp :tangle yes
-  (use-package markdown-mode
-    :mode ("\\.md\\'" . markdown-mode)
-    :init
-    (add-hook 'markdown-mode-hook #'turn-off-auto-fill)
-    (add-hook 'markdown-mode-hook #'turn-on-visual-line-mode))
+(use-package markdown-mode
+  :mode ("\\.md\\'" . markdown-mode)
+  :init
+  (add-hook 'markdown-mode-hook #'turn-off-auto-fill)
+  (add-hook 'markdown-mode-hook #'turn-on-visual-line-mode))
 
-  (unless (version< emacs-version "29.1")
-    (use-package word-wrap-mode
-      :hook (visual-line-mode . word-wrap-whitespace-mode)
-      :config
-      (add-to-list 'word-wrap-whitespace-characters ?\])))
+(unless (version< emacs-version "29.1")
+  (use-package word-wrap-mode
+    :hook (visual-line-mode . word-wrap-whitespace-mode)
+    :config
+    (add-to-list 'word-wrap-whitespace-characters ?\])))
 
-  ;; (use-package visual-fill-column
-  ;;   :hook (visual-line-mode . visual-fill-column-mode)
-  ;;   :init
-  ;;   (setq visual-line-fringe-indicators '(left-curly-arrow nil))
-  ;;   :config
-  ;;   (setq visual-fill-column-width 120))
+;; (use-package visual-fill-column
+;;   :hook (visual-line-mode . visual-fill-column-mode)
+;;   :init
+;;   (setq visual-line-fringe-indicators '(left-curly-arrow nil))
+;;   :config
+;;   (setq visual-fill-column-width 120))
 
-  (use-package adaptive-wrap
-    :hook (visual-line-mode . adaptive-wrap-prefix-mode))
+(use-package adaptive-wrap
+  :hook (visual-line-mode . adaptive-wrap-prefix-mode))
 #+end_src
 
 * Org
 ** 近代化
 ただし、-nw 時は行わない。
 #+begin_src elisp :tangle yes
-  (use-package org-modern
-    :if (display-graphic-p)
-    :ensure t
-    :hook ((org-mode . org-modern-mode)))
-  (global-set-key "\C-cl" 'org-toggle-link-display)
+(use-package org-modern
+  :if (display-graphic-p)
+  :ensure t
+  :hook ((org-mode . org-modern-mode)))
+(global-set-key "\C-cl" 'org-toggle-link-display)
 #+end_src
 
 ** 日記
 #+begin_src elisp :tangle yes
-  (use-package org-journal
-    :ensure t
-    :defer t
-    :config
-    (setq org-journal-dir "~/Nextcloud/Org/journal/"))
+(use-package org-journal
+  :ensure t
+  :defer t
+  :config
+  (setq org-journal-dir "~/Nextcloud/Org/journal/"))
 #+end_src
 
 ** =<s <tab>= でブロック文のテンプレートを挿入
 #+BEGIN_SRC elisp :tangle yes
-  ;; <s <tab> でブロック文のテンプレートを挿入
-  (require 'org-tempo)
+;; <s <tab> でブロック文のテンプレートを挿入
+(require 'org-tempo)
 #+END_SRC
 
 ** デフォルトのbabelではシェルは禁止されているの使えるようにする
 #+begin_src elisp :tangle yes
-  ;; デフォルトのbabelではシェルは禁止されているの使えるようにする
-  (org-babel-do-load-languages
-   'org-babel-load-languages
-   (list
-     '(shell . t)
-     '(ruby . t)
-     '(python . t)
-     '(lua . t)
-     '(lisp . t)
-     (cons 'mermaid  (executable-find "mmdc"))
-     ))
+;; デフォルトのbabelではシェルは禁止されているの使えるようにする
+(org-babel-do-load-languages
+ 'org-babel-load-languages
+ (list
+  '(shell . t)
+  '(ruby . t)
+  '(python . t)
+  '(lua . t)
+  '(lisp . t)
+  (cons 'mermaid  (executable-find "mmdc"))
+  ))
 #+end_src
 
 #+RESULTS:
@@ -718,19 +721,19 @@ https://zenn.dev/ebang/articles/231106_emacs-markdown
 ** TODO ポモドーロタイマに使用する音源を物色中
 Windows の検索パスは別途検討
 #+begin_src elisp :tangle no :results list
-  (let ((all-sounds
-         (directory-files-recursively "/usr/share/sounds/sound-icons/" "\\.wav$" nil)))
-    (dolist (snd all-sounds)
-      (play-sound-file snd))
-    all-sounds)
+(let ((all-sounds
+       (directory-files-recursively "/usr/share/sounds/sound-icons/" "\\.wav$" nil)))
+  (dolist (snd all-sounds)
+    (play-sound-file snd))
+  all-sounds)
 #+end_src
 
 #+begin_src elisp :tangle no :results list
-  (let ((all-sounds
-         (directory-files-recursively "C:/Windows" "\\.wav$" nil)))
-    ;; (dolist (snd all-sounds)
-    ;;   (play-sound-file snd))
-    all-sounds)
+(let ((all-sounds
+       (directory-files-recursively "C:/Windows" "\\.wav$" nil)))
+  ;; (dolist (snd all-sounds)
+  ;;   (play-sound-file snd))
+  all-sounds)
 #+end_src
 
 #+RESULTS:
@@ -977,34 +980,35 @@ Windows の検索パスは別途検討
 
 ** string-matchの実験
 #+begin_src elisp :tangle no
-  (string-match-p "\\.wav$"
-		  "/usr/share/sounds/sound-icons/canary-long.wav")
-  (string-match-p "^file:///"
-		  "file:///usr/local/share/GNUstep/Documentation/Developer/Base/ProgrammingManual/gs-base/index.html")
+(string-match-p "\\.wav$"
+		"/usr/share/sounds/sound-icons/canary-long.wav")
+(string-match-p "^file:///"
+		"file:///usr/local/share/GNUstep/Documentation/Developer/Base/ProgrammingManual/gs-base/index.html")
 #+end_src
 
 * ポモドーロタイマー
+@see
 [[https://systemcrafters.net/emacs-shorts/pomodoro-timer/]]
 #+begin_src elisp :tangle yes
-  ;; https://systemcrafters.net/emacs-shorts/pomodoro-timer/
-  (setq org-clock-sound "/usr/share/sounds/sound-icons/xylofon.wav")
-  ;; C-c C-x ;
-  (org-timer-set-timer 25)
+;; https://systemcrafters.net/emacs-shorts/pomodoro-timer/
+(setq org-clock-sound "/usr/share/sounds/sound-icons/xylofon.wav")
+;; C-c C-x ;
+(org-timer-set-timer 25)
 #+end_src
 
 #+RESULTS:
 : /usr/share/sounds/sound-icons/xylofon.wav
 * キーストローク表示
 #+begin_src elisp :tangle yes
-  ;; キーストローク表示
-  ;; https://github.com/tarsius/keycast
-  (use-package keycast
-    :ensure t)
+;; キーストローク表示
+;; https://github.com/tarsius/keycast
+(use-package keycast
+  :ensure t)
 #+end_src
 * 日本語フォントの設定
 ** 使用できるフォント名の確認
 #+begin_src elisp :tangle no :results list
-  (seq-uniq (sort (font-family-list) 'string<) 'string=)
+(seq-uniq (sort (font-family-list) 'string<) 'string=)
 #+end_src
 
 *** RESULTS(Haiku):
@@ -1651,11 +1655,11 @@ Windows の検索パスは別途検討
 
 ** 日本語の範囲をNotoフォントに設定
 #+begin_src elisp :tangle yes
-  ;; 日本語の範囲をNotoフォントに設定
-  (when (display-graphic-p)
-    (set-fontset-font nil 'japanese-jisx0208 (font-spec :family "Noto Serif CJK JP"))
-    ;; (set-fontset-font nil 'japanese-jisx0208 (font-spec :family "Noto Sans CJK JP"))
-    )
+;; 日本語の範囲をNotoフォントに設定
+(when (display-graphic-p)
+  (set-fontset-font nil 'japanese-jisx0208 (font-spec :family "Noto Serif CJK JP"))
+  ;; (set-fontset-font nil 'japanese-jisx0208 (font-spec :family "Noto Sans CJK JP"))
+  )
 #+end_src
 
 ** 確認用テーブル
@@ -1669,135 +1673,135 @@ Windows の検索パスは別途検討
 ** Notoフォントのインストール
 *** Windows
 #+begin_src bash :tangle no
-  kenjiro@um560-win11 MINGW64 ~
-  $ scoop bucket add nerd-fonts
-  Checking repo... OK
-  The nerd-fonts bucket was added successfully.
+kenjiro@um560-win11 MINGW64 ~
+$ scoop bucket add nerd-fonts
+Checking repo... OK
+The nerd-fonts bucket was added successfully.
 
-  kenjiro@um560-win11 MINGW64 ~
-  $ scoop search noto
-  Results from local buckets...
+kenjiro@um560-win11 MINGW64 ~
+$ scoop search noto
+Results from local buckets...
 
-  Name                          Version  Source     Binaries
-  ----                          -------  ------     --------
-  Noto-CJK-Mega-OTC             20190603 nerd-fonts
-  Noto-NF-Mono                  3.2.1    nerd-fonts
-  Noto-NF-Propo                 3.2.1    nerd-fonts
-  Noto-NF                       3.2.1    nerd-fonts
-  Source-Han-Noto-CJK-Ultra-OTC 20190603 nerd-fonts
+Name                          Version  Source     Binaries
+----                          -------  ------     --------
+Noto-CJK-Mega-OTC             20190603 nerd-fonts
+Noto-NF-Mono                  3.2.1    nerd-fonts
+Noto-NF-Propo                 3.2.1    nerd-fonts
+Noto-NF                       3.2.1    nerd-fonts
+Source-Han-Noto-CJK-Ultra-OTC 20190603 nerd-fonts
 
 
-  kenjiro@um560-win11 MINGW64 ~
-  $ scoop install Noto-CJK-Mega-OTC
-  Updating Scoop...
-  Updating Buckets...
-  Scoop was updated successfully!
-  Installing 'Noto-CJK-Mega-OTC' (20190603) [64bit] from 'nerd-fonts' bucket
-  NotoCJK.ttc (272.5 MB) [======================================================================================] 100%
-  Checking hash of NotoCJK.ttc ... ok.
-  Running installer script...done.
-  Linking ~\scoop\apps\Noto-CJK-Mega-OTC\current => ~\scoop\apps\Noto-CJK-Mega-OTC\20190603
-  'Noto-CJK-Mega-OTC' (20190603) was installed successfully!
+kenjiro@um560-win11 MINGW64 ~
+$ scoop install Noto-CJK-Mega-OTC
+Updating Scoop...
+Updating Buckets...
+Scoop was updated successfully!
+Installing 'Noto-CJK-Mega-OTC' (20190603) [64bit] from 'nerd-fonts' bucket
+NotoCJK.ttc (272.5 MB) [======================================================================================] 100%
+Checking hash of NotoCJK.ttc ... ok.
+Running installer script...done.
+Linking ~\scoop\apps\Noto-CJK-Mega-OTC\current => ~\scoop\apps\Noto-CJK-Mega-OTC\20190603
+'Noto-CJK-Mega-OTC' (20190603) was installed successfully!
 
-  kenjiro@um560-win11 MINGW64 ~
+kenjiro@um560-win11 MINGW64 ~
 #+end_src
 
 ** Iosevkaフォントのインストール
 https://github.com/be5invis/Iosevka
 *** Linux
 #+begin_src bash :tangle no
-  mkdir -p ~/Downloads
-  cd ~/Downloads
-  curl -O https://sid.ethz.ch/debian/fonts-iosevka/fonts-iosevka_22.0.0%2Bds-1_all.deb
-  sudo dpkg -i fonts-iosevka_22.0.0%2Bds-1_all.deb
+mkdir -p ~/Downloads
+cd ~/Downloads
+curl -O https://sid.ethz.ch/debian/fonts-iosevka/fonts-iosevka_22.0.0%2Bds-1_all.deb
+sudo dpkg -i fonts-iosevka_22.0.0%2Bds-1_all.deb
 #+end_src
 
 #+RESULTS:
 
 *** Windows
 #+begin_src bash :tangle no
-  kenjiro@um560-win11 MINGW64 ~
-  $ scoop search iosevka
-  Results from local buckets...
+kenjiro@um560-win11 MINGW64 ~
+$ scoop search iosevka
+Results from local buckets...
 
-  Name                     Version Source     Binaries
-  ----                     ------- ------     --------
-  Iosevka-NF-Mono          3.2.1   nerd-fonts
-  Iosevka-NF-Propo         3.2.1   nerd-fonts
-  Iosevka-NF               3.2.1   nerd-fonts
-  IosevkaTerm-NF-Mono      3.2.1   nerd-fonts
-  IosevkaTerm-NF-Propo     3.2.1   nerd-fonts
-  IosevkaTerm-NF           3.2.1   nerd-fonts
-  IosevkaTermSlab-NF-Mono  3.2.1   nerd-fonts
-  IosevkaTermSlab-NF-Propo 3.2.1   nerd-fonts
-  IosevkaTermSlab-NF       3.2.1   nerd-fonts
+Name                     Version Source     Binaries
+----                     ------- ------     --------
+Iosevka-NF-Mono          3.2.1   nerd-fonts
+Iosevka-NF-Propo         3.2.1   nerd-fonts
+Iosevka-NF               3.2.1   nerd-fonts
+IosevkaTerm-NF-Mono      3.2.1   nerd-fonts
+IosevkaTerm-NF-Propo     3.2.1   nerd-fonts
+IosevkaTerm-NF           3.2.1   nerd-fonts
+IosevkaTermSlab-NF-Mono  3.2.1   nerd-fonts
+IosevkaTermSlab-NF-Propo 3.2.1   nerd-fonts
+IosevkaTermSlab-NF       3.2.1   nerd-fonts
 
 
-  kenjiro@um560-win11 MINGW64 ~
-  $ scoop install Iosevka-NF-Mono Iosevka-NF-Propo Iosevka-NF IosevkaTerm-NF-Mono IosevkaTerm-NF-Propo IosevkaTerm-NF IosevkaTermSlab-NF-Mono IosevkaTermSlab-NF-Propo IosevkaTermSlab-NF
-  Installing 'Iosevka-NF-Mono' (3.2.1) [64bit] from 'nerd-fonts' bucket
-  Iosevka.zip (324.0 MB) [======================================================================================] 100%
-  Checking hash of Iosevka.zip ... ok.
-  Extracting Iosevka.zip ... done.
-  Running installer script...done.
-  Linking ~\scoop\apps\Iosevka-NF-Mono\current => ~\scoop\apps\Iosevka-NF-Mono\3.2.1
-  'Iosevka-NF-Mono' (3.2.1) was installed successfully!
-  Installing 'Iosevka-NF-Propo' (3.2.1) [64bit] from 'nerd-fonts' bucket
-  Iosevka.zip (324.0 MB) [======================================================================================] 100%
-  Checking hash of Iosevka.zip ... ok.
-  Extracting Iosevka.zip ... done.
-  Running installer script...done.
-  Linking ~\scoop\apps\Iosevka-NF-Propo\current => ~\scoop\apps\Iosevka-NF-Propo\3.2.1
-  'Iosevka-NF-Propo' (3.2.1) was installed successfully!
-  Installing 'Iosevka-NF' (3.2.1) [64bit] from 'nerd-fonts' bucket
-  Iosevka.zip (324.0 MB) [======================================================================================] 100%
-  Checking hash of Iosevka.zip ... ok.
-  Extracting Iosevka.zip ... done.
-  Running installer script...done.
-  Linking ~\scoop\apps\Iosevka-NF\current => ~\scoop\apps\Iosevka-NF\3.2.1
-  'Iosevka-NF' (3.2.1) was installed successfully!
-  Installing 'IosevkaTerm-NF-Mono' (3.2.1) [64bit] from 'nerd-fonts' bucket
-  IosevkaTerm.zip (324.1 MB) [==================================================================================] 100%
-  Checking hash of IosevkaTerm.zip ... ok.
-  Extracting IosevkaTerm.zip ... done.
-  Running installer script...done.
-  Linking ~\scoop\apps\IosevkaTerm-NF-Mono\current => ~\scoop\apps\IosevkaTerm-NF-Mono\3.2.1
-  'IosevkaTerm-NF-Mono' (3.2.1) was installed successfully!
-  Installing 'IosevkaTerm-NF-Propo' (3.2.1) [64bit] from 'nerd-fonts' bucket
-  IosevkaTerm.zip (324.1 MB) [==================================================================================] 100%
-  Checking hash of IosevkaTerm.zip ... ok.
-  Extracting IosevkaTerm.zip ... done.
-  Running installer script...done.
-  Linking ~\scoop\apps\IosevkaTerm-NF-Propo\current => ~\scoop\apps\IosevkaTerm-NF-Propo\3.2.1
-  'IosevkaTerm-NF-Propo' (3.2.1) was installed successfully!
-  Installing 'IosevkaTerm-NF' (3.2.1) [64bit] from 'nerd-fonts' bucket
-  IosevkaTerm.zip (324.1 MB) [==================================================================================] 100%
-  Checking hash of IosevkaTerm.zip ... ok.
-  Extracting IosevkaTerm.zip ... done.
-  Running installer script...done.
-  Linking ~\scoop\apps\IosevkaTerm-NF\current => ~\scoop\apps\IosevkaTerm-NF\3.2.1
-  'IosevkaTerm-NF' (3.2.1) was installed successfully!
-  Installing 'IosevkaTermSlab-NF-Mono' (3.2.1) [64bit] from 'nerd-fonts' bucket
-  IosevkaTermSlab.zip (182.4 MB) [==============================================================================] 100%
-  Checking hash of IosevkaTermSlab.zip ... ok.
-  Extracting IosevkaTermSlab.zip ... done.
-  Running installer script...done.
-  Linking ~\scoop\apps\IosevkaTermSlab-NF-Mono\current => ~\scoop\apps\IosevkaTermSlab-NF-Mono\3.2.1
-  'IosevkaTermSlab-NF-Mono' (3.2.1) was installed successfully!
-  Installing 'IosevkaTermSlab-NF-Propo' (3.2.1) [64bit] from 'nerd-fonts' bucket
-  IosevkaTermSlab.zip (182.4 MB) [==============================================================================] 100%
-  Checking hash of IosevkaTermSlab.zip ... ok.
-  Extracting IosevkaTermSlab.zip ... done.
-  Running installer script...done.
-  Linking ~\scoop\apps\IosevkaTermSlab-NF-Propo\current => ~\scoop\apps\IosevkaTermSlab-NF-Propo\3.2.1
-  'IosevkaTermSlab-NF-Propo' (3.2.1) was installed successfully!
-  Installing 'IosevkaTermSlab-NF' (3.2.1) [64bit] from 'nerd-fonts' bucket
-  IosevkaTermSlab.zip (182.4 MB) [==============================================================================] 100%
-  Checking hash of IosevkaTermSlab.zip ... ok.
-  Extracting IosevkaTermSlab.zip ... done.
-  Running installer script...done.
-  Linking ~\scoop\apps\IosevkaTermSlab-NF\current => ~\scoop\apps\IosevkaTermSlab-NF\3.2.1
-  'IosevkaTermSlab-NF' (3.2.1) was installed successfully!
+kenjiro@um560-win11 MINGW64 ~
+$ scoop install Iosevka-NF-Mono Iosevka-NF-Propo Iosevka-NF IosevkaTerm-NF-Mono IosevkaTerm-NF-Propo IosevkaTerm-NF IosevkaTermSlab-NF-Mono IosevkaTermSlab-NF-Propo IosevkaTermSlab-NF
+Installing 'Iosevka-NF-Mono' (3.2.1) [64bit] from 'nerd-fonts' bucket
+Iosevka.zip (324.0 MB) [======================================================================================] 100%
+Checking hash of Iosevka.zip ... ok.
+Extracting Iosevka.zip ... done.
+Running installer script...done.
+Linking ~\scoop\apps\Iosevka-NF-Mono\current => ~\scoop\apps\Iosevka-NF-Mono\3.2.1
+'Iosevka-NF-Mono' (3.2.1) was installed successfully!
+Installing 'Iosevka-NF-Propo' (3.2.1) [64bit] from 'nerd-fonts' bucket
+Iosevka.zip (324.0 MB) [======================================================================================] 100%
+Checking hash of Iosevka.zip ... ok.
+Extracting Iosevka.zip ... done.
+Running installer script...done.
+Linking ~\scoop\apps\Iosevka-NF-Propo\current => ~\scoop\apps\Iosevka-NF-Propo\3.2.1
+'Iosevka-NF-Propo' (3.2.1) was installed successfully!
+Installing 'Iosevka-NF' (3.2.1) [64bit] from 'nerd-fonts' bucket
+Iosevka.zip (324.0 MB) [======================================================================================] 100%
+Checking hash of Iosevka.zip ... ok.
+Extracting Iosevka.zip ... done.
+Running installer script...done.
+Linking ~\scoop\apps\Iosevka-NF\current => ~\scoop\apps\Iosevka-NF\3.2.1
+'Iosevka-NF' (3.2.1) was installed successfully!
+Installing 'IosevkaTerm-NF-Mono' (3.2.1) [64bit] from 'nerd-fonts' bucket
+IosevkaTerm.zip (324.1 MB) [==================================================================================] 100%
+Checking hash of IosevkaTerm.zip ... ok.
+Extracting IosevkaTerm.zip ... done.
+Running installer script...done.
+Linking ~\scoop\apps\IosevkaTerm-NF-Mono\current => ~\scoop\apps\IosevkaTerm-NF-Mono\3.2.1
+'IosevkaTerm-NF-Mono' (3.2.1) was installed successfully!
+Installing 'IosevkaTerm-NF-Propo' (3.2.1) [64bit] from 'nerd-fonts' bucket
+IosevkaTerm.zip (324.1 MB) [==================================================================================] 100%
+Checking hash of IosevkaTerm.zip ... ok.
+Extracting IosevkaTerm.zip ... done.
+Running installer script...done.
+Linking ~\scoop\apps\IosevkaTerm-NF-Propo\current => ~\scoop\apps\IosevkaTerm-NF-Propo\3.2.1
+'IosevkaTerm-NF-Propo' (3.2.1) was installed successfully!
+Installing 'IosevkaTerm-NF' (3.2.1) [64bit] from 'nerd-fonts' bucket
+IosevkaTerm.zip (324.1 MB) [==================================================================================] 100%
+Checking hash of IosevkaTerm.zip ... ok.
+Extracting IosevkaTerm.zip ... done.
+Running installer script...done.
+Linking ~\scoop\apps\IosevkaTerm-NF\current => ~\scoop\apps\IosevkaTerm-NF\3.2.1
+'IosevkaTerm-NF' (3.2.1) was installed successfully!
+Installing 'IosevkaTermSlab-NF-Mono' (3.2.1) [64bit] from 'nerd-fonts' bucket
+IosevkaTermSlab.zip (182.4 MB) [==============================================================================] 100%
+Checking hash of IosevkaTermSlab.zip ... ok.
+Extracting IosevkaTermSlab.zip ... done.
+Running installer script...done.
+Linking ~\scoop\apps\IosevkaTermSlab-NF-Mono\current => ~\scoop\apps\IosevkaTermSlab-NF-Mono\3.2.1
+'IosevkaTermSlab-NF-Mono' (3.2.1) was installed successfully!
+Installing 'IosevkaTermSlab-NF-Propo' (3.2.1) [64bit] from 'nerd-fonts' bucket
+IosevkaTermSlab.zip (182.4 MB) [==============================================================================] 100%
+Checking hash of IosevkaTermSlab.zip ... ok.
+Extracting IosevkaTermSlab.zip ... done.
+Running installer script...done.
+Linking ~\scoop\apps\IosevkaTermSlab-NF-Propo\current => ~\scoop\apps\IosevkaTermSlab-NF-Propo\3.2.1
+'IosevkaTermSlab-NF-Propo' (3.2.1) was installed successfully!
+Installing 'IosevkaTermSlab-NF' (3.2.1) [64bit] from 'nerd-fonts' bucket
+IosevkaTermSlab.zip (182.4 MB) [==============================================================================] 100%
+Checking hash of IosevkaTermSlab.zip ... ok.
+Extracting IosevkaTermSlab.zip ... done.
+Running installer script...done.
+Linking ~\scoop\apps\IosevkaTermSlab-NF\current => ~\scoop\apps\IosevkaTermSlab-NF\3.2.1
+'IosevkaTermSlab-NF' (3.2.1) was installed successfully!
 #+end_src
 
 * ewwのフォントが汚い件
@@ -1814,165 +1818,165 @@ F => Shift-f
 ** flycheck
 - @see https://www.ovistoica.com/blog/2024-7-05-modern-emacs-typescript-web-tsx-config#org014ff07
 #+begin_src elisp :tangle yes
-  (use-package flycheck
-    :ensure t
-    :hook ((after-init . global-flycheck-mode)
-           ;; Show diagnostics inline, next to the code (Error Lens style)
-           (after-init . global-flycheck-annotate-mode))
-    :bind (:map flycheck-mode-map
-                ("M-n" . flycheck-next-error) ; optional but recommended error navigation
-                ("M-p" . flycheck-previous-error))
-    :config
-    ;; Report Eglot's LSP diagnostics through Flycheck
-    (global-flycheck-eglot-mode 1))
+(use-package flycheck
+  :ensure t
+  :hook ((after-init . global-flycheck-mode)
+         ;; Show diagnostics inline, next to the code (Error Lens style)
+         (after-init . global-flycheck-annotate-mode))
+  :bind (:map flycheck-mode-map
+              ("M-n" . flycheck-next-error) ; optional but recommended error navigation
+              ("M-p" . flycheck-previous-error))
+  :config
+  ;; Report Eglot's LSP diagnostics through Flycheck
+  (global-flycheck-eglot-mode 1))
 #+end_src
 
 #+begin_src elisp :tangle no
-  (use-package flycheck
-    :ensure t
-    :init (global-flycheck-mode)
-)
+(use-package flycheck
+  :ensure t
+  :init (global-flycheck-mode)
+  )
 #+end_src
 ** 基本編
 #+begin_src elisp :tangle yes
-  (use-package lsp-mode
-    :diminish "LSP"
-    :ensure t
-    :hook ((lsp-mode . lsp-diagnostics-mode)
-           (lsp-mode . lsp-enable-which-key-integration)
-           ((tsx-ts-mode
-             typescript-ts-mode
-             js-ts-mode) . lsp-deferred))
-    :custom
-    (lsp-keymap-prefix "C-c l")           ; Prefix for LSP actions
-    (lsp-completion-provider :none)       ; Using Corfu as the provider
-    (lsp-diagnostics-provider :flycheck)
-    (lsp-session-file (locate-user-emacs-file ".lsp-session"))
-    (lsp-log-io nil)                      ; IMPORTANT! Use only for debugging! Drastically affects performance
-    (lsp-keep-workspace-alive nil)        ; Close LSP server if all project buffers are closed
-    (lsp-idle-delay 0.5)                  ; Debounce timer for `after-change-function'
-    ;; core
-    (lsp-enable-xref t)                   ; Use xref to find references
-    (lsp-auto-configure t)                ; Used to decide between current active servers
-    (lsp-eldoc-enable-hover t)            ; Display signature information in the echo area
-    (lsp-enable-dap-auto-configure t)     ; Debug support
-    (lsp-enable-file-watchers nil)
-    (lsp-enable-folding nil)              ; I disable folding since I use origami
-    (lsp-enable-imenu t)
-    (lsp-enable-indentation nil)          ; I use prettier
-    (lsp-enable-links nil)                ; No need since we have `browse-url'
-    (lsp-enable-on-type-formatting nil)   ; Prettier handles this
-    (lsp-enable-suggest-server-download t) ; Useful prompt to download LSP providers
-    (lsp-enable-symbol-highlighting t)     ; Shows usages of symbol at point in the current buffer
-    (lsp-enable-text-document-color nil)   ; This is Treesitter's job
+(use-package lsp-mode
+  :diminish "LSP"
+  :ensure t
+  :hook ((lsp-mode . lsp-diagnostics-mode)
+         (lsp-mode . lsp-enable-which-key-integration)
+         ((tsx-ts-mode
+           typescript-ts-mode
+           js-ts-mode) . lsp-deferred))
+  :custom
+  (lsp-keymap-prefix "C-c l")           ; Prefix for LSP actions
+  (lsp-completion-provider :none)       ; Using Corfu as the provider
+  (lsp-diagnostics-provider :flycheck)
+  (lsp-session-file (locate-user-emacs-file ".lsp-session"))
+  (lsp-log-io nil)                      ; IMPORTANT! Use only for debugging! Drastically affects performance
+  (lsp-keep-workspace-alive nil)        ; Close LSP server if all project buffers are closed
+  (lsp-idle-delay 0.5)                  ; Debounce timer for `after-change-function'
+  ;; core
+  (lsp-enable-xref t)                   ; Use xref to find references
+  (lsp-auto-configure t)                ; Used to decide between current active servers
+  (lsp-eldoc-enable-hover t)            ; Display signature information in the echo area
+  (lsp-enable-dap-auto-configure t)     ; Debug support
+  (lsp-enable-file-watchers nil)
+  (lsp-enable-folding nil)              ; I disable folding since I use origami
+  (lsp-enable-imenu t)
+  (lsp-enable-indentation nil)          ; I use prettier
+  (lsp-enable-links nil)                ; No need since we have `browse-url'
+  (lsp-enable-on-type-formatting nil)   ; Prettier handles this
+  (lsp-enable-suggest-server-download t) ; Useful prompt to download LSP providers
+  (lsp-enable-symbol-highlighting t)     ; Shows usages of symbol at point in the current buffer
+  (lsp-enable-text-document-color nil)   ; This is Treesitter's job
 
-    (lsp-ui-sideline-show-hover nil)      ; Sideline used only for diagnostics
-    (lsp-ui-sideline-diagnostic-max-lines 20) ; 20 lines since typescript errors can be quite big
-    ;; completion
-    (lsp-completion-enable t)
-    (lsp-completion-enable-additional-text-edit t) ; Ex: auto-insert an import for a completion candidate
-    (lsp-enable-snippet t)                         ; Important to provide full JSX completion
-    (lsp-completion-show-kind t)                   ; Optional
-    ;; headerline
-    (lsp-headerline-breadcrumb-enable t)  ; Optional, I like the breadcrumbs
-    (lsp-headerline-breadcrumb-enable-diagnostics nil) ; Don't make them red, too noisy
-    (lsp-headerline-breadcrumb-enable-symbol-numbers nil)
-    (lsp-headerline-breadcrumb-icons-enable nil)
-    ;; modeline
-    (lsp-modeline-code-actions-enable nil) ; Modeline should be relatively clean
-    (lsp-modeline-diagnostics-enable nil)  ; Already supported through `flycheck'
-    (lsp-modeline-workspace-status-enable nil) ; Modeline displays "LSP" when lsp-mode is enabled
-    (lsp-signature-doc-lines 1)                ; Don't raise the echo area. It's distracting
-    (lsp-ui-doc-use-childframe t)              ; Show docs for symbol at point
-    (lsp-eldoc-render-all nil)            ; This would be very useful if it would respect `lsp-signature-doc-lines', currently it's distracting
-    ;; lens
-    (lsp-lens-enable nil)                 ; Optional, I don't need it
-    ;; semantic
-    (lsp-semantic-tokens-enable nil)      ; Related to highlighting, and we defer to treesitter
+  (lsp-ui-sideline-show-hover nil)      ; Sideline used only for diagnostics
+  (lsp-ui-sideline-diagnostic-max-lines 20) ; 20 lines since typescript errors can be quite big
+  ;; completion
+  (lsp-completion-enable t)
+  (lsp-completion-enable-additional-text-edit t) ; Ex: auto-insert an import for a completion candidate
+  (lsp-enable-snippet t)                         ; Important to provide full JSX completion
+  (lsp-completion-show-kind t)                   ; Optional
+  ;; headerline
+  (lsp-headerline-breadcrumb-enable t)  ; Optional, I like the breadcrumbs
+  (lsp-headerline-breadcrumb-enable-diagnostics nil) ; Don't make them red, too noisy
+  (lsp-headerline-breadcrumb-enable-symbol-numbers nil)
+  (lsp-headerline-breadcrumb-icons-enable nil)
+  ;; modeline
+  (lsp-modeline-code-actions-enable nil) ; Modeline should be relatively clean
+  (lsp-modeline-diagnostics-enable nil)  ; Already supported through `flycheck'
+  (lsp-modeline-workspace-status-enable nil) ; Modeline displays "LSP" when lsp-mode is enabled
+  (lsp-signature-doc-lines 1)                ; Don't raise the echo area. It's distracting
+  (lsp-ui-doc-use-childframe t)              ; Show docs for symbol at point
+  (lsp-eldoc-render-all nil)            ; This would be very useful if it would respect `lsp-signature-doc-lines', currently it's distracting
+  ;; lens
+  (lsp-lens-enable nil)                 ; Optional, I don't need it
+  ;; semantic
+  (lsp-semantic-tokens-enable nil)      ; Related to highlighting, and we defer to treesitter
 
-    :preface
-    ;; ここから :preface パートに張り込む部分
-    (defun lsp-booster--advice-json-parse (old-fn &rest args)
-      "Try to parse bytecode instead of json."
-      (or
-       (when (equal (following-char) ?#)
+  :preface
+  ;; ここから :preface パートに張り込む部分
+  (defun lsp-booster--advice-json-parse (old-fn &rest args)
+    "Try to parse bytecode instead of json."
+    (or
+     (when (equal (following-char) ?#)
 
-         (let ((bytecode (read (current-buffer))))
-           (when (byte-code-function-p bytecode)
-             (funcall bytecode))))
-       (apply old-fn args)))
-    (defun lsp-booster--advice-final-command (old-fn cmd &optional test?)
-      "Prepend emacs-lsp-booster command to lsp CMD."
-      (let ((orig-result (funcall old-fn cmd test?)))
-        (if (and (not test?)                             ;; for check lsp-server-present?
-                 (not (file-remote-p default-directory)) ;; see lsp-resolve-final-command, it would add extra shell wrapper
-                 lsp-use-plists
-                 (not (functionp 'json-rpc-connection))  ;; native json-rpc
-                 (executable-find "emacs-lsp-booster"))
-            (progn
-              (message "Using emacs-lsp-booster for %s!" orig-result)
-              (cons "emacs-lsp-booster" orig-result))
-          orig-result)))
-    ;; ここまで :preface パートに張り込む部分
+       (let ((bytecode (read (current-buffer))))
+         (when (byte-code-function-p bytecode)
+           (funcall bytecode))))
+     (apply old-fn args)))
+  (defun lsp-booster--advice-final-command (old-fn cmd &optional test?)
+    "Prepend emacs-lsp-booster command to lsp CMD."
+    (let ((orig-result (funcall old-fn cmd test?)))
+      (if (and (not test?)                             ;; for check lsp-server-present?
+               (not (file-remote-p default-directory)) ;; see lsp-resolve-final-command, it would add extra shell wrapper
+               lsp-use-plists
+               (not (functionp 'json-rpc-connection))  ;; native json-rpc
+               (executable-find "emacs-lsp-booster"))
+          (progn
+            (message "Using emacs-lsp-booster for %s!" orig-result)
+            (cons "emacs-lsp-booster" orig-result))
+        orig-result)))
+  ;; ここまで :preface パートに張り込む部分
 
-    :init
-    ;; ここから :init パートに張り込む部分
-    (setq lsp-use-plists t)
-    ;; Initiate https://github.com/blahgeek/emacs-lsp-booster for performance
-    (advice-add (if (progn (require 'json)
-                           (fboundp 'json-parse-buffer))
-                    'json-parse-buffer
-                  'json-read)
-                :around
-                #'lsp-booster--advice-json-parse)
-    (advice-add 'lsp-resolve-final-command :around #'lsp-booster--advice-final-command)
-    ;; ここまで :init パートに張り込む部分
-    )
+  :init
+  ;; ここから :init パートに張り込む部分
+  (setq lsp-use-plists t)
+  ;; Initiate https://github.com/blahgeek/emacs-lsp-booster for performance
+  (advice-add (if (progn (require 'json)
+                         (fboundp 'json-parse-buffer))
+                  'json-parse-buffer
+                'json-read)
+              :around
+              #'lsp-booster--advice-json-parse)
+  (advice-add 'lsp-resolve-final-command :around #'lsp-booster--advice-final-command)
+  ;; ここまで :init パートに張り込む部分
+  )
 
         ;;;; 引用したが、別のブロックとして外に出した。
         ;;;; エラー追求にて個別にインストールの可否を選択するため
-  ;; (use-package lsp-completion
-  ;;   :no-require
-  ;;   :hook ((lsp-mode . lsp-completion-mode)))
+;; (use-package lsp-completion
+;;   :no-require
+;;   :hook ((lsp-mode . lsp-completion-mode)))
 
-  ;; (use-package lsp-ui
-  ;;   :ensure t
-  ;;   :commands
-  ;;   (lsp-ui-doc-show
-  ;;    lsp-ui-doc-glance)
-  ;;   :bind (:map lsp-mode-map
-  ;;               ("C-c C-d" . 'lsp-ui-doc-glance))
-  ;;   :after (lsp-mode evil)
-  ;;   :config (setq lsp-ui-doc-enable t
-  ;;                 evil-lookup-func #'lsp-ui-doc-glance ; Makes K in evil-mode toggle the doc for symbol at point
-  ;;                 lsp-ui-doc-show-with-cursor nil      ; Don't show doc when cursor is over symbol - too distracting
-  ;;                 lsp-ui-doc-include-signature t       ; Show signature
-  ;;                 lsp-ui-doc-position 'at-point))
+;; (use-package lsp-ui
+;;   :ensure t
+;;   :commands
+;;   (lsp-ui-doc-show
+;;    lsp-ui-doc-glance)
+;;   :bind (:map lsp-mode-map
+;;               ("C-c C-d" . 'lsp-ui-doc-glance))
+;;   :after (lsp-mode evil)
+;;   :config (setq lsp-ui-doc-enable t
+;;                 evil-lookup-func #'lsp-ui-doc-glance ; Makes K in evil-mode toggle the doc for symbol at point
+;;                 lsp-ui-doc-show-with-cursor nil      ; Don't show doc when cursor is over symbol - too distracting
+;;                 lsp-ui-doc-include-signature t       ; Show signature
+;;                 lsp-ui-doc-position 'at-point))
 #+end_src
 
 ** lsp-completion
 #+begin_src elisp :tangle no
-  (use-package lsp-completion
-    :no-require
-    :hook ((lsp-mode . lsp-completion-mode)))
+(use-package lsp-completion
+  :no-require
+  :hook ((lsp-mode . lsp-completion-mode)))
 #+end_src
 
 ** lsp-ui
 #+begin_src elisp :tangle yes
-  (use-package lsp-ui
-    :ensure t
-    :commands
-    (lsp-ui-doc-show
-     lsp-ui-doc-glance)
-    :bind (:map lsp-mode-map
-                ("C-c C-d" . 'lsp-ui-doc-glance))
-    :after (lsp-mode evil)
-    :config (setq lsp-ui-doc-enable t
-                  evil-lookup-func #'lsp-ui-doc-glance ; Makes K in evil-mode toggle the doc for symbol at point
-                  lsp-ui-doc-show-with-cursor nil      ; Don't show doc when cursor is over symbol - too distracting
-                  lsp-ui-doc-include-signature t       ; Show signature
-                  lsp-ui-doc-position 'at-point))
-                  #+end_src
+(use-package lsp-ui
+  :ensure t
+  :commands
+  (lsp-ui-doc-show
+   lsp-ui-doc-glance)
+  :bind (:map lsp-mode-map
+              ("C-c C-d" . 'lsp-ui-doc-glance))
+  :after (lsp-mode evil)
+  :config (setq lsp-ui-doc-enable t
+                evil-lookup-func #'lsp-ui-doc-glance ; Makes K in evil-mode toggle the doc for symbol at point
+                lsp-ui-doc-show-with-cursor nil      ; Don't show doc when cursor is over symbol - too distracting
+                lsp-ui-doc-include-signature t       ; Show signature
+                lsp-ui-doc-position 'at-point))
+#+end_src
 
 ** lsp booster
 - @see https://www.ovistoica.com/blog/2024-7-05-modern-emacs-typescript-web-tsx-config#org620d7ea
@@ -1980,451 +1984,451 @@ F => Shift-f
 
 以下のパートはコピペ用のテキストであり、エクスポートを禁止する。
 #+begin_src elisp :tangle no
-  (use-package lsp-mode
-    ;; ... previous configuration
-    :preface
-    ;; ここから :preface パートに張り込む部分
-    (defun lsp-booster--advice-json-parse (old-fn &rest args)
-      "Try to parse bytecode instead of json."
-      (or
-       (when (equal (following-char) ?#)
+(use-package lsp-mode
+  ;; ... previous configuration
+  :preface
+  ;; ここから :preface パートに張り込む部分
+  (defun lsp-booster--advice-json-parse (old-fn &rest args)
+    "Try to parse bytecode instead of json."
+    (or
+     (when (equal (following-char) ?#)
 
-         (let ((bytecode (read (current-buffer))))
-           (when (byte-code-function-p bytecode)
-             (funcall bytecode))))
-       (apply old-fn args)))
-    (defun lsp-booster--advice-final-command (old-fn cmd &optional test?)
-      "Prepend emacs-lsp-booster command to lsp CMD."
-      (let ((orig-result (funcall old-fn cmd test?)))
-        (if (and (not test?)                             ;; for check lsp-server-present?
-                 (not (file-remote-p default-directory)) ;; see lsp-resolve-final-command, it would add extra shell wrapper
-                 lsp-use-plists
-                 (not (functionp 'json-rpc-connection))  ;; native json-rpc
-                 (executable-find "emacs-lsp-booster"))
-            (progn
-              (message "Using emacs-lsp-booster for %s!" orig-result)
-              (cons "emacs-lsp-booster" orig-result))
-          orig-result)))
-    ;; ここまで :preface パートに張り込む部分
-    :init
-    ;; ここから :init パートに張り込む部分
-    (setq lsp-use-plists t)
-    ;; Initiate https://github.com/blahgeek/emacs-lsp-booster for performance
-    (advice-add (if (progn (require 'json)
-                           (fboundp 'json-parse-buffer))
-                    'json-parse-buffer
-                  'json-read)
-                :around
-                #'lsp-booster--advice-json-parse)
-    (advice-add 'lsp-resolve-final-command :around #'lsp-booster--advice-final-command)
-    ;; ここまで :init パートに張り込む部分
+       (let ((bytecode (read (current-buffer))))
+         (when (byte-code-function-p bytecode)
+           (funcall bytecode))))
+     (apply old-fn args)))
+  (defun lsp-booster--advice-final-command (old-fn cmd &optional test?)
+    "Prepend emacs-lsp-booster command to lsp CMD."
+    (let ((orig-result (funcall old-fn cmd test?)))
+      (if (and (not test?)                             ;; for check lsp-server-present?
+               (not (file-remote-p default-directory)) ;; see lsp-resolve-final-command, it would add extra shell wrapper
+               lsp-use-plists
+               (not (functionp 'json-rpc-connection))  ;; native json-rpc
+               (executable-find "emacs-lsp-booster"))
+          (progn
+            (message "Using emacs-lsp-booster for %s!" orig-result)
+            (cons "emacs-lsp-booster" orig-result))
+        orig-result)))
+  ;; ここまで :preface パートに張り込む部分
+  :init
+  ;; ここから :init パートに張り込む部分
+  (setq lsp-use-plists t)
+  ;; Initiate https://github.com/blahgeek/emacs-lsp-booster for performance
+  (advice-add (if (progn (require 'json)
+                         (fboundp 'json-parse-buffer))
+                  'json-parse-buffer
+                'json-read)
+              :around
+              #'lsp-booster--advice-json-parse)
+  (advice-add 'lsp-resolve-final-command :around #'lsp-booster--advice-final-command)
+  ;; ここまで :init パートに張り込む部分
 
-    )
+  )
 #+end_src
 
 * ESLint
 - @see https://www.ovistoica.com/blog/2024-7-05-modern-emacs-typescript-web-tsx-config#org2b45109
 #+begin_src elisp :tangle no
-  (use-package lsp-eslint
-    :demand t
-    :after lsp-mode)
+(use-package lsp-eslint
+  :demand t
+  :after lsp-mode)
 #+end_src
 
 * Typescript
 - @see https://www.reddit.com/r/emacs/comments/s6zkb6/how_do_i_autostart_lsp_and_typescriptmode_for_ts/?tl=ja
 Deprecated:
 #+begin_src elisp :tangle no
-  (use-package typescript-mode :ensure t)
+(use-package typescript-mode :ensure t)
 #+end_src
 
 - @see https://joppot.info/posts/c05e989a-e642-4c84-a5b8-a0e0c3178941
 #+begin_src elisp :tangle yes
-  (use-package typescript-ts-mode
-    :mode (("\\\\.tsx\\\\'" . tsx-ts-mode)
-           ("\\\\.ts\\\\'" . tsx-ts-mode))
-    :config
-    (setq typescript-ts-mode-indent-offset 2))
+(use-package typescript-ts-mode
+  :mode (("\\\\.tsx\\\\'" . tsx-ts-mode)
+         ("\\\\.ts\\\\'" . tsx-ts-mode))
+  :config
+  (setq typescript-ts-mode-indent-offset 2))
 #+end_src
 
 #+RESULTS:
 
 #+begin_src elisp :tangle yes
-  (use-package jtsx :ensure t)
+(use-package jtsx :ensure t)
 #+end_src
 
 #+begin_src elisp :tangle yes
-  (use-package ob-deno :ensure t)
+(use-package ob-deno :ensure t)
 #+end_src
 
 #+RESULTS:
 
 #+begin_src elisp :tangle yes
-  (use-package ob-ts-node :ensure t)
+(use-package ob-ts-node :ensure t)
 #+end_src
 
 #+begin_src elisp :tangle yes
-  (use-package tide
-    :ensure t
-    :hook (tsx-ts-mode . setup-tide-mode)
-    :config
-    (defun setup-tide-mode ()
-      (interactive)
-      (tide-setup)
-      (flycheck-mode +1)
-      (setq flycheck-check-syntax-automatically '(save mode-enabled))
-      (eldoc-mode +1)
-      (tide-hl-identifier-mode +1)
-      (company-mode +1))
-    (setq company-tooltip-align-annotations t))
+(use-package tide
+  :ensure t
+  :hook (tsx-ts-mode . setup-tide-mode)
+  :config
+  (defun setup-tide-mode ()
+    (interactive)
+    (tide-setup)
+    (flycheck-mode +1)
+    (setq flycheck-check-syntax-automatically '(save mode-enabled))
+    (eldoc-mode +1)
+    (tide-hl-identifier-mode +1)
+    (company-mode +1))
+  (setq company-tooltip-align-annotations t))
 #+end_src
 
 * Eglot導入
 lspサーバーとの比較のため導入してみる
 #+begin_src elisp :tangle yes
-    (use-package eglot
-      :ensure t
-      :hook
-      (c-mode . eglot-ensure)
-      (c++-mode . eglot-ensure)
-      (objc-mode . eglot-ensure)
-      (dylan-mode . eglot-ensure)
-      :config
-      (add-to-list 'eglot-server-programs '((c-mode c++-mode objc-mode) "clangd"))
-      (add-to-list 'eglot-server-programs '((dylan-mode) "dylan-lsp-server"))
-      )
+(use-package eglot
+  :ensure t
+  :hook
+  (c-mode . eglot-ensure)
+  (c++-mode . eglot-ensure)
+  (objc-mode . eglot-ensure)
+  (dylan-mode . eglot-ensure)
+  :config
+  (add-to-list 'eglot-server-programs '((c-mode c++-mode objc-mode) "clangd"))
+  (add-to-list 'eglot-server-programs '((dylan-mode) "dylan-lsp-server"))
+  )
 #+end_src
 * Tree sitter
 - https://joppot.info/posts/c05e989a-e642-4c84-a5b8-a0e0c3178941
 
 #+begin_src elisp :tangle yes
-  (use-package tree-sitter
-    :if (version< emacs-version "29.0")
-    :ensure t)
+(use-package tree-sitter
+  :if (version< emacs-version "29.0")
+  :ensure t)
 #+end_src
 
 #+begin_src elisp :tangle yes
-  (use-package tree-sitter-langs
+(use-package tree-sitter-langs
+  :ensure t
+  :after tree-sitter
+  :config
+  (tree-sitter-require 'tsx)
+  (add-to-list 'tree-sitter-major-mode-language-alist '(tsx-ts-mode . tsx)))
+#+end_src
+
+#+begin_src elisp :tangle yes
+;; 構文解析エンジン Tree sitter
+(unless (version< emacs-version "29.0")
+  (use-package treesit-auto
     :ensure t
-    :after tree-sitter
     :config
-    (tree-sitter-require 'tsx)
-    (add-to-list 'tree-sitter-major-mode-language-alist '(tsx-ts-mode . tsx)))
-#+end_src
-
-#+begin_src elisp :tangle yes
-  ;; 構文解析エンジン Tree sitter
-  (unless (version< emacs-version "29.0")
-    (use-package treesit-auto
-      :ensure t
-      :config
-      (setq treesit-auto-install t)
-      (global-treesit-auto-mode)))
+    (setq treesit-auto-install t)
+    (global-treesit-auto-mode)))
 #+end_src
 
 https://www.ovistoica.com/blog/2024-7-05-modern-emacs-typescript-web-tsx-config#orgf6d33f7
 #+begin_src elisp :tangle no
-  (use-package treesit
-    :mode (("\\.tsx\\'" . tsx-ts-mode)
-           ("\\.js\\'"  . typescript-ts-mode)
-           ("\\.mjs\\'" . typescript-ts-mode)
-           ("\\.mts\\'" . typescript-ts-mode)
-           ("\\.cjs\\'" . typescript-ts-mode)
-           ("\\.ts\\'"  . typescript-ts-mode)
-           ("\\.jsx\\'" . tsx-ts-mode)
-           ("\\.json\\'" .  json-ts-mode)
-           ("\\.Dockerfile\\'" . dockerfile-ts-mode)
-           ("\\.prisma\\'" . prisma-ts-mode)
-           ;; More modes defined here...
-           )
-    :preface
-    (defun os/setup-install-grammars ()
-      "Install Tree-sitter grammars if they are absent."
-      (interactive)
-      (dolist (grammar
-               '((css . ("https://github.com/tree-sitter/tree-sitter-css" "v0.20.0"))
-                 (bash "https://github.com/tree-sitter/tree-sitter-bash")
-                 (html . ("https://github.com/tree-sitter/tree-sitter-html" "v0.20.1"))
-                 (javascript . ("https://github.com/tree-sitter/tree-sitter-javascript" "v0.20.0" "src"))
-                 (json . ("https://github.com/tree-sitter/tree-sitter-json" "v0.20.2"))
-                 (python . ("https://github.com/tree-sitter/tree-sitter-python" "v0.20.4"))
-                 (go "https://github.com/tree-sitter/tree-sitter-go" "v0.20.0")
-                 (markdown "https://github.com/ikatyang/tree-sitter-markdown")
-                 (make "https://github.com/alemuller/tree-sitter-make")
-                 (elisp "https://github.com/Wilfred/tree-sitter-elisp")
-                 (cmake "https://github.com/uyha/tree-sitter-cmake")
-                 (c "https://github.com/tree-sitter/tree-sitter-c")
-                 (cpp "https://github.com/tree-sitter/tree-sitter-cpp")
-                 (toml "https://github.com/tree-sitter/tree-sitter-toml")
-                 (tsx . ("https://github.com/tree-sitter/tree-sitter-typescript" "v0.20.3" "tsx/src"))
-                 (typescript . ("https://github.com/tree-sitter/tree-sitter-typescript" "v0.20.3" "typescript/src"))
-                 (yaml . ("https://github.com/ikatyang/tree-sitter-yaml" "v0.5.0"))
-                 (prisma "https://github.com/victorhqc/tree-sitter-prisma")))
-        (add-to-list 'treesit-language-source-alist grammar)
-        ;; Only install `grammar' if we don't already have it
-        ;; installed. However, if you want to *update* a grammar then
-        ;; this obviously prevents that from happening.
-        (unless (treesit-language-available-p (car grammar))
-          (treesit-install-language-grammar (car grammar)))))
+(use-package treesit
+  :mode (("\\.tsx\\'" . tsx-ts-mode)
+         ("\\.js\\'"  . typescript-ts-mode)
+         ("\\.mjs\\'" . typescript-ts-mode)
+         ("\\.mts\\'" . typescript-ts-mode)
+         ("\\.cjs\\'" . typescript-ts-mode)
+         ("\\.ts\\'"  . typescript-ts-mode)
+         ("\\.jsx\\'" . tsx-ts-mode)
+         ("\\.json\\'" .  json-ts-mode)
+         ("\\.Dockerfile\\'" . dockerfile-ts-mode)
+         ("\\.prisma\\'" . prisma-ts-mode)
+         ;; More modes defined here...
+         )
+  :preface
+  (defun os/setup-install-grammars ()
+    "Install Tree-sitter grammars if they are absent."
+    (interactive)
+    (dolist (grammar
+             '((css . ("https://github.com/tree-sitter/tree-sitter-css" "v0.20.0"))
+               (bash "https://github.com/tree-sitter/tree-sitter-bash")
+               (html . ("https://github.com/tree-sitter/tree-sitter-html" "v0.20.1"))
+               (javascript . ("https://github.com/tree-sitter/tree-sitter-javascript" "v0.20.0" "src"))
+               (json . ("https://github.com/tree-sitter/tree-sitter-json" "v0.20.2"))
+               (python . ("https://github.com/tree-sitter/tree-sitter-python" "v0.20.4"))
+               (go "https://github.com/tree-sitter/tree-sitter-go" "v0.20.0")
+               (markdown "https://github.com/ikatyang/tree-sitter-markdown")
+               (make "https://github.com/alemuller/tree-sitter-make")
+               (elisp "https://github.com/Wilfred/tree-sitter-elisp")
+               (cmake "https://github.com/uyha/tree-sitter-cmake")
+               (c "https://github.com/tree-sitter/tree-sitter-c")
+               (cpp "https://github.com/tree-sitter/tree-sitter-cpp")
+               (toml "https://github.com/tree-sitter/tree-sitter-toml")
+               (tsx . ("https://github.com/tree-sitter/tree-sitter-typescript" "v0.20.3" "tsx/src"))
+               (typescript . ("https://github.com/tree-sitter/tree-sitter-typescript" "v0.20.3" "typescript/src"))
+               (yaml . ("https://github.com/ikatyang/tree-sitter-yaml" "v0.5.0"))
+               (prisma "https://github.com/victorhqc/tree-sitter-prisma")))
+      (add-to-list 'treesit-language-source-alist grammar)
+      ;; Only install `grammar' if we don't already have it
+      ;; installed. However, if you want to *update* a grammar then
+      ;; this obviously prevents that from happening.
+      (unless (treesit-language-available-p (car grammar))
+        (treesit-install-language-grammar (car grammar)))))
 
-    ;; Optional, but recommended. Tree-sitter enabled major modes are
-    ;; distinct from their ordinary counterparts.
-    ;;
-    ;; You can remap major modes with `major-mode-remap-alist'. Note
-    ;; that this does *not* extend to hooks! Make sure you migrate them
-    ;; also
-    (dolist (mapping
-             '((python-mode . python-ts-mode)
-               (css-mode . css-ts-mode)
-               (typescript-mode . typescript-ts-mode)
-               (js-mode . typescript-ts-mode)
-               (js2-mode . typescript-ts-mode)
-               (c-mode . c-ts-mode)
-               (c++-mode . c++-ts-mode)
-               (c-or-c++-mode . c-or-c++-ts-mode)
-               (bash-mode . bash-ts-mode)
-               (css-mode . css-ts-mode)
-               (json-mode . json-ts-mode)
-               (js-json-mode . json-ts-mode)
-               (sh-mode . bash-ts-mode)
-               (sh-base-mode . bash-ts-mode)))
-      (add-to-list 'major-mode-remap-alist mapping))
-    :config
-    (setq treesit-font-lock-level 4)
-    (os/setup-install-grammars))
+  ;; Optional, but recommended. Tree-sitter enabled major modes are
+  ;; distinct from their ordinary counterparts.
+  ;;
+  ;; You can remap major modes with `major-mode-remap-alist'. Note
+  ;; that this does *not* extend to hooks! Make sure you migrate them
+  ;; also
+  (dolist (mapping
+           '((python-mode . python-ts-mode)
+             (css-mode . css-ts-mode)
+             (typescript-mode . typescript-ts-mode)
+             (js-mode . typescript-ts-mode)
+             (js2-mode . typescript-ts-mode)
+             (c-mode . c-ts-mode)
+             (c++-mode . c++-ts-mode)
+             (c-or-c++-mode . c-or-c++-ts-mode)
+             (bash-mode . bash-ts-mode)
+             (css-mode . css-ts-mode)
+             (json-mode . json-ts-mode)
+             (js-json-mode . json-ts-mode)
+             (sh-mode . bash-ts-mode)
+             (sh-base-mode . bash-ts-mode)))
+    (add-to-list 'major-mode-remap-alist mapping))
+  :config
+  (setq treesit-font-lock-level 4)
+  (os/setup-install-grammars))
 #+end_src
 * フレームの回転
 #+begin_src elisp :tangle yes
-  ;; フレームの回転
-  (use-package transpose-frame
-    :ensure t)
+;; フレームの回転
+(use-package transpose-frame
+  :ensure t)
 #+end_src
 * ウィンドウのリサイズ
 #+begin_src elisp :tangle yes
-  ;; C-s <araow keys> でウィンドウのサイズをマウスを使わずに調節する
-  ;;
-  ;; Window Resize
-  ;; https://www.emacswiki.org/emacs/WindowResize
-  ;;
-  (defun win-resize-top-or-bot ()
-    "Figure out if the current window is on top, bottom or in the
+;; C-s <araow keys> でウィンドウのサイズをマウスを使わずに調節する
+;;
+;; Window Resize
+;; https://www.emacswiki.org/emacs/WindowResize
+;;
+(defun win-resize-top-or-bot ()
+  "Figure out if the current window is on top, bottom or in the
   middle"
-    (let* ((win-edges (window-edges))
-           (this-window-y-min (nth 1 win-edges))
-           (this-window-y-max (nth 3 win-edges))
-           (fr-height (frame-height)))
-      (cond
-       ((eq 0 this-window-y-min) "top")
-       ((eq (- fr-height 1) this-window-y-max) "bot")
-       (t "mid"))))
+  (let* ((win-edges (window-edges))
+         (this-window-y-min (nth 1 win-edges))
+         (this-window-y-max (nth 3 win-edges))
+         (fr-height (frame-height)))
+    (cond
+     ((eq 0 this-window-y-min) "top")
+     ((eq (- fr-height 1) this-window-y-max) "bot")
+     (t "mid"))))
 
-  (defun win-resize-left-or-right ()
-    "Figure out if the current window is to the left, right or in the
+(defun win-resize-left-or-right ()
+  "Figure out if the current window is to the left, right or in the
   middle"
-    (let* ((win-edges (window-edges))
-           (this-window-x-min (nth 0 win-edges))
-           (this-window-x-max (nth 2 win-edges))
-           (fr-width (frame-width)))
-      (cond
-       ((eq 0 this-window-x-min) "left")
-       ((eq (+ fr-width 4) this-window-x-max) "right")
-       (t "mid"))))
-
-  (defun win-resize-enlarge-horiz ()
-    (interactive)
+  (let* ((win-edges (window-edges))
+         (this-window-x-min (nth 0 win-edges))
+         (this-window-x-max (nth 2 win-edges))
+         (fr-width (frame-width)))
     (cond
-     ((equal "top" (win-resize-top-or-bot)) (enlarge-window -1))
-     ((equal "bot" (win-resize-top-or-bot)) (enlarge-window 1))
-     ((equal "mid" (win-resize-top-or-bot)) (enlarge-window -1))
-     (t (message "nil"))))
+     ((eq 0 this-window-x-min) "left")
+     ((eq (+ fr-width 4) this-window-x-max) "right")
+     (t "mid"))))
 
-  (defun win-resize-minimize-horiz ()
-    (interactive)
-    (cond
-     ((equal "top" (win-resize-top-or-bot)) (enlarge-window 1))
-     ((equal "bot" (win-resize-top-or-bot)) (enlarge-window -1))
-     ((equal "mid" (win-resize-top-or-bot)) (enlarge-window 1))
-     (t (message "nil"))))
+(defun win-resize-enlarge-horiz ()
+  (interactive)
+  (cond
+   ((equal "top" (win-resize-top-or-bot)) (enlarge-window -1))
+   ((equal "bot" (win-resize-top-or-bot)) (enlarge-window 1))
+   ((equal "mid" (win-resize-top-or-bot)) (enlarge-window -1))
+   (t (message "nil"))))
 
-  (defun win-resize-enlarge-vert ()
-    (interactive)
-    (cond
-     ((equal "left" (win-resize-left-or-right)) (enlarge-window-horizontally -1))
-     ((equal "right" (win-resize-left-or-right)) (enlarge-window-horizontally 1))
-     ((equal "mid" (win-resize-left-or-right)) (enlarge-window-horizontally -1))))
+(defun win-resize-minimize-horiz ()
+  (interactive)
+  (cond
+   ((equal "top" (win-resize-top-or-bot)) (enlarge-window 1))
+   ((equal "bot" (win-resize-top-or-bot)) (enlarge-window -1))
+   ((equal "mid" (win-resize-top-or-bot)) (enlarge-window 1))
+   (t (message "nil"))))
 
-  (defun win-resize-minimize-vert ()
-    (interactive)
-    (cond
-     ((equal "left" (win-resize-left-or-right)) (enlarge-window-horizontally 1))
-     ((equal "right" (win-resize-left-or-right)) (enlarge-window-horizontally -1))
-     ((equal "mid" (win-resize-left-or-right)) (enlarge-window-horizontally 1))))
+(defun win-resize-enlarge-vert ()
+  (interactive)
+  (cond
+   ((equal "left" (win-resize-left-or-right)) (enlarge-window-horizontally -1))
+   ((equal "right" (win-resize-left-or-right)) (enlarge-window-horizontally 1))
+   ((equal "mid" (win-resize-left-or-right)) (enlarge-window-horizontally -1))))
 
-  ;; replace all C-M-(down|up|left|right) to
-  ;;             C-s-(down|up|left|right)
-  ;; reason for confilict to paredit
-  (global-set-key [C-s-down] 'win-resize-minimize-vert)
-  (global-set-key [C-s-up] 'win-resize-enlarge-vert)
-  (global-set-key [C-s-left] 'win-resize-minimize-horiz)
-  (global-set-key [C-s-right] 'win-resize-enlarge-horiz)
-  (global-set-key [C-s-up] 'win-resize-enlarge-horiz)
-  (global-set-key [C-s-down] 'win-resize-minimize-horiz)
-  (global-set-key [C-s-left] 'win-resize-enlarge-vert)
-  (global-set-key [C-s-right] 'win-resize-minimize-vert)
+(defun win-resize-minimize-vert ()
+  (interactive)
+  (cond
+   ((equal "left" (win-resize-left-or-right)) (enlarge-window-horizontally 1))
+   ((equal "right" (win-resize-left-or-right)) (enlarge-window-horizontally -1))
+   ((equal "mid" (win-resize-left-or-right)) (enlarge-window-horizontally 1))))
+
+;; replace all C-M-(down|up|left|right) to
+;;             C-s-(down|up|left|right)
+;; reason for confilict to paredit
+(global-set-key [C-s-down] 'win-resize-minimize-vert)
+(global-set-key [C-s-up] 'win-resize-enlarge-vert)
+(global-set-key [C-s-left] 'win-resize-minimize-horiz)
+(global-set-key [C-s-right] 'win-resize-enlarge-horiz)
+(global-set-key [C-s-up] 'win-resize-enlarge-horiz)
+(global-set-key [C-s-down] 'win-resize-minimize-horiz)
+(global-set-key [C-s-left] 'win-resize-enlarge-vert)
+(global-set-key [C-s-right] 'win-resize-minimize-vert)
 #+end_src
 * sudo編集
 #+begin_src elisp :tangle yes
-  (use-package sudo-edit
-    :ensure t)
+(use-package sudo-edit
+  :ensure t)
 #+end_src
 * Which Key
- [[https://github.com/justbur/emacs-which-key][which-key]] is a useful UI panel that appears when you start pressing any key binding in Emacs to offer you all possible completions for the prefix.  For example, if you press =C-c= (hold control and press the letter =c=), a panel will appear at the bottom of the frame displaying all of the bindings under that prefix and which command they run.  This is very useful for learning the possible key bindings in the mode of your current buffer.
+[[https://github.com/justbur/emacs-which-key][which-key]] is a useful UI panel that appears when you start pressing any key binding in Emacs to offer you all possible completions for the prefix.  For example, if you press =C-c= (hold control and press the letter =c=), a panel will appear at the bottom of the frame displaying all of the bindings under that prefix and which command they run.  This is very useful for learning the possible key bindings in the mode of your current buffer.
 #+begin_src emacs-lisp :tangle yes
-  (use-package which-key
-    :defer 0
-    :diminish which-key-mode
-    :config
-    (which-key-mode)
-    (setq which-key-idle-delay 1))
+(use-package which-key
+  :defer 0
+  :diminish which-key-mode
+  :config
+  (which-key-mode)
+  (setq which-key-idle-delay 1))
 #+end_src
 * アイコン装飾
 #+begin_src elisp :tangle yes
-  (use-package all-the-icons
-    :if (display-graphic-p))
+(use-package all-the-icons
+  :if (display-graphic-p))
 
-  (when (display-graphic-p)
-    (use-package nerd-icons)
-    (unless (kf:font-family-installed-p "all-the-icons")
-      (all-the-icons-install-fonts))
-    (unless (kf:font-family-installed-p "symbols nerd")
-      (nerd-icons-install-fonts)))
+(when (display-graphic-p)
+  (use-package nerd-icons)
+  (unless (kf:font-family-installed-p "all-the-icons")
+    (all-the-icons-install-fonts))
+  (unless (kf:font-family-installed-p "symbols nerd")
+    (nerd-icons-install-fonts)))
 
-  (use-package all-the-icons-dired
-    :if (display-graphic-p)
-    :hook (dired-mode . all-the-icons-dired-mode))
+(use-package all-the-icons-dired
+  :if (display-graphic-p)
+  :hook (dired-mode . all-the-icons-dired-mode))
 #+end_src
 * astyle
 #+begin_src elisp :tangle yes
-  (use-package astyle
-    :ensure t
-    :when (executable-find "astyle"))
+(use-package astyle
+  :ensure t
+  :when (executable-find "astyle"))
 #+end_src
 * CMake 対応
 #+begin_src elisp :tangle yes
-  (use-package cmake-mode
-    :ensure t)
-  (setq auto-mode-alist
-        (append
-         '(("CMakeLists\\.txt\\'" . cmake-mode))
-         '(("\\.cmake\\'" . cmake-mode))
-         auto-mode-alist))
+(use-package cmake-mode
+  :ensure t)
+(setq auto-mode-alist
+      (append
+       '(("CMakeLists\\.txt\\'" . cmake-mode))
+       '(("\\.cmake\\'" . cmake-mode))
+       auto-mode-alist))
 #+end_src
 * 末尾のゴミを可視化
 ** デフォルトを有効にして除外を指定
 #+begin_src elisp :tangle no
-  ;; https://qiita.com/tadsan/items/df73c711f921708facdc
-  (setq-default show-trailing-whitespace t)
-  (defun my/disable-trailing-mode-hook ()
-    "Disable show tail whitespace."
-    (setq show-trailing-whitespace nil))
+;; https://qiita.com/tadsan/items/df73c711f921708facdc
+(setq-default show-trailing-whitespace t)
+(defun my/disable-trailing-mode-hook ()
+  "Disable show tail whitespace."
+  (setq show-trailing-whitespace nil))
 
-  (defvar my/disable-trailing-modes
-    '(comint-mode
-      eshell-mode
-      eww-mode
-      term-mode
-      vterm-mode
-      slime-repl-mode
-      dime-repl-mode
-      compilation-mode
-      org-journal-mode
-      twittering-mode))
+(defvar my/disable-trailing-modes
+  '(comint-mode
+    eshell-mode
+    eww-mode
+    term-mode
+    vterm-mode
+    slime-repl-mode
+    dime-repl-mode
+    compilation-mode
+    org-journal-mode
+    twittering-mode))
 
-  (mapc
-   (lambda (mode)
-     (add-hook (intern (concat (symbol-name mode) "-hook"))
-               'my/disable-trailing-mode-hook))
-   my/disable-trailing-modes)
+(mapc
+ (lambda (mode)
+   (add-hook (intern (concat (symbol-name mode) "-hook"))
+             'my/disable-trailing-mode-hook))
+ my/disable-trailing-modes)
 #+end_src
 ** デフォルトを無効にして対象を指定
 #+begin_src elisp :tangle yes
-  ;; https://qiita.com/tadsan/items/df73c711f921708facdc
-  (setq-default show-trailing-whitespace nil)
-  (defun my/enable-trailing-mode-hook ()
-    "Disable show tail whitespace."
-    (setq show-trailing-whitespace t))
+;; https://qiita.com/tadsan/items/df73c711f921708facdc
+(setq-default show-trailing-whitespace nil)
+(defun my/enable-trailing-mode-hook ()
+  "Disable show tail whitespace."
+  (setq show-trailing-whitespace t))
 
-  (defvar my/enable-trailing-modes
-    '(org-mode
-      c-mode
-      ))
+(defvar my/enable-trailing-modes
+  '(org-mode
+    c-mode
+    ))
 
-  (mapc
-   (lambda (mode)
-     (add-hook (intern (concat (symbol-name mode) "-hook"))
-               'my/enable-trailing-mode-hook))
-   my/enable-trailing-modes)
+(mapc
+ (lambda (mode)
+   (add-hook (intern (concat (symbol-name mode) "-hook"))
+             'my/enable-trailing-mode-hook))
+ my/enable-trailing-modes)
 #+end_src
 
 * Iosevkaを標準フォントに
 #+begin_src elisp :tangle yes
-  ;; TODO この対策は一時的なものであるため、通常のoptionsに戻すのを忘れないこと
-  (when (and (display-graphic-p) (kf:font-family-installed-p "iosevka"))
-    (let ((font-height (if (< (display-pixel-height) 900) 100 130))
-          (custom-set-faces
-           ;; custom-set-faces was added by Custom.
-           ;; If you edit it by hand, you could mess it up, so be careful.
-           ;; Your init file should contain only one such instance.
-           ;; If there is more than one, they won't work right.
-           ;;
-           '(default ((t (:family "Iosevka" :foundry "UKWN" :slant normal :weight regular :height font-height :width normal))))
-           ))))
+;; TODO この対策は一時的なものであるため、通常のoptionsに戻すのを忘れないこと
+(when (and (display-graphic-p) (kf:font-family-installed-p "iosevka"))
+  (let ((font-height (if (< (display-pixel-height) 900) 100 130))
+        (custom-set-faces
+         ;; custom-set-faces was added by Custom.
+         ;; If you edit it by hand, you could mess it up, so be careful.
+         ;; Your init file should contain only one such instance.
+         ;; If there is more than one, they won't work right.
+         ;;
+         '(default ((t (:family "Iosevka" :foundry "UKWN" :slant normal :weight regular :height font-height :width normal))))
+         ))))
 #+end_src
 
 * モードラインをシンプル化
 #+begin_src elisp :tangle yes
-  (use-package doom-modeline
-    :if (and (display-graphic-p) (not (eq system-type 'haiku)))
-    :init
-    (doom-modeline-mode +1))
+(use-package doom-modeline
+  :if (and (display-graphic-p) (not (eq system-type 'haiku)))
+  :init
+  (doom-modeline-mode +1))
 #+end_src
 * デスクトップのサイズを記憶
 #+begin_src elisp :tangle yes
-  ;; デスクトップ環境の保存
-  ;; https://www.gnu.org/software/emacs//manual/html_node/emacs/Saving-Emacs-Sessions.html
-  (desktop-save-mode (if (display-graphic-p) +1 -1))
-  ;; ホスト名を付加してファイル名衝突回避
-  (setq desktop-base-file-name (concat "." (safe-host-name-string) "-emacs.desktop"))
+;; デスクトップ環境の保存
+;; https://www.gnu.org/software/emacs//manual/html_node/emacs/Saving-Emacs-Sessions.html
+(desktop-save-mode (if (display-graphic-p) +1 -1))
+;; ホスト名を付加してファイル名衝突回避
+(setq desktop-base-file-name (concat "." (safe-host-name-string) "-emacs.desktop"))
 #+end_src
 
 #+begin_src elisp :tangle no  :results output
-  desktop-path
-  desktop-base-file-name
-  (safe-host-name-string)
+desktop-path
+desktop-base-file-name
+(safe-host-name-string)
 #+end_src
 
 #+RESULTS:
 #+begin_src elisp :tangle yes
-  (use-package ef-themes
-    :ensure t
-    ;; :config
-    ;; (ef-themes-select 'ef-dark)
-    )
+(use-package ef-themes
+  :ensure t
+  ;; :config
+  ;; (ef-themes-select 'ef-dark)
+  )
 #+end_src
 
 * グローバル高速検索
 #+begin_src elisp :tangle yes
-  ;; https://agel.readthedocs.io/en/latest/index.html
-  (use-package ag
-    :ensure t)
+;; https://agel.readthedocs.io/en/latest/index.html
+(use-package ag
+  :ensure t)
 #+end_src
 
 * TODO 垂直分割より水分平割を優先する(表現が逆かな)
 一時的にオフにしておく、frame が縦長か横長かの判定で切り分ける
 frame-geometry関数のouter-sizeで判定すること
 #+begin_src elisp :tangle no
-  ;; https://qiita.com/nobuyuki86/items/6b7aa2f17faa63b6a900#%E6%B0%B4%E5%B9%B3%E5%88%86%E5%89%B2%E3%82%88%E3%82%8A%E5%9E%82%E7%9B%B4%E5%88%86%E5%89%B2%E3%82%92%E5%84%AA%E5%85%88%E3%81%99%E3%82%8B
-  (setq split-height-threshold nil)
-  (setq split-width-threshold 0)
+;; https://qiita.com/nobuyuki86/items/6b7aa2f17faa63b6a900#%E6%B0%B4%E5%B9%B3%E5%88%86%E5%89%B2%E3%82%88%E3%82%8A%E5%9E%82%E7%9B%B4%E5%88%86%E5%89%B2%E3%82%92%E5%84%AA%E5%85%88%E3%81%99%E3%82%8B
+(setq split-height-threshold nil)
+(setq split-width-threshold 0)
 #+end_src
 * TODO 導入予定
 ** TODO narrow時にツリー間の移動を用意にし、プレゼンテーションも行える
@@ -2433,49 +2437,49 @@ https://protesilaos.com/emacs/logos*
 
 * Projectile
 #+begin_src elisp :tangle yes
-  (use-package projectile
-    :config
-    (defun projectile-project-find-function (dir)
-      (let* ((root (projectile-project-root dir)))
-        (and root (cons 'transient root))))
-    (with-eval-after-load 'project
-      (add-to-list 'project-find-functions 'projectile-project-find-function))
-    )
+(use-package projectile
+  :config
+  (defun projectile-project-find-function (dir)
+    (let* ((root (projectile-project-root dir)))
+      (and root (cons 'transient root))))
+  (with-eval-after-load 'project
+    (add-to-list 'project-find-functions 'projectile-project-find-function))
+  )
 
-  ;; (use-package eglot
-  ;;   :bind (:map eglot-mode-map
-  ;;               ("C-c C-d" . eglot-help-at-point)
-  ;;               ("C-c C-r" . eglot-code-actions))
-  ;;   :hook
-  ;;   ((c-mode-common . eglot-ensure))
-  ;;   )
+;; (use-package eglot
+;;   :bind (:map eglot-mode-map
+;;               ("C-c C-d" . eglot-help-at-point)
+;;               ("C-c C-r" . eglot-code-actions))
+;;   :hook
+;;   ((c-mode-common . eglot-ensure))
+;;   )
 #+end_src
 
 * TODO ObjC
 #+begin_src elisp :tangle yes
-  (defun kf:c-mode-init ()
-    (c-toggle-auto-newline 1)
-    (setq c-hanging-braces-alist '((statement-open before after)
-                                   (substatement-open before after) ))
-    )
-  (defun kf:objc-mode-init ()
-    (c-toggle-auto-newline 1)
-    (setq c-hanging-braces-alist '((statement before after)
-                                   (statement-open before after)
-                                   (substatement-open before after) ))
-    )
-  (add-hook 'c-mode-hook 'kf:c-mode-init)
-  (add-hook 'objc-mode-hook 'kf:objc-mode-init)
+(defun kf:c-mode-init ()
+  (c-toggle-auto-newline 1)
+  (setq c-hanging-braces-alist '((statement-open before after)
+                                 (substatement-open before after) ))
+  )
+(defun kf:objc-mode-init ()
+  (c-toggle-auto-newline 1)
+  (setq c-hanging-braces-alist '((statement before after)
+                                 (statement-open before after)
+                                 (substatement-open before after) ))
+  )
+(add-hook 'c-mode-hook 'kf:c-mode-init)
+(add-hook 'objc-mode-hook 'kf:objc-mode-init)
 
-  ;; https://qiita.com/fujimisakari/items/a6ff082f0e8eddc09511
-  ;; .hファイルもobjc-modeで開くけるようにする
-  (add-to-list 'magic-mode-alist
-               `(,(lambda ()
-                    (and (stringp (buffer-file-name))
-                         (string= (file-name-extension (buffer-file-name)) "h")
-                         (re-search-forward "@\\<interface\\>"
-                                            magic-mode-regexp-match-limit t)))
-                 . objc-mode))
+;; https://qiita.com/fujimisakari/items/a6ff082f0e8eddc09511
+;; .hファイルもobjc-modeで開けるようにする
+(add-to-list 'magic-mode-alist
+             `(,(lambda ()
+                  (and (stringp (buffer-file-name))
+                       (string= (file-name-extension (buffer-file-name)) "h")
+                       (re-search-forward "@\\<interface\\>"
+                                          magic-mode-regexp-match-limit t)))
+               . objc-mode))
 #+end_src
 
 #+RESULTS:
@@ -2483,8 +2487,8 @@ https://protesilaos.com/emacs/logos*
 
 * Smalltalk
 #+begin_src elisp :tangle yes
-  (use-package smalltalk-mode
-    :ensure t)
+(use-package smalltalk-mode
+  :ensure t)
 #+end_src
 
 * ClangFormat
@@ -2496,40 +2500,40 @@ https://protesilaos.com/emacs/logos*
 #+RESULTS:
 * GNUstep Renaissance
 #+begin_src elisp :tangle yes
- (add-to-list 'auto-mode-alist '("\\.gsmarkup$" . xml-mode))
+(add-to-list 'auto-mode-alist '("\\.gsmarkup$" . xml-mode))
 #+end_src
 
 * NeoTree
 #+begin_src elisp :tangle no
-  ;; @deprecated replace by treemacs
-  ;; NeoTree
-  ;; https://tsuu32.hatenablog.com/entry/2020/08/19/004306
-  (use-package neotree
-    :ensure t
-    :config
-    (setq neo-show-hidden-files t) ; dot-fileも表示する
-    (setq neo-theme 'icons) )
+;; @deprecated replace by treemacs
+;; NeoTree
+;; https://tsuu32.hatenablog.com/entry/2020/08/19/004306
+(use-package neotree
+  :ensure t
+  :config
+  (setq neo-show-hidden-files t) ; dot-fileも表示する
+  (setq neo-theme 'icons) )
 #+end_src
 * Orderless
 #+begin_src elisp :tangle yes
-  (use-package orderless
-    :ensure t
-    :custom
-    (completion-styles '(orderless basic))
-    (completion-category-overrides '((file (styles basic partial-completion)))))
+(use-package orderless
+  :ensure t
+  :custom
+  (completion-styles '(orderless basic))
+  (completion-category-overrides '((file (styles basic partial-completion)))))
 #+end_src
 * Mozc
 #+begin_src elisp :tangle yes
-  ;; sudo apt install -y emacs-mozc emacs-mozc-bin
-  (defun kf:mozc-installed-p ()
-    (and
-     (file-exists-p "/usr/share/emacs/site-lisp/emacs-mozc/mozc.el")
-     (file-exists-p "/usr/lib/mozc/mozc_server")
-     (file-exists-p "/usr/bin/mozc_emacs_helper")))
+;; sudo apt install -y emacs-mozc emacs-mozc-bin
+(defun kf:mozc-installed-p ()
+  (and
+   (file-exists-p "/usr/share/emacs/site-lisp/emacs-mozc/mozc.el")
+   (file-exists-p "/usr/lib/mozc/mozc_server")
+   (file-exists-p "/usr/bin/mozc_emacs_helper")))
 
-  (when (kf:mozc-installed-p)
-    (when (kf:ensure-load-file "/usr/share/emacs/site-lisp/emacs-mozc/mozc.el")
-      (setq default-input-method "japanese-mozc")))
+(when (kf:mozc-installed-p)
+  (when (kf:ensure-load-file "/usr/share/emacs/site-lisp/emacs-mozc/mozc.el")
+    (setq default-input-method "japanese-mozc")))
 
 #+end_src
 
@@ -2542,8 +2546,8 @@ https://protesilaos.com/emacs/logos*
 * Haiku Support
 ** Setup Jamfile mode
 #+begin_src elisp :tangle yes
-  ;; Haiku build system
-  (kf:ensure-load-file "~/.emacs.d/lisp/jam-mode.el")
+;; Haiku build system
+(kf:ensure-load-file "~/.emacs.d/lisp/jam-mode.el")
 
 #+end_src
 
@@ -2552,72 +2556,72 @@ https://protesilaos.com/emacs/logos*
 - [[https://emacsrocks.com/e13.html]]
 - [[https://github.com/magnars/multiple-cursors.el]]
 #+begin_src elisp :tangle yes
-  (use-package multiple-cursors
-    :ensure t)
+(use-package multiple-cursors
+  :ensure t)
 
-  (global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
-  (global-set-key (kbd "C->")         'mc/mark-next-like-this)
-  (global-set-key (kbd "C-<")         'mc/mark-previous-like-this)
-  (global-set-key (kbd "C-c C-<")     'mc/mark-all-like-this)
-  (global-set-key (kbd "C-\"")        'mc/skip-to-next-like-this)
-  (global-set-key (kbd "C-:")         'mc/skip-to-previous-like-this)
+(global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
+(global-set-key (kbd "C->")         'mc/mark-next-like-this)
+(global-set-key (kbd "C-<")         'mc/mark-previous-like-this)
+(global-set-key (kbd "C-c C-<")     'mc/mark-all-like-this)
+(global-set-key (kbd "C-\"")        'mc/skip-to-next-like-this)
+(global-set-key (kbd "C-:")         'mc/skip-to-previous-like-this)
 #+end_src
 
 #+RESULTS:
 * Transclude
 #+begin_src elisp :tangle yes
-  (use-package org-transclusion
-    :ensure t
-    :after org)
-  (define-key global-map (kbd "C-c <f12>") #'org-transclusion-add)
-  (define-key global-map (kbd "C-c t") #'org-transclusion-mode)
+(use-package org-transclusion
+  :ensure t
+  :after org)
+(define-key global-map (kbd "C-c <f12>") #'org-transclusion-add)
+(define-key global-map (kbd "C-c t") #'org-transclusion-mode)
 #+end_src
 * 定型文の挿入
 #+begin_src elisp :tangle yes
-  (use-package yasnippet
-    :ensure t
-    :config
-    (setq yas-snippet-dirs '("~/Nextcloud/snippets"))
-    (yas-global-mode 1))
-  (use-package yasnippet-snippets
-    :ensure t)
+(use-package yasnippet
+  :ensure t
+  :config
+  (setq yas-snippet-dirs '("~/Nextcloud/snippets"))
+  (yas-global-mode 1))
+(use-package yasnippet-snippets
+  :ensure t)
 #+end_src
 * Common Lisp環境
 #+begin_src elisp :tangle yes
-  ;; https://github.com/roswell/roswell
-  ;; (kf:ensure-load-file "~/.roswell/helper.el")
-  (use-package slime
-    :if (file-exists-p (expand-file-name "~/.roswell/helper.el"))
-    :ensure t
-    :init (load (expand-file-name "~/.roswell/helper.el"))
-    :custom (inferior-lisp-program "ros -Q run ")
-    :config (slime-setup '(slime-fancy)))
+;; https://github.com/roswell/roswell
+;; (kf:ensure-load-file "~/.roswell/helper.el")
+(use-package slime
+  :if (file-exists-p (expand-file-name "~/.roswell/helper.el"))
+  :ensure t
+  :init (load (expand-file-name "~/.roswell/helper.el"))
+  :custom (inferior-lisp-program "ros -Q run ")
+  :config (slime-setup '(slime-fancy)))
 
-  ;; SLIME用のCompany補完拡張を個別に紐付ける
-  (use-package slime-company
-    :ensure t
-    :after (slime company)
-    :config
-    (slime-setup '(slime-fancy slime-company)))
+;; SLIME用のCompany補完拡張を個別に紐付ける
+(use-package slime-company
+  :ensure t
+  :after (slime company)
+  :config
+  (slime-setup '(slime-fancy slime-company)))
 
-  (defun my-slime-sync-repl ()
-    "現在のバッファのパッケージに移動してからREPLに移行"
-    (slime-sync-package-and-default-directory)
-    (slime-switch-to-output-buffer))
+(defun my-slime-sync-repl ()
+  "現在のバッファのパッケージに移動してからREPLに移行"
+  (slime-sync-package-and-default-directory)
+  (slime-switch-to-output-buffer))
 
-  (global-set-key (kbd "C-c C-f") 'slime-sync-package-and-default-directory)
+(global-set-key (kbd "C-c C-f") 'slime-sync-package-and-default-directory)
 
 #+end_src
 * Free Basic
 #+begin_src elisp :tangle yes
-  ;; https://github.com/rversteegen/fb-mode
-  (kf:ensure-load-file "~/.emacs.d/lisp/fb-mode.el")
+;; https://github.com/rversteegen/fb-mode
+(kf:ensure-load-file "~/.emacs.d/lisp/fb-mode.el")
 
 #+end_src
 * D lang
 #+begin_src elisp :tangle yes
-  (use-package d-mode
-    :ensure t)
+(use-package d-mode
+  :ensure t)
 #+end_src
 
 * TODO Compile command
@@ -2625,50 +2629,50 @@ https://protesilaos.com/emacs/logos*
 https://www.reddit.com/r/emacs/comments/17ucbww/passing_current_file_name_to_compile_command/
 
 #+begin_src elisp :tangle yes
-  (add-hook 'c-mode-hook
-            (lambda ()
-              (set (make-local-variable 'compile-command)
-                   (format "gcc -g %s -o %s" (file-name-nondirectory buffer-file-name) (file-name-sans-extension (file-name-nondirectory buffer-file-name))))))
-  (defun dylan:exec-name ()
-    (concat (file-name-directory buffer-file-name)
-            "/_build/bin/"
-            (file-name-nondirectory buffer-file-name)))
-  (add-hook 'dylan-mode-hook
-            (lambda ()
-              (set (make-local-variable 'compile-command)
-                   (format "deft build --all && echo '' && %s"
-                           (dylan:exec-name)))))
+(add-hook 'c-mode-hook
+          (lambda ()
+            (set (make-local-variable 'compile-command)
+                 (format "gcc -g %s -o %s" (file-name-nondirectory buffer-file-name) (file-name-sans-extension (file-name-nondirectory buffer-file-name))))))
+(defun dylan:exec-name ()
+  (concat (file-name-directory buffer-file-name)
+          "/_build/bin/"
+          (file-name-nondirectory buffer-file-name)))
+(add-hook 'dylan-mode-hook
+          (lambda ()
+            (set (make-local-variable 'compile-command)
+                 (format "deft build --all && echo '' && %s"
+                         (dylan:exec-name)))))
 #+end_src
 
 * Open Dylan
 #+begin_src elisp :tangle yes
-  (use-package dylan
-    :ensure t)
-  (use-package dime
-    :ensure t)
-  (dime-setup '(dime-repl dime-note-tree))
-  (setq dime-dylan-implementations
-        '((opendylan ("/home/kenjiro/Documents/opendylan/bin/dswank")
-                     :env ("OPEN_DYLAN_USER_REGISTRIES=/home/kenjiro/Nextcloud/sandbox/dylan-room"))))
+(use-package dylan
+  :ensure t)
+(use-package dime
+  :ensure t)
+(dime-setup '(dime-repl dime-note-tree))
+(setq dime-dylan-implementations
+      '((opendylan ("/home/kenjiro/Documents/opendylan/bin/dswank")
+                   :env ("OPEN_DYLAN_USER_REGISTRIES=/home/kenjiro/Nextcloud/sandbox/dylan-room"))))
 #+end_src
 
 * ソースコードの縦揃え
 #+begin_src elisp :tangle yes
-  (defadvice align-regexp (around align-regexp-with-spaces activate)
-    (let ((old-indent-tabs-mode indent-tabs-mode))
-      (setq indent-tabs-mode nil)
-      ad-do-it
-      (setq indent-tabs-mode old-indent-tabs-mode)))
+(defadvice align-regexp (around align-regexp-with-spaces activate)
+  (let ((old-indent-tabs-mode indent-tabs-mode))
+    (setq indent-tabs-mode nil)
+    ad-do-it
+    (setq indent-tabs-mode old-indent-tabs-mode)))
 #+end_src
 
 * mermaid
 #+begin_src elisp :tangle yes
-  (use-package mermaid-mode
-    :ensure t
-    :when (executable-find "mmdc"))
-  (use-package ob-mermaid
-    :ensure t
-    :when (executable-find "mmdc"))
+(use-package mermaid-mode
+  :ensure t
+  :when (executable-find "mmdc"))
+(use-package ob-mermaid
+  :ensure t
+  :when (executable-find "mmdc"))
 #+end_src
 
 #+RESULTS:
@@ -2677,80 +2681,80 @@ https://www.reddit.com/r/emacs/comments/17ucbww/passing_current_file_name_to_com
 * pug-mode
 https://github.com/hlissner/emacs-pug-mode
 #+begin_src elisp :tangle yes
-  (use-package pug-mode
-     :ensure t)
+(use-package pug-mode
+  :ensure t)
 #+end_src
 
 * Bookmark+
 ** 導入方法
 - https://www.reddit.com/r/emacs/comments/ig7736/whatever_happened_to_bookmark/?tl=ja
 #+begin_src elisp :tangle yes
-  (use-package quelpa
-    :init
-    (setq quelpa-self-upgrade-p nil))
-  (use-package quelpa-use-package
-    :after (quelpa)
-    :config
-    (quelpa-use-package-activate-advice))
+(use-package quelpa
+  :init
+  (setq quelpa-self-upgrade-p nil))
+(use-package quelpa-use-package
+  :after (quelpa)
+  :config
+  (quelpa-use-package-activate-advice))
 #+end_src
 
 #+begin_src elisp :tangle yes
-  (use-package bookmark+
-    :quelpa (bookmark+ :fetcher github :repo "emacsmirror/bookmark-plus")
-    :after bookmark ; 事前に読み込みたい一般的なブックマークのカスタマイズがあるので、これは必要ないかもしれません
-    ;; [...] your :init and :config
-    )
+(use-package bookmark+
+  :quelpa (bookmark+ :fetcher github :repo "emacsmirror/bookmark-plus")
+  :after bookmark ; 事前に読み込みたい一般的なブックマークのカスタマイズがあるので、これは必要ないかもしれません
+  ;; [...] your :init and :config
+  )
 #+end_src
 
 * TailwindCSS
 #+begin_src elisp :tangle yes
-  (use-package lsp-tailwindcss
-    :straight '(lsp-tailwindcss :type git :host github :repo "merrickluo/lsp-tailwindcss")
-    :init (setq lsp-tailwindcss-add-on-mode t)
-    :config
-    (dolist (tw-major-mode
-             '(css-mode
-               css-ts-mode
-               typescript-mode
-               typescript-ts-mode
-               tsx-ts-mode
-               js2-mode
-               web-mode
-               js-ts-mode
-               clojure-mode))
-      (add-to-list 'lsp-tailwindcss-major-modes tw-major-mode)))
+(use-package lsp-tailwindcss
+  :straight '(lsp-tailwindcss :type git :host github :repo "merrickluo/lsp-tailwindcss")
+  :init (setq lsp-tailwindcss-add-on-mode t)
+  :config
+  (dolist (tw-major-mode
+           '(css-mode
+             css-ts-mode
+             typescript-mode
+             typescript-ts-mode
+             tsx-ts-mode
+             js2-mode
+             web-mode
+             js-ts-mode
+             clojure-mode))
+    (add-to-list 'lsp-tailwindcss-major-modes tw-major-mode)))
 #+end_src
 
 * タブ幅の補修
 - @ see https://www.google.com/search?q=org-mode+tab+width+must+be+8
 
 #+begin_src elisp :tangle yes
-  (add-hook 'org-mode-hook (lambda () (setq-local tab-width 8)))
+(add-hook 'org-mode-hook (lambda () (setq-local tab-width 8)))
 #+end_src
 
 * PHP
 #+begin_src elisp :tangle yes
-  (use-package web-mode :ensure t)
-  (use-package auto-rename-tag :ensure t)
-  (use-package projectile-laravel
-    :straight (projectile-laravel :type git :host github :repo "strikerlulu/projectile-laravel"))
+(use-package web-mode :ensure t)
+(use-package auto-rename-tag :ensure t)
+(use-package projectile-laravel
+  :straight (projectile-laravel :type git :host github :repo "strikerlulu/projectile-laravel"))
 
-  ;; PHP環境とDAPモードの設定をuse-packageに統合
-  (use-package php-mode
-    :ensure t
-    :hook (php-mode-hook . lsp)
-    :config
-    (with-eval-after-load 'lsp-mode
-      (require 'dap-php)
-      (yas-global-mode 1)))
+;; PHP環境とDAPモードの設定をuse-packageに統合
+(use-package php-mode
+  :ensure t
+  :hook (php-mode-hook . lsp)
+  :config
+  (with-eval-after-load 'lsp-mode
+    (require 'dap-php)
+    (yas-global-mode 1)))
 
-  ;; LSP関連のパフォーマンス調整（ここに一括退避）
-  (setq gc-cons-threshold (* 100 1024 1024)
-        read-process-output-max (* 10 1024 1024)
-        treemacs-space-between-root-nodes nil
-        company-idle-delay 0.0
-        company-minimum-prefix-length 1
-        lsp-idle-delay 0.5)
+;; LSP関連のパフォーマンス調整（ここに一括退避）
+(setq gc-cons-threshold (* 100 1024 1024)
+      read-process-output-max (* 10 1024 1024)
+      treemacs-space-between-root-nodes nil
+      company-idle-delay 0.0
+      company-minimum-prefix-length 1
+      lsp-idle-delay 0.5)
 #+end_src
 * IBus
 - @see https://w.atwiki.jp/s-irie/pages/21.html
@@ -2780,152 +2784,179 @@ https://github.com/hlissner/emacs-pug-mode
 
 * gmake mode
 #+begin_src elisp :tangle yes
-  (setq auto-mode-alist
-        (append
-         '(("\\.mak\\'" . makefile-gmake-mode))
-         auto-mode-alist))
-	 #+end_src
+(setq auto-mode-alist
+      (append
+       '(("\\.mak\\'" . makefile-gmake-mode))
+       auto-mode-alist))
+#+end_src
 
 * Google翻訳
 #+begin_src elisp :tangle yes
-  (use-package google-translate :ensure t)
+(use-package google-translate :ensure t)
 #+end_src
 
 * デーモン化
 #+begin_src elisp :tangle yes
-  (server-start)
+(server-start)
 #+end_src
 * 非同期実行
 #+begin_src elisp :tangle yes
-  (use-package ob-async :ensure t)
+(use-package ob-async :ensure t)
 #+end_src
 
 * ObjectLisp シンタックス対応
 #+begin_src elisp :tangle yes
-  (with-eval-after-load 'lisp-mode
-    ;; 1. ObjectLispのキーワードリスト（単語をここに追加するだけで反映されます）
-    (defvar my-objectlisp-keywords
-      '("defobject"
-        "defobfun"
-        "defrecord"
-        "variant"
-        "ask"
-        "oneof"
-        "kindof"
-        ))
+(with-eval-after-load 'lisp-mode
+  ;; 1. ObjectLispのキーワードリスト（単語をここに追加するだけで反映されます）
+  (defvar my-objectlisp-keywords
+    '("defobject"
+      "defobfun"
+      "defrecord"
+      "variant"
+      "ask"
+      "oneof"
+      "kindof"
+      ))
 
-    ;; 2. リストを正規表現に変換してフォントロック（構文強調）に追加
-    (let ((pattern (concat "(\\(" (regexp-opt my-objectlisp-keywords) "\\)\\>")))
-      (font-lock-add-keywords 'lisp-mode `((,pattern . 1))))
+  ;; 2. リストを正規表現に変換してフォントロック（構文強調）に追加
+  (let ((pattern (concat "(\\(" (regexp-opt my-objectlisp-keywords) "\\)\\>")))
+    (font-lock-add-keywords 'lisp-mode `((,pattern . 1))))
 
-    (font-lock-add-keywords
-     'lisp-mode
-     '(("(\\(usual-\\(\\w\\|\\s_\\)+\\)\\>" . (1 font-lock-builtin-face))))
+  (font-lock-add-keywords
+   'lisp-mode
+   '(("(\\(usual-\\(\\w\\|\\s_\\)+\\)\\>" . (1 font-lock-builtin-face))))
 
-    ;; 3. 各マクロのインデント設定
-    (put 'defobject     'lisp-indent-function 1)
-    (put 'defobfun      'lisp-indent-function 2)
-    (put 'ask           'lisp-indent-function 1)
-    (put 'oneof         'lisp-indent-function 1)
-    (put 'kindof        'lisp-indent-function 1)
-    )
+  ;; 3. 各マクロのインデント設定
+  (put 'defobject     'lisp-indent-function 1)
+  (put 'defobfun      'lisp-indent-function 2)
+  (put 'ask           'lisp-indent-function 1)
+  (put 'oneof         'lisp-indent-function 1)
+  (put 'kindof        'lisp-indent-function 1)
+  )
 #+end_src
 
 * Scheme環境
 
 #+begin_src elisp :tangle yes
-  ;; ob-scheme は Org 内蔵機能のため、straightによるダウンロードを完全に無効化する
-  (use-package ob-scheme
-    :ensure nil
-    :straight nil
-    :after org
-    :config
-    (add-to-list 'org-babel-load-languages '(scheme . t))
-    (org-babel-do-load-languages 'org-babel-load-languages org-babel-load-languages)
-    :when (or (executable-find "gosh")
+;; ob-scheme は Org 内蔵機能のため、straightによるダウンロードを完全に無効化する
+(use-package ob-scheme
+  :ensure nil
+  :straight nil
+  :after org
+  :config
+  (add-to-list 'org-babel-load-languages '(scheme . t))
+  (org-babel-do-load-languages 'org-babel-load-languages org-babel-load-languages)
+  :when (or (executable-find "gosh")
   	    (executable-find "guile")))
 #+end_src
 
 ** Gauche
 #+begin_src elisp :tangle yes
-  (use-package geiser-gauche
-      ;; :init (add-to-list 'geiser-active-implementations 'gauche))
-      :after geiser)
+(use-package geiser-gauche
+  ;; :init (add-to-list 'geiser-active-implementations 'gauche))
+  :after geiser)
 
-  (defun gosh-path ()
-      (if (eq system-type 'windows-nt)
-          "c:/Users/kenjiro/scoop/shims/gosh.exe"
-        "/usr/bin/gosh"))
+(defun gosh-path ()
+  (if (eq system-type 'windows-nt)
+      "c:/Users/kenjiro/scoop/shims/gosh.exe"
+    "/usr/bin/gosh"))
 
-  (setq geiser-gauche-binary (gosh-path))
+(setq geiser-gauche-binary (gosh-path))
 
-  #+end_src
+#+end_src
 
 ** Guile
 #+begin_src elisp :tangle yes
-  (use-package geiser-guile
-    :after geiser)
+(use-package geiser-guile
+  :after geiser)
 
-  (defun guile-path ()
-    (if (eq system-type 'windows-nt)
-        "c:/Users/kenjiro/scoop/shims/guile.exe"
-      "/usr/bin/guile"))
+(defun guile-path ()
+  (if (eq system-type 'windows-nt)
+      "c:/Users/kenjiro/scoop/shims/guile.exe"
+    "/usr/bin/guile"))
 
-  (setq geiser-guile-binary (guile-path))
-  #+end_src
+(setq geiser-guile-binary (guile-path))
+#+end_src
 
 ** Racket
 #+begin_src elisp :tangle no
-  (defun racket-path ()
-    (if (eq system-type 'windows-nt)
-        "c:/Users/kenjiro/scoop/shims/racket.exe"
-      "/usr/bin/racket"))
+(defun racket-path ()
+  (if (eq system-type 'windows-nt)
+      "c:/Users/kenjiro/scoop/shims/racket.exe"
+    "/usr/bin/racket"))
 
-  ;; Racket
-  ;; racket-mode にて、拡張子判定が行われても、scheme-mode が優先されてしまうので
-  ;; 予め、除外しておく
-  (setq auto-mode-alist (cl-remove-if
+;; Racket
+;; racket-mode にて、拡張子判定が行われても、scheme-mode が優先されてしまうので
+;; 予め、除外しておく
+(setq auto-mode-alist (cl-remove-if
   		       (lambda (e)
   			 (equal "\\.rkt\\'" (car e)))
   		       auto-mode-alist))
-  (use-package racket-mode
-    :ensure t)
+(use-package racket-mode
+  :ensure t)
 
-  (eval-after-load 'racket-mode
-    '(progn
-       (add-hook 'racket-mode-hook 'racket-xp-mode)
-       (add-hook 'racket-mode-hook 'subword-mode)
-       ;;(add-hook 'racket-mode-hook 'paredit-mode)
-       (add-hook 'racket-mode-hook 'smartparens-strict-mode)
-       (add-hook 'racket-mode-hook 'rainbow-delimiters-mode)
-       ;;(add-hook 'racket-mode-hook 'aggressive-indent-mode)
-       ))
+(eval-after-load 'racket-mode
+  '(progn
+     (add-hook 'racket-mode-hook 'racket-xp-mode)
+     (add-hook 'racket-mode-hook 'subword-mode)
+     ;;(add-hook 'racket-mode-hook 'paredit-mode)
+     (add-hook 'racket-mode-hook 'smartparens-strict-mode)
+     (add-hook 'racket-mode-hook 'rainbow-delimiters-mode)
+     ;;(add-hook 'racket-mode-hook 'aggressive-indent-mode)
+     ))
 
 #+end_src
 
 * Kotlin 開発環境
 #+begin_src elisp :tangle yes
-  (use-package kotlin-mode
-    :ensure t)
-  (add-hook 'kotlin-mode-hook 'eglot-ensure)
+(use-package kotlin-mode
+  :ensure t)
+(add-hook 'kotlin-mode-hook 'eglot-ensure)
 #+end_src
 * Org チェック
 #+begin_src elisp :tangle yes
-  (add-hook 'org-mode-hook #'font-lock-ensure)
-  (with-eval-after-load 'org
-    ;; ソースブロック内のシンタックスハイライトを有効化
-    (setq org-src-fontify-natively t)
-    ;; ネイティブのタブやインデントを維持して構造をわかりやすくする
-    (setq org-src-tab-acts-natively t))
+(add-hook 'org-mode-hook #'font-lock-ensure)
+
+(with-eval-after-load 'org
+  ;; 1. ソースブロック内のシンタックスハイライトを有効化
+  (setq org-src-fontify-natively t)
+  ;; 2. ネイティブのタブやインデント（EditorConfig）をバッファ上でも部分的に効かせる
+  (setq org-src-tab-acts-natively t)
+  ;; 3. コードブロック内の左端余白をゼロにし、EditorConfigのインデント幅を厳密に守る
+  (setq org-src-preserve-indentation t)
+  (setq org-edit-src-content-indentation 0)
+
+  ;; 4. 改行時に勝手にインデントがズレる挙動（electric-indent）をOrg内だけで抑制
+  (add-hook 'org-mode-hook (lambda () (electric-indent-local-mode -1)))
+
+  ;; ========================================================================
+  ;; 【最終解決】Babelバッファ専用のインデント・フォールバック
+  ;; ========================================================================
+  ;; EditorConfigがOrg内ソースブロックを正しく認識できない場合の対策です。
+  ;; Emacs自体の「グローバル（デフォルト）設定」を2スペースに固定します。
+  ;;
+  ;; ※他人のプロジェクトで仮に「4インデント」が必要な場合でも問題ありません。
+  ;;   その場合は、対象のプログラミング言語ファイル（.js 等）を直接開けば、
+  ;;   すでに正常動作しているEditorConfigプラグインが優先的に「4」に上書きしてくれます。
+  (add-hook 'org-src-mode-hook
+            (lambda ()
+              ;; JavaScript / TypeScript
+              (setq js-indent-level 2)
+              (setq js-ts-mode-indent-offset 2)
+              (setq typescript-ts-mode-indent-offset 2)
+              ;; ついでに他言語のBabelでも4マス化を防ぎたい場合の保険
+              (setq c-basic-offset 2)
+              (setq css-indent-offset 2)))
+  )
 #+end_src
 
 * 末尾
 #+BEGIN_SRC elisp :tangle yes
-  (setq org-startup-folded t)
-  (recentf-open-files)
-  ;; (add-hook 'kill-emacs-query-functions 'kf:quit-query-function)
-  (global-set-key "\C-x\ \C-c" 'kf:quit-emacs)
-  (provide 'init)
+(setq org-startup-folded t)
+(recentf-open-files)
+;; (add-hook 'kill-emacs-query-functions 'kf:quit-query-function)
+(global-set-key "\C-x\ \C-c" 'kf:quit-emacs)
+(provide 'init)
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;;; init.el ends here
 #+END_SRC

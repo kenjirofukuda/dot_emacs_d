@@ -25,9 +25,9 @@
              '("\\.\\(p\\|pas\\|dpr\\|dpk\\)\\'" . mpascal-mode))
 
 (add-hook 'mpascal-mode-hook
-        (lambda ()
-          (setq tab-width 4)
-          (setq c-basic-offset 4)))
+          (lambda ()
+            (setq tab-width 4)
+            (setq c-basic-offset 4)))
 
 
 (setq inhibit-startup-message t)
@@ -44,6 +44,10 @@
 
 (column-number-mode)
 (global-display-line-numbers-mode -1)
+
+;; 【追記】ネイティブコンパイルの警告バッファを自動ポップアップさせない（無音化）
+(setq native-comp-async-report-warnings-errors 'silent)
+(setq warning-minimum-level :error)
 
 ;; パッケージアーカイブ
 (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
@@ -83,7 +87,10 @@
 (use-package editorconfig
   :ensure t
   :config
-  (editorconfig-mode 1))
+  (editorconfig-mode 1)
+  ;; 【追加】Org-modeのソースブロック（Babel）内にも、親ファイルの .editorconfig を強制適用する
+  (add-hook 'org-src-mode-hook #'editorconfig-apply)
+)
 
 ;; より本物に近いターミナルエミュレータ
 (use-package vterm
@@ -281,8 +288,8 @@
    consult-theme :preview-key '(:debounce 0.2 any)
    consult-ripgrep consult-git-grep consult-grep
    consult-bookmark consult-recent-file consult-xref
-   consult--source-bookmark consult--source-file-register
-   consult--source-recent-file consult--source-project-recent-file
+   consult-source-bookmark consult-source-file-register
+   consult-source-recent-file consult-source-project-recent-file
    ;; :preview-key "M-."
    :preview-key '(:debounce 0.4 any))
 
@@ -461,13 +468,13 @@
 (org-babel-do-load-languages
  'org-babel-load-languages
  (list
-   '(shell . t)
-   '(ruby . t)
-   '(python . t)
-   '(lua . t)
-   '(lisp . t)
-   (cons 'mermaid  (executable-find "mmdc"))
-   ))
+  '(shell . t)
+  '(ruby . t)
+  '(python . t)
+  '(lua . t)
+  '(lisp . t)
+  (cons 'mermaid  (executable-find "mmdc"))
+  ))
 
 (setq browse-url-browser-function 'eww-browse-url)
 
@@ -593,8 +600,8 @@
   ;; ここまで :init パートに張り込む部分
   )
 
-      ;;;; 引用したが、別のブロックとして外に出した。
-      ;;;; エラー追求にて個別にインストールの可否を選択するため
+        ;;;; 引用したが、別のブロックとして外に出した。
+        ;;;; エラー追求にて個別にインストールの可否を選択するため
 ;; (use-package lsp-completion
 ;;   :no-require
 ;;   :hook ((lsp-mode . lsp-completion-mode)))
@@ -695,7 +702,7 @@
 ;;
 (defun win-resize-top-or-bot ()
   "Figure out if the current window is on top, bottom or in the
-middle"
+  middle"
   (let* ((win-edges (window-edges))
          (this-window-y-min (nth 1 win-edges))
          (this-window-y-max (nth 3 win-edges))
@@ -707,7 +714,7 @@ middle"
 
 (defun win-resize-left-or-right ()
   "Figure out if the current window is to the left, right or in the
-middle"
+  middle"
   (let* ((win-edges (window-edges))
          (this-window-x-min (nth 0 win-edges))
          (this-window-x-max (nth 2 win-edges))
@@ -877,7 +884,7 @@ middle"
 (add-hook 'objc-mode-hook 'kf:objc-mode-init)
 
 ;; https://qiita.com/fujimisakari/items/a6ff082f0e8eddc09511
-;; .hファイルもobjc-modeで開くけるようにする
+;; .hファイルもobjc-modeで開けるようにする
 (add-to-list 'magic-mode-alist
              `(,(lambda ()
                   (and (stringp (buffer-file-name))
@@ -1008,7 +1015,7 @@ middle"
   :when (executable-find "mmdc"))
 
 (use-package pug-mode
-   :ensure t)
+  :ensure t)
 
 (use-package quelpa
   :init
@@ -1131,16 +1138,16 @@ middle"
   (add-to-list 'org-babel-load-languages '(scheme . t))
   (org-babel-do-load-languages 'org-babel-load-languages org-babel-load-languages)
   :when (or (executable-find "gosh")
-	    (executable-find "guile")))
+  	    (executable-find "guile")))
 
 (use-package geiser-gauche
-    ;; :init (add-to-list 'geiser-active-implementations 'gauche))
-    :after geiser)
+  ;; :init (add-to-list 'geiser-active-implementations 'gauche))
+  :after geiser)
 
 (defun gosh-path ()
-    (if (eq system-type 'windows-nt)
-        "c:/Users/kenjiro/scoop/shims/gosh.exe"
-      "/usr/bin/gosh"))
+  (if (eq system-type 'windows-nt)
+      "c:/Users/kenjiro/scoop/shims/gosh.exe"
+    "/usr/bin/gosh"))
 
 (setq geiser-gauche-binary (gosh-path))
 
@@ -1160,16 +1167,43 @@ middle"
 (add-hook 'kotlin-mode-hook 'eglot-ensure)
 
 (add-hook 'org-mode-hook #'font-lock-ensure)
+
 (with-eval-after-load 'org
-  ;; ソースブロック内のシンタックスハイライトを有効化
+  ;; 1. ソースブロック内のシンタックスハイライトを有効化
   (setq org-src-fontify-natively t)
-  ;; ネイティブのタブやインデントを維持して構造をわかりやすくする
-  (setq org-src-tab-acts-natively t))
+  ;; 2. ネイティブのタブやインデント（EditorConfig）をバッファ上でも部分的に効かせる
+  (setq org-src-tab-acts-natively t)
+  ;; 3. コードブロック内の左端余白をゼロにし、EditorConfigのインデント幅を厳密に守る
+  (setq org-src-preserve-indentation t)
+  (setq org-edit-src-content-indentation 0)
+
+  ;; 4. 改行時に勝手にインデントがズレる挙動（electric-indent）をOrg内だけで抑制
+  (add-hook 'org-mode-hook (lambda () (electric-indent-local-mode -1)))
+
+  ;; ========================================================================
+  ;; 【最終解決】Babelバッファ専用のインデント・フォールバック
+  ;; ========================================================================
+  ;; EditorConfigがOrg内ソースブロックを正しく認識できない場合の対策です。
+  ;; Emacs自体の「グローバル（デフォルト）設定」を2スペースに固定します。
+  ;;
+  ;; ※他人のプロジェクトで仮に「4インデント」が必要な場合でも問題ありません。
+  ;;   その場合は、対象のプログラミング言語ファイル（.js 等）を直接開けば、
+  ;;   すでに正常動作しているEditorConfigプラグインが優先的に「4」に上書きしてくれます。
+  (add-hook 'org-src-mode-hook
+            (lambda ()
+              ;; JavaScript / TypeScript
+              (setq js-indent-level 2)
+              (setq js-ts-mode-indent-offset 2)
+              (setq typescript-ts-mode-indent-offset 2)
+              ;; ついでに他言語のBabelでも4マス化を防ぎたい場合の保険
+              (setq c-basic-offset 2)
+              (setq css-indent-offset 2)))
+  )
 
 (setq org-startup-folded t)
 (recentf-open-files)
 ;; (add-hook 'kill-emacs-query-functions 'kf:quit-query-function)
 (global-set-key "\C-x\ \C-c" 'kf:quit-emacs)
 (provide 'init)
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; init.el ends here
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;; init.el ends here
