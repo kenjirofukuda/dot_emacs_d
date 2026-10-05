@@ -27,7 +27,7 @@ C-c C-v C-t
 * Script Runner
 
 これはブラウザの拡張機能であり、以下のソースを GNU Manuals というタイトルのもとに貼り付けて利用すれば、おかしな翻訳を避けることができる。
-** TODO COMMENT あれ、javascript で C-M-\ =indent-region= すると、4space のインデントになってしまう。どこかで見直そう。
+** DONE COMMENT あれ、javascript で C-M-\ =indent-region= すると、4space のインデントになってしまう。どこかで見直そう。
 
 #+begin_src javascript :tangle no
 const classes = [
@@ -113,28 +113,37 @@ document.querySelectorAll(qclasses).forEach((el) => {
 * パッケージ自動アップデート
 ** use-package
 #+BEGIN_SRC elisp :tangle yes
-;; パッケージアーカイブ
-(setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
+  ;; パッケージアーカイブ
+  (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
 
-;; straight.el を use-package に統合する設定
-(setq straight-use-package-by-default t)
+  ;; straight.el を use-package に統合する設定
+  (setq straight-use-package-by-default t)
 
-;; --- ここで先に straight.el をブートストラップ（初期化）する ---
-(defvar bootstrap-version)
-(let ((bootstrap-file
-       (expand-file-name
-        "straight/repos/straight.el/bootstrap.el"
-        (or (bound-and-true-p straight-base-dir)
-            user-emacs-directory)))
-      (bootstrap-version 7))
-  (unless (file-exists-p bootstrap-file)
-    (with-current-buffer
-        (url-retrieve-synchronously
-         "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
-         'silent 'inhibit-cookies)
-      (goto-char (point-max))
-      (eval-print-last-sexp)))
-  (load bootstrap-file nil 'nomessage))
+  ;; --- ここで先に straight.el をブートストラップ（初期化）する ---
+  (defvar bootstrap-version)
+  (let ((bootstrap-file
+         (expand-file-name
+          "straight/repos/straight.el/bootstrap.el"
+          (or (bound-and-true-p straight-base-dir)
+              user-emacs-directory)))
+        (bootstrap-version 7))
+    (unless (file-exists-p bootstrap-file)
+      (with-current-buffer
+          (url-retrieve-synchronously
+           "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
+           'silent 'inhibit-cookies)
+        (goto-char (point-max))
+        (eval-print-last-sexp)))
+    (load bootstrap-file nil 'nomessage))
+
+  ;; ========================================================================
+  ;; 【最重要】Emacs 30 内蔵の「project.el」を最優先ロックし、外部ビルドを完全禁止する
+  ;; ========================================================================
+  ;; straight.el が他のパッケージの依存関係を解決する際、外部の project.el を
+  ;; ネットから落としてきて衝突させるのを物理的に完全にブロックします。
+  (straight-register-package
+   '(project :type built-in))
+
 #+END_SRC
 
 ** パッケージ自動アップデート
@@ -735,209 +744,6 @@ Windows の検索パスは別途検討
   ;;   (play-sound-file snd))
   all-sounds)
 #+end_src
-
-#+RESULTS:
-- c:/Windows/Media/dm/Windows Background.wav
-- c:/Windows/Media/dm/Windows Foreground.wav
-- c:/Windows/Media/dm/Windows Hardware Fail.wav
-- c:/Windows/Media/dm/Windows Hardware Insert.wav
-- c:/Windows/Media/dm/Windows Hardware Remove.wav
-- c:/Windows/Media/dm/Windows Notify Calendar.wav
-- c:/Windows/Media/dm/Windows Notify Email.wav
-- c:/Windows/Media/dm/Windows Notify Messaging.wav
-- c:/Windows/Media/dm/Windows Notify System Generic.wav
-- c:/Windows/Media/dm/Windows User Account Control.wav
-- c:/Windows/Media/Alarm01.wav
-- c:/Windows/Media/Alarm02.wav
-- c:/Windows/Media/Alarm03.wav
-- c:/Windows/Media/Alarm04.wav
-- c:/Windows/Media/Alarm05.wav
-- c:/Windows/Media/Alarm06.wav
-- c:/Windows/Media/Alarm07.wav
-- c:/Windows/Media/Alarm08.wav
-- c:/Windows/Media/Alarm09.wav
-- c:/Windows/Media/Alarm10.wav
-- c:/Windows/Media/Ring01.wav
-- c:/Windows/Media/Ring02.wav
-- c:/Windows/Media/Ring03.wav
-- c:/Windows/Media/Ring04.wav
-- c:/Windows/Media/Ring05.wav
-- c:/Windows/Media/Ring06.wav
-- c:/Windows/Media/Ring07.wav
-- c:/Windows/Media/Ring08.wav
-- c:/Windows/Media/Ring09.wav
-- c:/Windows/Media/Ring10.wav
-- c:/Windows/Media/Speech Disambiguation.wav
-- c:/Windows/Media/Speech Misrecognition.wav
-- c:/Windows/Media/Speech Off.wav
-- c:/Windows/Media/Speech On.wav
-- c:/Windows/Media/Speech Sleep.wav
-- c:/Windows/Media/Windows Background.wav
-- c:/Windows/Media/Windows Balloon.wav
-- c:/Windows/Media/Windows Battery Critical.wav
-- c:/Windows/Media/Windows Battery Low.wav
-- c:/Windows/Media/Windows Critical Stop.wav
-- c:/Windows/Media/Windows Default.wav
-- c:/Windows/Media/Windows Ding.wav
-- c:/Windows/Media/Windows Error.wav
-- c:/Windows/Media/Windows Exclamation.wav
-- c:/Windows/Media/Windows Feed Discovered.wav
-- c:/Windows/Media/Windows Foreground.wav
-- c:/Windows/Media/Windows Hardware Fail.wav
-- c:/Windows/Media/Windows Hardware Insert.wav
-- c:/Windows/Media/Windows Hardware Remove.wav
-- c:/Windows/Media/Windows Information Bar.wav
-- c:/Windows/Media/Windows Logoff Sound.wav
-- c:/Windows/Media/Windows Logon.wav
-- c:/Windows/Media/Windows Menu Command.wav
-- c:/Windows/Media/Windows Message Nudge.wav
-- c:/Windows/Media/Windows Minimize.wav
-- c:/Windows/Media/Windows Navigation Start.wav
-- c:/Windows/Media/Windows Notify Calendar.wav
-- c:/Windows/Media/Windows Notify Email.wav
-- c:/Windows/Media/Windows Notify Messaging.wav
-- c:/Windows/Media/Windows Notify System Generic.wav
-- c:/Windows/Media/Windows Notify.wav
-- c:/Windows/Media/Windows Pop-up Blocked.wav
-- c:/Windows/Media/Windows Print complete.wav
-- c:/Windows/Media/Windows Proximity Connection.wav
-- c:/Windows/Media/Windows Proximity Notification.wav
-- c:/Windows/Media/Windows Recycle.wav
-- c:/Windows/Media/Windows Restore.wav
-- c:/Windows/Media/Windows Ringin.wav
-- c:/Windows/Media/Windows Ringout.wav
-- c:/Windows/Media/Windows Shutdown.wav
-- c:/Windows/Media/Windows Startup.wav
-- c:/Windows/Media/Windows Unlock.wav
-- c:/Windows/Media/Windows User Account Control.wav
-- c:/Windows/Media/chimes.wav
-- c:/Windows/Media/chord.wav
-- c:/Windows/Media/ding.wav
-- c:/Windows/Media/notify.wav
-- c:/Windows/Media/recycle.wav
-- c:/Windows/Media/ringout.wav
-- c:/Windows/Media/tada.wav
-- c:/Windows/SystemApps/MicrosoftWindows.Client.CBS_cw5n1h2txyewy/InputApp/Assets/Dictation/BasicCancelledEarcon.wav
-- c:/Windows/SystemApps/MicrosoftWindows.Client.CBS_cw5n1h2txyewy/InputApp/Assets/Dictation/BasicDoneListeningEarcon.wav
-- c:/Windows/SystemApps/MicrosoftWindows.Client.CBS_cw5n1h2txyewy/InputApp/Assets/Dictation/BasicListeningEarcon.wav
-- c:/Windows/SystemApps/MicrosoftWindows.Client.CBS_cw5n1h2txyewy/InputApp/Assets/KbdAccentPicker.wav
-- c:/Windows/SystemApps/MicrosoftWindows.Client.CBS_cw5n1h2txyewy/InputApp/Assets/KbdFunction.wav
-- c:/Windows/SystemApps/MicrosoftWindows.Client.CBS_cw5n1h2txyewy/InputApp/Assets/KbdFunctionModernUX.wav
-- c:/Windows/SystemApps/MicrosoftWindows.Client.CBS_cw5n1h2txyewy/InputApp/Assets/KbdKeyTap.wav
-- c:/Windows/SystemApps/MicrosoftWindows.Client.CBS_cw5n1h2txyewy/InputApp/Assets/KbdKeyTapModernUX.wav
-- c:/Windows/SystemApps/MicrosoftWindows.Client.CBS_cw5n1h2txyewy/InputApp/Assets/KbdSpaceBarModernUX.wav
-- c:/Windows/SystemApps/MicrosoftWindows.Client.CBS_cw5n1h2txyewy/InputApp/Assets/KbdSpacebar.wav
-- c:/Windows/SystemApps/MicrosoftWindows.Client.CBS_cw5n1h2txyewy/InputApp/Assets/KbdSwipeGesture.wav
-- c:/Windows/SystemApps/MicrosoftWindows.Client.CBS_cw5n1h2txyewy/ScreenClipping/Assets/Sounds/camerashutter.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-ie-internetexplorer_31bf3856ad364e35_11.0.22621.3527_none_52f66545bf10ea29/Windows Feed Discovered.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-ie-internetexplorer_31bf3856ad364e35_11.0.22621.3527_none_52f66545bf10ea29/Windows Information Bar.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-ie-internetexplorer_31bf3856ad364e35_11.0.22621.3527_none_52f66545bf10ea29/Windows Navigation Start.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-ie-internetexplorer_31bf3856ad364e35_11.0.22621.3527_none_52f66545bf10ea29/Windows Pop-up Blocked.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds-dm_31bf3856ad364e35_10.0.22621.1_none_a9a06b326661fac0/Windows Background.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds-dm_31bf3856ad364e35_10.0.22621.1_none_a9a06b326661fac0/Windows Foreground.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds-dm_31bf3856ad364e35_10.0.22621.1_none_a9a06b326661fac0/Windows Hardware Fail.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds-dm_31bf3856ad364e35_10.0.22621.1_none_a9a06b326661fac0/Windows Hardware Insert.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds-dm_31bf3856ad364e35_10.0.22621.1_none_a9a06b326661fac0/Windows Hardware Remove.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds-dm_31bf3856ad364e35_10.0.22621.1_none_a9a06b326661fac0/Windows Notify Calendar.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds-dm_31bf3856ad364e35_10.0.22621.1_none_a9a06b326661fac0/Windows Notify Email.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds-dm_31bf3856ad364e35_10.0.22621.1_none_a9a06b326661fac0/Windows Notify Messaging.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds-dm_31bf3856ad364e35_10.0.22621.1_none_a9a06b326661fac0/Windows Notify System Generic.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds-dm_31bf3856ad364e35_10.0.22621.1_none_a9a06b326661fac0/Windows User Account Control.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Alarm01.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Alarm02.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Alarm03.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Alarm04.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Alarm05.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Alarm06.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Alarm07.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Alarm08.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Alarm09.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Alarm10.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Ring01.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Ring02.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Ring03.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Ring04.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Ring05.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Ring06.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Ring07.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Ring08.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Ring09.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Ring10.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Background.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Balloon.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Battery Critical.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Battery Low.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Critical Stop.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Default.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Ding.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Error.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Exclamation.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Foreground.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Hardware Fail.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Hardware Insert.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Hardware Remove.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Logoff Sound.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Logon.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Menu Command.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Message Nudge.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Minimize.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Notify Calendar.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Notify Email.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Notify Messaging.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Notify System Generic.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Notify.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Print complete.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Proximity Connection.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Proximity Notification.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Recycle.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Restore.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Ringin.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Ringout.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Shutdown.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Startup.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows Unlock.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/Windows User Account Control.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/chimes.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/chord.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/ding.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/notify.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/recycle.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/ringout.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-shell-sounds_31bf3856ad364e35_10.0.22621.3527_none_f6eecd7c3127689e/tada.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-speech-userexperience_31bf3856ad364e35_10.0.22621.3672_none_fbe0e4c2c76d8bb2/Speech Disambiguation.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-speech-userexperience_31bf3856ad364e35_10.0.22621.3672_none_fbe0e4c2c76d8bb2/Speech Misrecognition.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-speech-userexperience_31bf3856ad364e35_10.0.22621.3672_none_fbe0e4c2c76d8bb2/Speech Off.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-speech-userexperience_31bf3856ad364e35_10.0.22621.3672_none_fbe0e4c2c76d8bb2/Speech On.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-speech-userexperience_31bf3856ad364e35_10.0.22621.3672_none_fbe0e4c2c76d8bb2/Speech Sleep.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-speech-userexperience_31bf3856ad364e35_10.0.22621.4249_none_fc088602c7508077/Speech Disambiguation.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-speech-userexperience_31bf3856ad364e35_10.0.22621.4249_none_fc088602c7508077/Speech Misrecognition.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-speech-userexperience_31bf3856ad364e35_10.0.22621.4249_none_fc088602c7508077/Speech Off.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-speech-userexperience_31bf3856ad364e35_10.0.22621.4249_none_fc088602c7508077/Speech On.wav
-- c:/Windows/WinSxS/amd64_microsoft-windows-speech-userexperience_31bf3856ad364e35_10.0.22621.4249_none_fc088602c7508077/Speech Sleep.wav
-- c:/Windows/WinSxS/amd64_userexperience-desktop_31bf3856ad364e35_10.0.22621.4111_none_0c5d079de5c7d956/CBS/InputApp/Assets/Dictation/BasicCancelledEarcon.wav
-- c:/Windows/WinSxS/amd64_userexperience-desktop_31bf3856ad364e35_10.0.22621.4111_none_0c5d079de5c7d956/CBS/InputApp/Assets/Dictation/BasicDoneListeningEarcon.wav
-- c:/Windows/WinSxS/amd64_userexperience-desktop_31bf3856ad364e35_10.0.22621.4111_none_0c5d079de5c7d956/CBS/InputApp/Assets/Dictation/BasicListeningEarcon.wav
-- c:/Windows/WinSxS/amd64_userexperience-desktop_31bf3856ad364e35_10.0.22621.4111_none_0c5d079de5c7d956/CBS/InputApp/Assets/KbdAccentPicker.wav
-- c:/Windows/WinSxS/amd64_userexperience-desktop_31bf3856ad364e35_10.0.22621.4111_none_0c5d079de5c7d956/CBS/InputApp/Assets/KbdFunction.wav
-- c:/Windows/WinSxS/amd64_userexperience-desktop_31bf3856ad364e35_10.0.22621.4111_none_0c5d079de5c7d956/CBS/InputApp/Assets/KbdFunctionModernUX.wav
-- c:/Windows/WinSxS/amd64_userexperience-desktop_31bf3856ad364e35_10.0.22621.4111_none_0c5d079de5c7d956/CBS/InputApp/Assets/KbdKeyTap.wav
-- c:/Windows/WinSxS/amd64_userexperience-desktop_31bf3856ad364e35_10.0.22621.4111_none_0c5d079de5c7d956/CBS/InputApp/Assets/KbdKeyTapModernUX.wav
-- c:/Windows/WinSxS/amd64_userexperience-desktop_31bf3856ad364e35_10.0.22621.4111_none_0c5d079de5c7d956/CBS/InputApp/Assets/KbdSpaceBarModernUX.wav
-- c:/Windows/WinSxS/amd64_userexperience-desktop_31bf3856ad364e35_10.0.22621.4111_none_0c5d079de5c7d956/CBS/InputApp/Assets/KbdSpacebar.wav
-- c:/Windows/WinSxS/amd64_userexperience-desktop_31bf3856ad364e35_10.0.22621.4111_none_0c5d079de5c7d956/CBS/InputApp/Assets/KbdSwipeGesture.wav
-- c:/Windows/WinSxS/amd64_userexperience-desktop_31bf3856ad364e35_10.0.22621.4111_none_0c5d079de5c7d956/CBS/ScreenClipping/Assets/Sounds/camerashutter.wav
-- c:/Windows/WinSxS/amd64_userexperience-desktop_31bf3856ad364e35_10.0.22621.4249_none_0c54824fe5ce0e54/CBS/InputApp/Assets/Dictation/BasicCancelledEarcon.wav
-- c:/Windows/WinSxS/amd64_userexperience-desktop_31bf3856ad364e35_10.0.22621.4249_none_0c54824fe5ce0e54/CBS/InputApp/Assets/Dictation/BasicDoneListeningEarcon.wav
-- c:/Windows/WinSxS/amd64_userexperience-desktop_31bf3856ad364e35_10.0.22621.4249_none_0c54824fe5ce0e54/CBS/InputApp/Assets/Dictation/BasicListeningEarcon.wav
-- c:/Windows/WinSxS/amd64_userexperience-desktop_31bf3856ad364e35_10.0.22621.4249_none_0c54824fe5ce0e54/CBS/InputApp/Assets/KbdAccentPicker.wav
-- c:/Windows/WinSxS/amd64_userexperience-desktop_31bf3856ad364e35_10.0.22621.4249_none_0c54824fe5ce0e54/CBS/InputApp/Assets/KbdFunction.wav
-- c:/Windows/WinSxS/amd64_userexperience-desktop_31bf3856ad364e35_10.0.22621.4249_none_0c54824fe5ce0e54/CBS/InputApp/Assets/KbdFunctionModernUX.wav
-- c:/Windows/WinSxS/amd64_userexperience-desktop_31bf3856ad364e35_10.0.22621.4249_none_0c54824fe5ce0e54/CBS/InputApp/Assets/KbdKeyTap.wav
-- c:/Windows/WinSxS/amd64_userexperience-desktop_31bf3856ad364e35_10.0.22621.4249_none_0c54824fe5ce0e54/CBS/InputApp/Assets/KbdKeyTapModernUX.wav
-- c:/Windows/WinSxS/amd64_userexperience-desktop_31bf3856ad364e35_10.0.22621.4249_none_0c54824fe5ce0e54/CBS/InputApp/Assets/KbdSpaceBarModernUX.wav
-- c:/Windows/WinSxS/amd64_userexperience-desktop_31bf3856ad364e35_10.0.22621.4249_none_0c54824fe5ce0e54/CBS/InputApp/Assets/KbdSpacebar.wav
-- c:/Windows/WinSxS/amd64_userexperience-desktop_31bf3856ad364e35_10.0.22621.4249_none_0c54824fe5ce0e54/CBS/InputApp/Assets/KbdSwipeGesture.wav
-- c:/Windows/WinSxS/amd64_userexperience-desktop_31bf3856ad364e35_10.0.22621.4249_none_0c54824fe5ce0e54/CBS/ScreenClipping/Assets/Sounds/camerashutter.wav
 
 #+RESULTS(Linux):
 - /usr/share/sounds/sound-icons/canary-long.wav
@@ -2310,7 +2116,31 @@ https://www.ovistoica.com/blog/2024-7-05-modern-emacs-typescript-web-tsx-config#
 #+begin_src elisp :tangle yes
 (use-package astyle
   :ensure t
-  :when (executable-find "astyle"))
+  :when (executable-find "astyle")
+  ;; 保存時に自動で AStyle を実行してフォーマットを最終確定させる場合（お好みで）
+  ;; (add-hook 'objc-mode-hook #'astyle-on-save-mode)
+  )
+
+(with-eval-after-load 'cc-mode
+  ;; 1. タイピングした瞬間に Emacs が勝手に括弧の位置を「BSD」等に動かすのを禁止する
+  (setq-default c-electric-pound-behavior '(alignleft))
+
+  (defun my-objc-iron-astyle-setup ()
+    ;; 2. 中括弧 { } や改行を打った瞬間に Emacs が勝手にインデントルールを差し込んでくるのを無効化
+    (setq-local c-electric-flag nil)
+    (electric-indent-local-mode -1)
+
+    ;; 3. プロジェクトに .astylerc (style=gnu) がある場合は、Emacs自体のフォールバック
+    ;;    インデントルールも「gnu」かつ「2マス」に強制同期させ、タイピング時の摩擦をなくす
+    (c-set-style "gnu")
+    (setq c-basic-offset 2)
+    (setq tab-width 2))
+
+  ;; Objective-C モード起動時にこの鉄壁のルールを適用
+  (add-hook 'objc-mode-hook #'my-objc-iron-astyle-setup)
+  (add-hook 'c-mode-hook #'my-objc-iron-astyle-setup)
+  )
+
 #+end_src
 * CMake 対応
 #+begin_src elisp :tangle yes
@@ -2437,11 +2267,19 @@ https://protesilaos.com/emacs/logos*
 
 * Projectile
 #+begin_src elisp :tangle yes
+;; Emacs 30 内蔵の project.el が straight 側の古いキャッシュと衝突するのを防ぐ
+(use-package project
+  :ensure nil
+  :straight nil)
+
+;; Projectileの設定
 (use-package projectile
   :config
   (defun projectile-project-find-function (dir)
     (let* ((root (projectile-project-root dir)))
       (and root (cons 'transient root))))
+
+  ;; project ライブラリが安全に読み込まれた後で、フックを同期する
   (with-eval-after-load 'project
     (add-to-list 'project-find-functions 'projectile-project-find-function))
   )

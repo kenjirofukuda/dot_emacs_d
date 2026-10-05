@@ -29,7 +29,6 @@
             (setq tab-width 4)
             (setq c-basic-offset 4)))
 
-
 (setq inhibit-startup-message t)
 
 (scroll-bar-mode -1)        ; Disable visible scrollbar
@@ -71,6 +70,14 @@
       (goto-char (point-max))
       (eval-print-last-sexp)))
   (load bootstrap-file nil 'nomessage))
+
+;; ========================================================================
+;; 【最重要】Emacs 30 内蔵の「project.el」を最優先ロックし、外部ビルドを完全禁止する
+;; ========================================================================
+;; straight.el が他のパッケージの依存関係を解決する際、外部の project.el を
+;; ネットから落としてきて衝突させるのを物理的に完全にブロックします。
+(straight-register-package
+ '(project :type built-in))
 
 ;; straightの初期化が終わったので、安全にuse-packageが使える
 (use-package auto-package-update
@@ -425,7 +432,6 @@
      (add-hook 'ielm-mode-hook 'paredit-mode)
      (define-key paredit-mode-map (kbd "RET") nil)
      (define-key paredit-mode-map (kbd "C-j") 'paredit-newline)))
-
 
 (use-package markdown-mode
   :mode ("\\.md\\'" . markdown-mode)
@@ -792,7 +798,30 @@
 
 (use-package astyle
   :ensure t
-  :when (executable-find "astyle"))
+  :when (executable-find "astyle")
+  ;; 保存時に自動で AStyle を実行してフォーマットを最終確定させる場合（お好みで）
+  ;; (add-hook 'objc-mode-hook #'astyle-on-save-mode)
+  )
+
+(with-eval-after-load 'cc-mode
+  ;; 1. タイピングした瞬間に Emacs が勝手に括弧の位置を「BSD」等に動かすのを禁止する
+  (setq-default c-electric-pound-behavior '(alignleft))
+
+  (defun my-objc-iron-astyle-setup ()
+    ;; 2. 中括弧 { } や改行を打った瞬間に Emacs が勝手にインデントルールを差し込んでくるのを無効化
+    (setq-local c-electric-flag nil)
+    (electric-indent-local-mode -1)
+
+    ;; 3. プロジェクトに .astylerc (style=gnu) がある場合は、Emacs自体のフォールバック
+    ;;    インデントルールも「gnu」かつ「2マス」に強制同期させ、タイピング時の摩擦をなくす
+    (c-set-style "gnu")
+    (setq c-basic-offset 2)
+    (setq tab-width 2))
+
+  ;; Objective-C モード起動時にこの鉄壁のルールを適用
+  (add-hook 'objc-mode-hook #'my-objc-iron-astyle-setup)
+  (add-hook 'c-mode-hook #'my-objc-iron-astyle-setup)
+  )
 
 (use-package cmake-mode
   :ensure t)
@@ -852,11 +881,19 @@
 (use-package ag
   :ensure t)
 
+;; Emacs 30 内蔵の project.el が straight 側の古いキャッシュと衝突するのを防ぐ
+(use-package project
+  :ensure nil
+  :straight nil)
+
+;; Projectileの設定
 (use-package projectile
   :config
   (defun projectile-project-find-function (dir)
     (let* ((root (projectile-project-root dir)))
       (and root (cons 'transient root))))
+
+  ;; project ライブラリが安全に読み込まれた後で、フックを同期する
   (with-eval-after-load 'project
     (add-to-list 'project-find-functions 'projectile-project-find-function))
   )
@@ -918,10 +955,8 @@
   (when (kf:ensure-load-file "/usr/share/emacs/site-lisp/emacs-mozc/mozc.el")
     (setq default-input-method "japanese-mozc")))
 
-
 ;; Haiku build system
 (kf:ensure-load-file "~/.emacs.d/lisp/jam-mode.el")
-
 
 (use-package multiple-cursors
   :ensure t)
@@ -970,10 +1005,8 @@
 
 (global-set-key (kbd "C-c C-f") 'slime-sync-package-and-default-directory)
 
-
 ;; https://github.com/rversteegen/fb-mode
 (kf:ensure-load-file "~/.emacs.d/lisp/fb-mode.el")
-
 
 (use-package d-mode
   :ensure t)
@@ -1150,7 +1183,6 @@
     "/usr/bin/gosh"))
 
 (setq geiser-gauche-binary (gosh-path))
-
 
 (use-package geiser-guile
   :after geiser)
