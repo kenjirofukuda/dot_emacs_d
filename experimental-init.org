@@ -101,6 +101,36 @@ document.querySelectorAll(qclasses).forEach((el) => {
 (setq native-comp-async-report-warnings-errors 'silent)
 (setq warning-minimum-level :error)
 #+end_src
+
+* 一時ファイルの設定変更
+#+begin_src elisp :tangle yes
+;; =====================================================================
+;; 一時ファイル（バックアップ・自動保存・ロック）の出力先をシステム固有のテンポラリに退避
+;; =====================================================================
+
+;; 1. システムに応じた一時ディレクトリの定義
+;; Windows (system-type が 'windows-nt) の場合は環境変数 TEMP、それ以外（Linux等）は /tmp/ を使用
+(setq my-temporary-dir
+      (if (eq system-type 'windows-nt)
+          (file-name-as-directory (getenv "TEMP"))
+        "/tmp/emacs-temporary/"))
+
+;; ディレクトリが存在しない場合は自動作成
+(unless (file-exists-p my-temporary-dir)
+  (make-directory my-temporary-dir t))
+
+;; 2. バックアップファイル（ファイル名~）の退避設定
+(setq backup-directory-alist `(("." . ,my-temporary-dir)))
+(setq backup-by-copying t)    ; 元ファイルをコピーしてバックアップを作る（マウント時の安全対策）
+
+;; 3. 自動保存ファイル（#ファイル名#）の退避設定
+(setq auto-save-file-name-transforms `((".*" ,my-temporary-dir t)))
+
+;; 4. ロックファイル（.#ファイル名）の生成自体を抑制する設定
+;; ※ rclone マウント上での頻繁なI/O競合を回避するため、ロックファイル機能を無効化します
+(setq create-lockfiles nil)
+
+#+end_src
 ** +check-parens 対策+
 対策そのものは不要であるが、備忘録として残しておく。
 アロー関数が引っかかってエラーを起す原因が check-paren にあると思っていた頃の対策。
@@ -113,36 +143,36 @@ document.querySelectorAll(qclasses).forEach((el) => {
 * パッケージ自動アップデート
 ** use-package
 #+BEGIN_SRC elisp :tangle yes
-  ;; パッケージアーカイブ
-  (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
+;; パッケージアーカイブ
+(setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
 
-  ;; straight.el を use-package に統合する設定
-  (setq straight-use-package-by-default t)
+;; straight.el を use-package に統合する設定
+(setq straight-use-package-by-default t)
 
-  ;; --- ここで先に straight.el をブートストラップ（初期化）する ---
-  (defvar bootstrap-version)
-  (let ((bootstrap-file
-         (expand-file-name
-          "straight/repos/straight.el/bootstrap.el"
-          (or (bound-and-true-p straight-base-dir)
-              user-emacs-directory)))
-        (bootstrap-version 7))
-    (unless (file-exists-p bootstrap-file)
-      (with-current-buffer
-          (url-retrieve-synchronously
-           "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
-           'silent 'inhibit-cookies)
-        (goto-char (point-max))
-        (eval-print-last-sexp)))
-    (load bootstrap-file nil 'nomessage))
+;; --- ここで先に straight.el をブートストラップ（初期化）する ---
+(defvar bootstrap-version)
+(let ((bootstrap-file
+       (expand-file-name
+        "straight/repos/straight.el/bootstrap.el"
+        (or (bound-and-true-p straight-base-dir)
+            user-emacs-directory)))
+      (bootstrap-version 7))
+  (unless (file-exists-p bootstrap-file)
+    (with-current-buffer
+        (url-retrieve-synchronously
+         "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
+         'silent 'inhibit-cookies)
+      (goto-char (point-max))
+      (eval-print-last-sexp)))
+  (load bootstrap-file nil 'nomessage))
 
-  ;; ========================================================================
-  ;; 【最重要】Emacs 30 内蔵の「project.el」を最優先ロックし、外部ビルドを完全禁止する
-  ;; ========================================================================
-  ;; straight.el が他のパッケージの依存関係を解決する際、外部の project.el を
-  ;; ネットから落としてきて衝突させるのを物理的に完全にブロックします。
-  (straight-register-package
-   '(project :type built-in))
+;; ========================================================================
+;; 【最重要】Emacs 30 内蔵の「project.el」を最優先ロックし、外部ビルドを完全禁止する
+;; ========================================================================
+;; straight.el が他のパッケージの依存関係を解決する際、外部の project.el を
+;; ネットから落としてきて衝突させるのを物理的に完全にブロックします。
+(straight-register-package
+ '(project :type built-in))
 
 #+END_SRC
 
@@ -2786,6 +2816,28 @@ https://github.com/hlissner/emacs-pug-mode
               (setq c-basic-offset 2)
               (setq css-indent-offset 2)))
   )
+#+end_src
+* AI アシスタント情報
+
+#+begin_src elisp
+;; =====================================================================
+;; Org-babel の安全確認プロンプトを一時的に無効化し、一括実行する設定
+;; =====================================================================
+
+(defun my/org-babel-execute-buffer-no-eval-query ()
+  "プロンプトによる確認（yes/no）を挟まずに、現在のバッファ内のすべてのコードブロックを一括実行します。"
+  (interactive)
+  (if (derived-mode-p 'org-mode)
+      (let ((org-confirm-babel-evaluate nil)) ; 実行時の確認をスキップ
+        (org-babel-execute-buffer)
+        (message "すべてのコードブロックの再評価が完了しました。"))
+    (message "このコマンドは Org-mode のバッファでのみ実行できます。")))
+
+;; ショートカットキーの割り当て (例: C-c C-v e)
+;; ※お好みのキーに変更可能です
+(with-eval-after-load 'org
+  (define-key org-mode-map (kbd "C-c C-v e") 'my/org-babel-execute-buffer-no-eval-query))
+
 #+end_src
 
 * 末尾

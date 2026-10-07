@@ -29,6 +29,7 @@
             (setq tab-width 4)
             (setq c-basic-offset 4)))
 
+
 (setq inhibit-startup-message t)
 
 (scroll-bar-mode -1)        ; Disable visible scrollbar
@@ -47,6 +48,33 @@
 ;; 【追記】ネイティブコンパイルの警告バッファを自動ポップアップさせない（無音化）
 (setq native-comp-async-report-warnings-errors 'silent)
 (setq warning-minimum-level :error)
+
+;; =====================================================================
+;; 一時ファイル（バックアップ・自動保存・ロック）の出力先をシステム固有のテンポラリに退避
+;; =====================================================================
+
+;; 1. システムに応じた一時ディレクトリの定義
+;; Windows (system-type が 'windows-nt) の場合は環境変数 TEMP、それ以外（Linux等）は /tmp/ を使用
+(setq my-temporary-dir
+      (if (eq system-type 'windows-nt)
+          (file-name-as-directory (getenv "TEMP"))
+        "/tmp/emacs-temporary/"))
+
+;; ディレクトリが存在しない場合は自動作成
+(unless (file-exists-p my-temporary-dir)
+  (make-directory my-temporary-dir t))
+
+;; 2. バックアップファイル（ファイル名~）の退避設定
+(setq backup-directory-alist `(("." . ,my-temporary-dir)))
+(setq backup-by-copying t)    ; 元ファイルをコピーしてバックアップを作る（マウント時の安全対策）
+
+;; 3. 自動保存ファイル（#ファイル名#）の退避設定
+(setq auto-save-file-name-transforms `((".*" ,my-temporary-dir t)))
+
+;; 4. ロックファイル（.#ファイル名）の生成自体を抑制する設定
+;; ※ rclone マウント上での頻繁なI/O競合を回避するため、ロックファイル機能を無効化します
+(setq create-lockfiles nil)
+
 
 ;; パッケージアーカイブ
 (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
@@ -78,6 +106,7 @@
 ;; ネットから落としてきて衝突させるのを物理的に完全にブロックします。
 (straight-register-package
  '(project :type built-in))
+
 
 ;; straightの初期化が終わったので、安全にuse-packageが使える
 (use-package auto-package-update
@@ -432,6 +461,7 @@
      (add-hook 'ielm-mode-hook 'paredit-mode)
      (define-key paredit-mode-map (kbd "RET") nil)
      (define-key paredit-mode-map (kbd "C-j") 'paredit-newline)))
+
 
 (use-package markdown-mode
   :mode ("\\.md\\'" . markdown-mode)
@@ -823,6 +853,7 @@
   (add-hook 'c-mode-hook #'my-objc-iron-astyle-setup)
   )
 
+
 (use-package cmake-mode
   :ensure t)
 (setq auto-mode-alist
@@ -955,8 +986,10 @@
   (when (kf:ensure-load-file "/usr/share/emacs/site-lisp/emacs-mozc/mozc.el")
     (setq default-input-method "japanese-mozc")))
 
+
 ;; Haiku build system
 (kf:ensure-load-file "~/.emacs.d/lisp/jam-mode.el")
+
 
 (use-package multiple-cursors
   :ensure t)
@@ -1005,8 +1038,10 @@
 
 (global-set-key (kbd "C-c C-f") 'slime-sync-package-and-default-directory)
 
+
 ;; https://github.com/rversteegen/fb-mode
 (kf:ensure-load-file "~/.emacs.d/lisp/fb-mode.el")
+
 
 (use-package d-mode
   :ensure t)
@@ -1184,6 +1219,7 @@
 
 (setq geiser-gauche-binary (gosh-path))
 
+
 (use-package geiser-guile
   :after geiser)
 
@@ -1231,6 +1267,25 @@
               (setq c-basic-offset 2)
               (setq css-indent-offset 2)))
   )
+
+;; =====================================================================
+;; Org-babel の安全確認プロンプトを一時的に無効化し、一括実行する設定
+;; =====================================================================
+
+(defun my/org-babel-execute-buffer-no-eval-query ()
+  "プロンプトによる確認（yes/no）を挟まずに、現在のバッファ内のすべてのコードブロックを一括実行します。"
+  (interactive)
+  (if (derived-mode-p 'org-mode)
+      (let ((org-confirm-babel-evaluate nil)) ; 実行時の確認をスキップ
+        (org-babel-execute-buffer)
+        (message "すべてのコードブロックの再評価が完了しました。"))
+    (message "このコマンドは Org-mode のバッファでのみ実行できます。")))
+
+;; ショートカットキーの割り当て (例: C-c C-v e)
+;; ※お好みのキーに変更可能です
+(with-eval-after-load 'org
+  (define-key org-mode-map (kbd "C-c C-v e") 'my/org-babel-execute-buffer-no-eval-query))
+
 
 (setq org-startup-folded t)
 (recentf-open-files)
