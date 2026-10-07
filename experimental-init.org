@@ -2403,6 +2403,38 @@ https://protesilaos.com/emacs/logos*
   (when (kf:ensure-load-file "/usr/share/emacs/site-lisp/emacs-mozc/mozc.el")
     (setq default-input-method "japanese-mozc")))
 
+;; =====================================================================
+;; インプットメソッド（Mozc）のON/OFF連動カーソル装飾設定
+;; =====================================================================
+(defvar my/im-active-cursor-color "red"
+  "インプットメソッドがONの時のカーソル色")
+
+(defvar my/im-inactive-cursor-color "white"
+  "インプットメソッドがOFFの時のカーソル色（環境に合わせて変更してください）")
+
+(defvar my/im-active-cursor-type 'bar
+  "インプットメソッドがONの時のカーソル形状 (box, bar, hollow など)")
+
+(defvar my/im-inactive-cursor-type 'box
+  "インプットメソッドがOFFの時のカーソル形状 (box, bar, hollow など)")
+
+(defun my/update-cursor-by-input-method ()
+  "インプットメソッドの状態に応じてカーソルの色と形状を切り替える"
+  (if current-input-method
+      (progn
+        (set-cursor-color my/im-active-cursor-color)
+        (setq-local cursor-type my/im-active-cursor-type))
+    (progn
+      (set-cursor-color my/im-inactive-cursor-color)
+      (setq-local cursor-type my/im-inactive-cursor-type))))
+
+;; 各種フックへの登録
+(add-hook 'input-method-activate-hook #'my/update-cursor-by-input-method)
+(add-hook 'input-method-deactivate-hook #'my/update-cursor-by-input-method)
+
+;; バッファ切り替え時にも状態を反映させるための保険フック
+(add-hook 'post-command-hook #'my/update-cursor-by-input-method)
+;; ここに
 #+end_src
 
 #+RESULTS:
