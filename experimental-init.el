@@ -670,6 +670,17 @@
                 lsp-ui-doc-include-signature t       ; Show signature
                 lsp-ui-doc-position 'at-point))
 
+(use-package dap-mode
+  :ensure t
+  :hook
+  (lsp-mode . dap-mode)
+  (lsp-mode . dap-ui-mode)
+  :config
+  (require 'dap-python)
+  ;; (dap-node-setup)
+)   ; デバッグアダプタの自動セットアップ
+
+
 (use-package typescript-ts-mode
   :mode (("\\\\.tsx\\\\'" . tsx-ts-mode)
          ("\\\\.ts\\\\'" . tsx-ts-mode))
@@ -901,12 +912,6 @@
 (desktop-save-mode (if (display-graphic-p) +1 -1))
 ;; ホスト名を付加してファイル名衝突回避
 (setq desktop-base-file-name (concat "." (safe-host-name-string) "-emacs.desktop"))
-
-(use-package ef-themes
-  :ensure t
-  ;; :config
-  ;; (ef-themes-select 'ef-dark)
-  )
 
 ;; https://agel.readthedocs.io/en/latest/index.html
 (use-package ag
@@ -1318,6 +1323,89 @@
 (with-eval-after-load 'org
   (define-key org-mode-map (kbd "C-c C-v e") 'my/org-babel-execute-buffer-no-eval-query))
 
+
+(use-package envrc
+  :ensure t
+  :config
+  (envrc-global-mode 1))
+
+(use-package lsp-pyright
+  :ensure t
+  :custom (lsp-pyright-langserver-command "pyright") ;; or basedpyright
+  :hook (python-mode . (lambda ()
+                         (require 'lsp-pyright)
+                         (lsp))))  ; or lsp-deferred
+
+(setopt dap-auto-configure-mode t)
+
+(defun my-locate-python-virtualenv ()
+  "Find the Python executable based on the VIRTUAL_ENV environment variable."
+  (when-let ((venv (getenv "VIRTUAL_ENV")))
+    (let ((python-path (expand-file-name "bin/python" venv)))
+      (when (file-executable-p python-path)
+        python-path))))
+
+(with-eval-after-load 'lsp-pyright
+  (add-to-list 'lsp-pyright-python-search-functions
+               #'my-locate-python-virtualenv))
+
+(defmacro company-backend-for-hook (hook backends)
+  `(add-hook ,hook (lambda ()
+                     (set (make-local-variable 'company-backends)
+                          ,backends))))
+
+(defun setup-python-environment ()
+  "Setup a Python development environment in the current buffer."
+  ;; Update the current buffer's environment.
+  (envrc--update)
+
+  ;; Enable YASnippet mode
+  (yas-minor-mode 1)
+
+  ;; Set the `python-shell-interpreter' to the python in PATH.
+  ;; At this moment `envrc' should successfully configure environment.
+  (setq-local python-shell-interpreter (executable-find "python"))
+
+  ;; Setup active backends for `python-mode'.
+  (company-backend-for-hook 'lsp-completion-mode-hook
+                            '((company-capf :with company-yasnippet)
+                              company-dabbrev-code))
+
+  ;; Enable LSP support in Python buffers.
+  (require 'lsp-pyright)
+  (lsp-deferred)
+
+  ;; Enable DAP support in Python buffers.
+  (require 'dap-python)
+  (setq-local dap-python-debugger 'debugpy)
+
+  (dap-mode 1))
+
+;; Configure hooks after `python-mode' is loaded.
+(add-hook 'python-mode-hook #'setup-python-environment)
+;; (add-hook 'python-ts-mode-hook #'setup-python-environment)
+
+(use-package direnv
+ :config
+ (direnv-mode))
+;; Setup buffer-local direnv integration for Emacs.
+(when (executable-find "direnv")
+  (add-hook 'after-init-hook #'envrc-global-mode))
+
+(defun my/dap-debug-load-project-templates (&rest _args)
+  "dap-debug の実行直前に、カレントバッファ周辺の debug.el を自動ロードします。"
+  (let* ((proj-root (and (fboundp 'projectile-project-root) (projectile-project-root)))
+         ;; 1. プロジェクトルートがある場合はそこから、なければ現在のディレクトリから探す
+         (base-dir (or proj-root default-directory))
+         (debug-file (expand-file-name "debug.el" base-dir)))
+
+    (when (file-exists-p debug-file)
+      ;; 物理的な衝突や2重ロードによる肥大化を防ぎつつ安全にロード
+      (load debug-file t t)
+      (message "Loaded project debug templates from: %s" debug-file))))
+
+;; dap-debug コマンドが実行される「直前 (:before)」に、上の関数を割り込ませる
+(advice-add 'dap-debug :before #'my/dap-debug-load-project-templates)
 
 (setq org-startup-folded t)
 (recentf-open-files)

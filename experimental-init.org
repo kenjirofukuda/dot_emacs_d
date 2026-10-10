@@ -1647,6 +1647,7 @@ M-x eww-toggle-fonts
 F => Shift-f
 #+end_example
 
+
 * LSP導入
 一度は設定したものの削除してしまった経緯がある。が復活させた。
 - @see https://www.ovistoica.com/blog/2024-7-05-modern-emacs-typescript-web-tsx-config#org0c47228
@@ -1862,6 +1863,19 @@ F => Shift-f
   )
 #+end_src
 
+* dap-mode
+#+begin_src elisp :tangle yes
+(use-package dap-mode
+  :ensure t
+  :hook
+  (lsp-mode . dap-mode)
+  (lsp-mode . dap-ui-mode)
+  :config
+  (require 'dap-python)
+  ;; (dap-node-setup)
+)   ; デバッグアダプタの自動セットアップ
+
+#+end_src
 * ESLint
 - @see https://www.ovistoica.com/blog/2024-7-05-modern-emacs-typescript-web-tsx-config#org2b45109
 #+begin_src elisp :tangle no
@@ -2267,13 +2281,6 @@ desktop-base-file-name
 #+end_src
 
 #+RESULTS:
-#+begin_src elisp :tangle yes
-(use-package ef-themes
-  :ensure t
-  ;; :config
-  ;; (ef-themes-select 'ef-dark)
-  )
-#+end_src
 
 * グローバル高速検索
 #+begin_src elisp :tangle yes
@@ -2872,6 +2879,100 @@ https://github.com/hlissner/emacs-pug-mode
 
 #+end_src
 
+* envrc
+#+begin_src elisp :tangle yes
+(use-package envrc
+  :ensure t
+  :config
+  (envrc-global-mode 1))
+#+end_src
+
+* lsp-pyright
+- @see https://blog.serghei.pl/posts/emacs-python-ide/
+#+begin_src elisp :tangle yes
+(use-package lsp-pyright
+  :ensure t
+  :custom (lsp-pyright-langserver-command "pyright") ;; or basedpyright
+  :hook (python-mode . (lambda ()
+                         (require 'lsp-pyright)
+                         (lsp))))  ; or lsp-deferred
+
+(setopt dap-auto-configure-mode t)
+
+(defun my-locate-python-virtualenv ()
+  "Find the Python executable based on the VIRTUAL_ENV environment variable."
+  (when-let ((venv (getenv "VIRTUAL_ENV")))
+    (let ((python-path (expand-file-name "bin/python" venv)))
+      (when (file-executable-p python-path)
+        python-path))))
+
+(with-eval-after-load 'lsp-pyright
+  (add-to-list 'lsp-pyright-python-search-functions
+               #'my-locate-python-virtualenv))
+
+(defmacro company-backend-for-hook (hook backends)
+  `(add-hook ,hook (lambda ()
+                     (set (make-local-variable 'company-backends)
+                          ,backends))))
+
+(defun setup-python-environment ()
+  "Setup a Python development environment in the current buffer."
+  ;; Update the current buffer's environment.
+  (envrc--update)
+
+  ;; Enable YASnippet mode
+  (yas-minor-mode 1)
+
+  ;; Set the `python-shell-interpreter' to the python in PATH.
+  ;; At this moment `envrc' should successfully configure environment.
+  (setq-local python-shell-interpreter (executable-find "python"))
+
+  ;; Setup active backends for `python-mode'.
+  (company-backend-for-hook 'lsp-completion-mode-hook
+                            '((company-capf :with company-yasnippet)
+                              company-dabbrev-code))
+
+  ;; Enable LSP support in Python buffers.
+  (require 'lsp-pyright)
+  (lsp-deferred)
+
+  ;; Enable DAP support in Python buffers.
+  (require 'dap-python)
+  (setq-local dap-python-debugger 'debugpy)
+
+  (dap-mode 1))
+
+;; Configure hooks after `python-mode' is loaded.
+(add-hook 'python-mode-hook #'setup-python-environment)
+;; (add-hook 'python-ts-mode-hook #'setup-python-environment)
+#+end_src
+* direnv
+#+begin_src elisp :tangle yes
+(use-package direnv
+ :config
+ (direnv-mode))
+;; Setup buffer-local direnv integration for Emacs.
+(when (executable-find "direnv")
+  (add-hook 'after-init-hook #'envrc-global-mode))
+#+end_src
+
+* debug.el 自動読み込み
+#+begin_src elisp :tangle yes
+(defun my/dap-debug-load-project-templates (&rest _args)
+  "dap-debug の実行直前に、カレントバッファ周辺の debug.el を自動ロードします。"
+  (let* ((proj-root (and (fboundp 'projectile-project-root) (projectile-project-root)))
+         ;; 1. プロジェクトルートがある場合はそこから、なければ現在のディレクトリから探す
+         (base-dir (or proj-root default-directory))
+         (debug-file (expand-file-name "debug.el" base-dir)))
+
+    (when (file-exists-p debug-file)
+      ;; 物理的な衝突や2重ロードによる肥大化を防ぎつつ安全にロード
+      (load debug-file t t)
+      (message "Loaded project debug templates from: %s" debug-file))))
+
+;; dap-debug コマンドが実行される「直前 (:before)」に、上の関数を割り込ませる
+(advice-add 'dap-debug :before #'my/dap-debug-load-project-templates)
+#+end_src
 * 末尾
 #+BEGIN_SRC elisp :tangle yes
 (setq org-startup-folded t)
