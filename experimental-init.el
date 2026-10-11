@@ -909,9 +909,19 @@
 
 ;; デスクトップ環境の保存
 ;; https://www.gnu.org/software/emacs//manual/html_node/emacs/Saving-Emacs-Sessions.html
-(desktop-save-mode (if (display-graphic-p) +1 -1))
-;; ホスト名を付加してファイル名衝突回避
-(setq desktop-base-file-name (concat "." (safe-host-name-string) "-emacs.desktop"))
+;; [GUID: f6b42b9e-67a6-48c2-ab47-d5d22f183701]
+;; デスクトップ環境の保存と自動同期の復元
+(when (display-graphic-p)
+  ;; 1. ベースとなるファイル名をホスト名付きで定義
+  (setq desktop-base-file-name (concat "." (safe-host-name-string) "-emacs.desktop"))
+  ;; 2. 【最重要】保存先ディレクトリを ~/.emacs.d/ に物理的に完全固定する
+  ;; これにより、direnv やプロジェクトごとのパスに流されるのを完全にブロックします
+  (setq desktop-dirname user-emacs-directory)
+  ;; 3. 終了時に保存先や上書きの質問を一切させず、無条件で自動保存させる設定
+  ;; 'ask-if-new ではなく t にすることで、毎回割り込んでくるプロンプトを抑制します
+  (setq desktop-save t)
+  ;; 4. デスクトップ保存モードを有効化
+  (desktop-save-mode 1))
 
 ;; https://agel.readthedocs.io/en/latest/index.html
 (use-package ag
@@ -1177,7 +1187,10 @@
       lsp-idle-delay 0.5)
 
 (when (eq system-type 'gnu/linux)
-  (require 'ibus)
+  ;; すでにロード済みであった場合の保険として、一度環境を隔離した状態で安全に require します。
+  (let ((exec-path (cons "/usr/bin" exec-path))
+	(process-environment (cons "PATH=/usr/bin:/bin" process-environment)))
+    (require 'ibus))
   (add-hook 'after-init-hook 'ibus-mode-on)
   ;; C-SPC は Set Mark に使う
   (ibus-define-common-key ?\C-\s nil)
@@ -1393,19 +1406,20 @@
   (add-hook 'after-init-hook #'envrc-global-mode))
 
 (defun my/dap-debug-load-project-templates (&rest _args)
-  "dap-debug の実行直前に、カレントバッファ周辺の debug.el を自動ロードします。"
-  (let* ((proj-root (and (fboundp 'projectile-project-root) (projectile-project-root)))
-         ;; 1. プロジェクトルートがある場合はそこから、なければ現在のディレクトリから探す
-         (base-dir (or proj-root default-directory))
-         (debug-file (expand-file-name "debug.el" base-dir)))
-
+  "dap-debug の実行直前に、.git または projectile から debug.el を自動ロードします。"
+  (let* ((git-root (and (buffer-file-name)
+			(vc-git-root (buffer-file-name))))
+	 (proj-root (and (fboundp 'projectile-project-root)
+			 (projectile-project-root)))
+	 (base-dir (or git-root proj-root default-directory))
+	 (debug-file (expand-file-name "debug.el" base-dir)))
+    (message "DEBUG: Checking debug template path: %s" debug-file)
     (when (file-exists-p debug-file)
-      ;; 物理的な衝突や2重ロードによる肥大化を防ぎつつ安全にロード
       (load debug-file t t)
       (message "Loaded project debug templates from: %s" debug-file))))
-
-;; dap-debug コマンドが実行される「直前 (:before)」に、上の関数を割り込ませる
-(advice-add 'dap-debug :before #'my/dap-debug-load-project-templates)
+;; 💡 【仕上げ】dap-mode の実体がロードされた「後」にアドバイスを確実にバインドします
+(with-eval-after-load 'dap-mode
+  (advice-add 'dap-debug :before #'my/dap-debug-load-project-templates))
 
 (setq org-startup-folded t)
 (recentf-open-files)
