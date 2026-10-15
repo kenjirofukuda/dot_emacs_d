@@ -420,7 +420,8 @@
 
 ;; Magit 設定 (straight.el 向けに最適化)
 (use-package magit
-  :ensure t)
+  :ensure t
+  :defer t)
 
 ;; https://joppot.info/posts/f3007a42-5ba2-4060-90d4-496697413cf9
 (use-package diff-hl
@@ -543,9 +544,15 @@
   ;; Report Eglot's LSP diagnostics through Flycheck
   (global-flycheck-eglot-mode 1))
 
+; GUID: a5d8c3e2-9f1b-4d6a-8c2e-e3d4f5b6c8e5
+;; ========================================================================
+;; LSP / LSP-UI / DAP-MODE の完全同期・遅延読み込み一括制御（爆速化対策）
+;; ========================================================================
 (use-package lsp-mode
   :diminish "LSP"
   :ensure t
+  ;; commands を明示することで、これらの関数が呼ばれるまでロードを完全にストップします
+  :commands (lsp lsp-deferred)
   :hook ((lsp-mode . lsp-diagnostics-mode)
          (lsp-mode . lsp-enable-which-key-integration)
          ((tsx-ts-mode
@@ -657,8 +664,10 @@
 ;;                 lsp-ui-doc-include-signature t       ; Show signature
 ;;                 lsp-ui-doc-position 'at-point))
 
+;; --- lsp-mode がロードされた後に連動して初めて読み込む（単体での先行ロードを禁止） ---
 (use-package lsp-ui
   :ensure t
+  :after lsp-mode
   :commands
   (lsp-ui-doc-show
    lsp-ui-doc-glance)
@@ -671,8 +680,10 @@
                 lsp-ui-doc-include-signature t       ; Show signature
                 lsp-ui-doc-position 'at-point))
 
+;; --- lsp-mode 起動後に連動し、dapが必要になった段階で初めてロードする ---
 (use-package dap-mode
   :ensure t
+  :after lsp-mode
   :hook
   (lsp-mode . dap-mode)
   (lsp-mode . dap-ui-mode)
@@ -741,7 +752,8 @@
 
 ;; フレームの回転
 (use-package transpose-frame
-  :ensure t)
+  :ensure t
+  :defer t)
 
 ;; C-s <araow keys> でウィンドウのサイズをマウスを使わずに調節する
 ;;
@@ -1133,9 +1145,16 @@
 (use-package pug-mode
   :ensure t)
 
+;; GUID: b4c8d3e1-7f5a-496a-8b2c-e3d2f5b6c8d4
+;; ========================================================================
+;; Quelpa パッケージ管理の初期化と自動更新制限（高速化対策）
+;; ========================================================================
 (use-package quelpa
   :init
-  (setq quelpa-self-upgrade-p nil))
+  (setq quelpa-self-upgrade-p nil)      ; 起動時の quelpa 自身の自動アップグレードを禁止
+  (setq quelpa-update-melpa-p nil)     ; 【最重要】起動ごとに毎回 MELPA レシピを更新するのを強制停止
+  (setq quelpa-checkout-melpa-p nil))   ; レシピのローカルチェックアウト同期をスキップ
+
 (use-package quelpa-use-package
   :after (quelpa)
   :config
@@ -1192,7 +1211,9 @@
        '(("\\.mak\\'" . makefile-gmake-mode))
        auto-mode-alist))
 
-(use-package google-translate :ensure t)
+(use-package google-translate
+  :ensure t
+  :defer t)
 
 (server-start)
 
