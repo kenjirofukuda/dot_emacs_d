@@ -238,14 +238,14 @@
 (defun options-file-name ()
   (expand-file-name (locate-user-emacs-file (options-base-name))))
 
-(setq custom-file (options-file-name))
-(if (file-exists-p custom-file)
-    (load custom-file t nil nil))
-
 ;; 拡張選択範囲
 (use-package expand-region
   )
 (global-set-key (kbd "C-q") 'er/expand-region)
+
+;; コード補完
+(use-package company
+  )
 
 ;; ミニバッファーの改善
 ;; https://github.com/minad/vertico
@@ -369,6 +369,43 @@
   ;; (keymap-set consult-narrow-map (concat consult-narrow-key " ?") #'consult-narrow-help)
   )
 
+;; https://github.com/oantolin/embark/
+(use-package embark
+
+
+  :bind
+  (("C-." . embark-act)         ;; pick some comfortable binding
+   ("C-;" . embark-dwim)        ;; good alternative: M-.
+   ("C-h B" . embark-bindings)) ;; alternative for `describe-bindings'
+
+  :init
+
+  ;; Optionally replace the key help with a completing-read interface
+  (setq prefix-help-command #'embark-prefix-help-command)
+
+  ;; Show the Embark target at point via Eldoc. You may adjust the
+  ;; Eldoc strategy, if you want to see the documentation from
+  ;; multiple providers. Beware that using this can be a little
+  ;; jarring since the message shown in the minibuffer can be more
+  ;; than one line, causing the modeline to move up and down:
+
+  ;; (add-hook 'eldoc-documentation-functions #'embark-eldoc-first-target)
+  ;; (setq eldoc-documentation-strategy #'eldoc-documentation-compose-eagerly)
+
+  :config
+
+  ;; Hide the mode line of the Embark live/completions buffers
+  (add-to-list 'display-buffer-alist
+               '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
+                 nil
+                 (window-parameters (mode-line-format . none)))))
+
+;; Consult users will also want the embark-consult package.
+(use-package embark-consult
+   ; only need to install it, embark loads it after consult if found
+  :hook
+  (embark-collect-mode . consult-preview-at-point-mode))
+
 ;; https://github.com/minad/corfu
 (use-package corfu
   ;; Optional customizations
@@ -444,6 +481,20 @@
 (use-package smartparens )
 (use-package rainbow-delimiters )
 
+;; emacs lisp
+(add-hook 'emacs-lisp-mode-hook 'paredit-mode)
+(add-hook 'emacs-lisp-mode-hook 'rainbow-delimiters-mode)
+;; (add-hook 'emacs-lisp-mode-hook 'company-mode)
+;; (add-hook 'emacs-lisp-mode-hook 'subword-mode)
+;; (add-hook 'emacs-lisp-mode-hook 'aggressive-indent-mode)
+
+(eval-after-load 'inferior-emacs-lisp-mode
+  '(progn
+     (add-hook 'ielm-mode-hook 'paredit-mode)
+     (define-key paredit-mode-map (kbd "RET") nil)
+     (define-key paredit-mode-map (kbd "C-j") 'paredit-newline)))
+
+
 (use-package markdown-mode
   :mode ("\\.md\\'" . markdown-mode)
   :init
@@ -471,6 +522,12 @@
 
   :hook ((org-mode . org-modern-mode)))
 (global-set-key "\C-cl" 'org-toggle-link-display)
+
+(use-package org-journal
+
+  :defer t
+  :config
+  (setq org-journal-dir "~/Nextcloud/Org/journal/"))
 
 ;; <s <tab> でブロック文のテンプレートを挿入
 (require 'org-tempo)
@@ -530,7 +587,8 @@
          (lsp-mode . lsp-enable-which-key-integration)
          ((tsx-ts-mode
            typescript-ts-mode
-           js-ts-mode) . lsp-deferred))
+           js-ts-mode
+	   php-mode) . lsp-deferred))
   :custom
   (lsp-keymap-prefix "C-c l")           ; Prefix for LSP actions
   (lsp-completion-provider :none)       ; Using Corfu as the provider
@@ -867,6 +925,14 @@
   )
 
 
+(use-package cmake-mode
+  )
+(setq auto-mode-alist
+      (append
+       '(("CMakeLists\\.txt\\'" . cmake-mode))
+       '(("\\.cmake\\'" . cmake-mode))
+       auto-mode-alist))
+
 ;; https://qiita.com/tadsan/items/df73c711f921708facdc
 (setq-default show-trailing-whitespace nil)
 (defun my/enable-trailing-mode-hook ()
@@ -980,49 +1046,44 @@
 
 (add-to-list 'auto-mode-alist '("\\.gsmarkup$" . xml-mode))
 
-;; sudo apt install -y emacs-mozc emacs-mozc-bin
+(use-package orderless
+
+  :custom
+  (completion-styles '(orderless basic))
+  (completion-category-overrides '((file (styles basic partial-completion)))))
+
+;; GUID: mz300b4c-8f5a-496a-b2c4-a3d1f5b6c8f4
+;; ========================================================================
+;; Mozcロード時のEmacs 30.1固有マクロ警告を一時的に完全無音化
+;; ========================================================================
 (defun kf:mozc-installed-p ()
-  (and
-   (file-exists-p "/usr/share/emacs/site-lisp/emacs-mozc/mozc.el")
-   (file-exists-p "/usr/lib/mozc/mozc_server")
-   (file-exists-p "/usr/bin/mozc_emacs_helper")))
+  (and (file-exists-p "/usr/share/emacs/site-lisp/emacs-mozc/mozc.el")
+       (file-exists-p "/usr/lib/mozc/mozc_server")
+       (file-exists-p "/usr/bin/mozc_emacs_helper")))
 
 (when (kf:mozc-installed-p)
-  (when (kf:ensure-load-file "/usr/share/emacs/site-lisp/emacs-mozc/mozc.el")
-    (setq default-input-method "japanese-mozc")))
+  ;; ロード時の一時的な警告抑止ガード（letの閉じ括弧が最末尾で正しく全体を包み込みます）
+  (let ((warning-minimum-level :emergency)
+        (native-comp-async-report-warnings-errors 'silent))
+    (when (kf:ensure-load-file "/usr/share/emacs/site-lisp/emacs-mozc/mozc.el")
+      (setq default-input-method "japanese-mozc"))))
 
-;; =====================================================================
 ;; インプットメソッド（Mozc）のON/OFF連動カーソル装飾設定
-;; =====================================================================
-(defvar my/im-active-cursor-color "red"
-  "インプットメソッドがONの時のカーソル色")
-
-(defvar my/im-inactive-cursor-color "white"
-  "インプットメソッドがOFFの時のカーソル色（環境に合わせて変更してください）")
-
-(defvar my/im-active-cursor-type 'bar
-  "インプットメソッドがONの時のカーソル形状 (box, bar, hollow など)")
-
-(defvar my/im-inactive-cursor-type 'box
-  "インプットメソッドがOFFの時のカーソル形状 (box, bar, hollow など)")
+(defvar my/im-active-cursor-color "red" "インプットメソッドがONの時のカーソル色")
+(defvar my/im-inactive-cursor-color "white" "インプットメソッドがOFFの時のカーソル色")
+(defvar my/im-active-cursor-type 'bar "インプットメソッドがONの時のカーソル形状")
+(defvar my/im-inactive-cursor-type 'box "インプットメソッドがOFFの時のカーソル形状")
 
 (defun my/update-cursor-by-input-method ()
-  "インプットメソッドの状態に応じてカーソルの色と形状を切り替える"
   (if current-input-method
-      (progn
-        (set-cursor-color my/im-active-cursor-color)
-        (setq-local cursor-type my/im-active-cursor-type))
-    (progn
-      (set-cursor-color my/im-inactive-cursor-color)
-      (setq-local cursor-type my/im-inactive-cursor-type))))
+      (progn (set-cursor-color my/im-active-cursor-color)
+             (setq-local cursor-type my/im-active-cursor-type))
+    (progn (set-cursor-color my/im-inactive-cursor-color)
+           (setq-local cursor-type my/im-inactive-cursor-type))))
 
-;; 各種フックへの登録
 (add-hook 'input-method-activate-hook #'my/update-cursor-by-input-method)
 (add-hook 'input-method-deactivate-hook #'my/update-cursor-by-input-method)
-
-;; バッファ切り替え時にも状態を反映させるための保険フック
 (add-hook 'post-command-hook #'my/update-cursor-by-input-method)
-;; ここに
 
 ;; Haiku build system
 (kf:ensure-load-file "~/.emacs.d/lisp/jam-mode.el")
@@ -1043,6 +1104,14 @@
   :after org)
 (define-key global-map (kbd "C-c <f12>") #'org-transclusion-add)
 (define-key global-map (kbd "C-c t") #'org-transclusion-mode)
+
+(use-package yasnippet
+
+  :config
+  (setq yas-snippet-dirs '("~/Nextcloud/snippets"))
+  (yas-global-mode 1))
+(use-package yasnippet-snippets
+  )
 
 ;; https://github.com/roswell/roswell
 ;; (kf:ensure-load-file "~/.roswell/helper.el")
@@ -1153,21 +1222,23 @@
 
 (add-hook 'org-mode-hook (lambda () (setq-local tab-width 8)))
 
-(use-package web-mode )
-(use-package auto-rename-tag )
+;; GUID: ph300d5e-9f1b-4d6a-8c2e-e3d4f5b6c8f5
+(use-package web-mode)
+(use-package auto-rename-tag)
 (use-package projectile-laravel
   :straight (projectile-laravel :type git :host github :repo "strikerlulu/projectile-laravel"))
 
-;; PHP環境とDAPモードの設定をuse-packageに統合
 (use-package php-mode
-
   :hook (php-mode-hook . lsp)
   :config
+  ;; dap-php 自体を、LSPがPHPファイルを掴んで動き出した瞬間に初めてロードさせる遅延ガード
   (with-eval-after-load 'lsp-mode
-    (require 'dap-php)
-    (yas-global-mode 1)))
+    (use-package dap-php
+      :ensure nil
+      :straight nil
+      :config
+      (yas-global-mode 1))))
 
-;; LSP関連のパフォーマンス調整（ここに一括退避）
 (setq gc-cons-threshold (* 100 1024 1024)
       read-process-output-max (* 10 1024 1024)
       treemacs-space-between-root-nodes nil
@@ -1249,6 +1320,10 @@
 
 (setq geiser-guile-binary (guile-path))
 
+(use-package kotlin-mode
+  )
+(add-hook 'kotlin-mode-hook 'eglot-ensure)
+
 (add-hook 'org-mode-hook #'font-lock-ensure)
 
 (with-eval-after-load 'org
@@ -1307,6 +1382,62 @@
   :config
   (envrc-global-mode 1))
 
+(use-package lsp-pyright
+
+  :custom (lsp-pyright-langserver-command "pyright") ;; or basedpyright
+  :hook (python-mode . (lambda ()
+                         (require 'lsp-pyright)
+                         (lsp))))  ; or lsp-deferred
+
+(setopt dap-auto-configure-mode t)
+
+(defun my-locate-python-virtualenv ()
+  "Find the Python executable based on the VIRTUAL_ENV environment variable."
+  (when-let ((venv (getenv "VIRTUAL_ENV")))
+    (let ((python-path (expand-file-name "bin/python" venv)))
+      (when (file-executable-p python-path)
+        python-path))))
+
+(with-eval-after-load 'lsp-pyright
+  (add-to-list 'lsp-pyright-python-search-functions
+               #'my-locate-python-virtualenv))
+
+(defmacro company-backend-for-hook (hook backends)
+  `(add-hook ,hook (lambda ()
+                     (set (make-local-variable 'company-backends)
+                          ,backends))))
+
+(defun setup-python-environment ()
+  "Setup a Python development environment in the current buffer."
+  ;; Update the current buffer's environment.
+  (envrc--update)
+
+  ;; Enable YASnippet mode
+  (yas-minor-mode 1)
+
+  ;; Set the `python-shell-interpreter' to the python in PATH.
+  ;; At this moment `envrc' should successfully configure environment.
+  (setq-local python-shell-interpreter (executable-find "python"))
+
+  ;; Setup active backends for `python-mode'.
+  (company-backend-for-hook 'lsp-completion-mode-hook
+                            '((company-capf :with company-yasnippet)
+                              company-dabbrev-code))
+
+  ;; Enable LSP support in Python buffers.
+  (require 'lsp-pyright)
+  (lsp-deferred)
+
+  ;; Enable DAP support in Python buffers.
+  (require 'dap-python)
+  (setq-local dap-python-debugger 'debugpy)
+
+  (dap-mode 1))
+
+;; Configure hooks after `python-mode' is loaded.
+(add-hook 'python-mode-hook #'setup-python-environment)
+;; (add-hook 'python-ts-mode-hook #'setup-python-environment)
+
 (use-package direnv
  :config
  (direnv-mode))
@@ -1342,6 +1473,12 @@
               (font-lock-add-keywords
                nil
                '(("^\\s-*\\(;;.*\\)$" 1 font-lock-comment-face t))))))
+
+(use-package pytest
+
+  :bind (:map python-mode-map
+	      ("C-c C-t a" . pytest-all)
+	      ("C-c C-t m" . pytest-one)))
 
 ;; ========================================================================
 ;; 1. 【最優先実行】F9キーマップの生成と基本コマンド（g, s, m, v）の即時バインド
@@ -1542,6 +1679,11 @@
   (message "[SUCCESS] Startup profile written to: %s" log-file))
 
 (setq org-startup-folded t)
+
+(setq custom-file (options-file-name))
+(if (file-exists-p custom-file)
+    (load custom-file t nil nil))
+
 (recentf-open-files)
 ;; (add-hook 'kill-emacs-query-functions 'kf:quit-query-function)
 (global-set-key "\C-x\ \C-c" 'kf:quit-emacs)
