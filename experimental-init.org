@@ -62,15 +62,27 @@ document.querySelectorAll(qclasses).forEach((el) => {
   (insert "\n")
   (insert "\n"))
 
-(when (file-directory-p "~/.emacs.d/lisp")
-  (push (expand-file-name "~/.emacs.d/lisp") load-path))
-
 (setq gc-cons-threshold 200000000)
 (setq read-process-output-max (* 10 1024 1024)) ;; 8mb
-;; カスタムコマンドのロード
+
+;; 個別の拡張を配下のlispフォルダに入れている
+(when (file-directory-p "~/.emacs.d/lisp")
+  (push (expand-file-name "~/.emacs.d/lisp") load-path))
+#+END_SRC
+
+* 私設カスタムコマンドのロード
+#+begin_src elisp :tangle yes
 (require 'kf-command)
-(require 'mpascal)
+#+end_src
+
+* Calma GPLIIモードの導入
+#+begin_src elisp :tangle yes
 (require 'cgpl-mode)
+#+end_src
+
+* mpascal の導入
+#+begin_src elisp :tangle yes
+(require 'mpascal)
 
 (add-to-list 'auto-mode-alist
              '("\\.\\(p\\|pas\\|dpr\\|dpk\\)\\'" . mpascal-mode))
@@ -79,8 +91,8 @@ document.querySelectorAll(qclasses).forEach((el) => {
           (lambda ()
             (setq tab-width 4)
             (setq c-basic-offset 4)))
+#+end_src
 
-#+END_SRC
 * 基本設定
 #+begin_src elisp :tangle yes
 (setq inhibit-startup-message t)
@@ -1915,17 +1927,23 @@ Deprecated:
 #+RESULTS:
 
 #+begin_src elisp :tangle yes
-(use-package jtsx :ensure t)
+(use-package jtsx
+  :ensure t
+  :defer t)
 #+end_src
 
 #+begin_src elisp :tangle yes
-(use-package ob-deno :ensure t)
+(use-package ob-deno
+  :ensure t
+  :defer t)
 #+end_src
 
 #+RESULTS:
 
 #+begin_src elisp :tangle yes
-(use-package ob-ts-node :ensure t)
+(use-package ob-ts-node
+  :ensure t
+  :defer t)
 #+end_src
 
 #+begin_src elisp :tangle yes
@@ -2386,13 +2404,15 @@ https://protesilaos.com/emacs/logos*
 * Smalltalk
 #+begin_src elisp :tangle yes
 (use-package smalltalk-mode
-  :ensure t)
+  :ensure t
+  :defer t)
 #+end_src
 
 * ClangFormat
 #+begin_src elisp :tangle yes
 (use-package clang-format
-  :ensure t)
+  :ensure t
+  :defer t)
 #+end_src
 
 #+RESULTS:
