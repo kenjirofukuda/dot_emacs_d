@@ -90,3 +90,4 @@ experimental-init.*
 /lsp-cache/
 /.dap-breakpoints
 /.extension/
+/emacs-cleanup-userdefined.txt

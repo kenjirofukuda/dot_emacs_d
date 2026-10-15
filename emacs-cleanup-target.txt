@@ -1,0 +1,28 @@
+# Generated: fbc18a2c-6fa4-4d81-bf41-e1f2bcf92da1 | 2026-10-15T13:18:00Z
+# ========================================================================
+# Emacs / LSP 外部隠れキャッシュ・一時ファイル クリーンアップ対象リスト
+# ========================================================================
+
+# 1. LSP (Language Server) 関連の強力な解析キャッシュ
+~/.cache/lsp-mode/
+~/.cache/eglot/
+~/.cache/pyright/
+
+# 2. XDG規格およびEmacs標準の外部一時保存領域
+~/.cache/emacs/
+
+# 3. システムの一時ディレクトリ（画像キャッシュや通信ソケット）
+/tmp/emacs-temporary/
+
+# パッケージ管理およびダウンロードソース（非再帰クリーンアップ対象）
+~/.emacs.d/elpa/
+~/.emacs.d/straight/
+~/.emacs.d/quelpa/
+
+# コンパイル・LSP・各種ツールの生成キャッシュ領域
+~/.emacs.d/eln-cache/
+~/.emacs.d/lsp-cache/
+~/.emacs.d/intelephense/
+~/.emacs.d/.extension/
+~/.emacs.d/tree-sitter/
+~/.emacs.d/url/

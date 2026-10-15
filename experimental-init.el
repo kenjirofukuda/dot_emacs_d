@@ -20,6 +20,7 @@
 ;; カスタムコマンドのロード
 (require 'kf-command)
 (require 'mpascal)
+(require 'cgpl-mode)
 
 (add-to-list 'auto-mode-alist
              '("\\.\\(p\\|pas\\|dpr\\|dpk\\)\\'" . mpascal-mode))
@@ -1186,28 +1187,6 @@
       company-minimum-prefix-length 1
       lsp-idle-delay 0.5)
 
-(when (eq system-type 'gnu/linux)
-  ;; すでにロード済みであった場合の保険として、一度環境を隔離した状態で安全に require します。
-  (let ((exec-path (cons "/usr/bin" exec-path))
-	(process-environment (cons "PATH=/usr/bin:/bin" process-environment)))
-    (require 'ibus))
-  (add-hook 'after-init-hook 'ibus-mode-on)
-  ;; C-SPC は Set Mark に使う
-  (ibus-define-common-key ?\C-\s nil)
-  ;; C-/ は Undo に使う
-  (ibus-define-common-key ?\C-/ nil)
-  ;; IBusの状態によってカーソル色を変化させる
-  (setq ibus-cursor-color '("red" "blue" "limegreen"))
-  ;; C-j で半角英数モードをトグルする
-  (ibus-define-common-key ?\C-j t)
-  ;; カーソルの位置に予測候補を表示
-  (setq ibus-prediction-window-position t)
-  ;; Undo の時に確定した位置まで戻る
-  (setq ibus-undo-by-committed-string t)
-  ;; インクリメンタル検索中のカーソル形状を変更する
-  (setq ibus-isearch-cursor-type 'hollow)
-  )
-
 (setq auto-mode-alist
       (append
        '(("\\.mak\\'" . makefile-gmake-mode))
@@ -1420,6 +1399,193 @@
 ;; 💡 【仕上げ】dap-mode の実体がロードされた「後」にアドバイスを確実にバインドします
 (with-eval-after-load 'dap-mode
   (advice-add 'dap-debug :before #'my/dap-debug-load-project-templates))
+
+(use-package bnf-mode
+  :ensure t
+  :config
+  (add-hook 'bnf-mode-hook
+            (lambda ()
+              ;; 1. セミコロン自体は通常文字（シンボル属性）にしてインラインのグレーアウトを防ぐ
+              (modify-syntax-entry ?\; "_" bnf-mode-syntax-table)
+
+              ;; 2. 行頭の ";;" または空白を挟んだ行頭の ";;" から行末までをコメントとして着色する
+              (font-lock-add-keywords
+               nil
+               '(("^\\s-*\\(;;.*\\)$" 1 font-lock-comment-face t))))))
+
+(use-package pytest
+  :ensure t
+  :bind (:map python-mode-map
+	      ("C-c C-t a" . pytest-all)
+	      ("C-c C-t m" . pytest-one)))
+
+;; ========================================================================
+;; 1. 【最優先実行】F9キーマップの生成と基本コマンド（g, s, m, v）の即時バインド
+;; ========================================================================
+;; パッケージがロードされる前であっても、F9 プレフィックスと配下の全キーは起動時に100%確定します。
+(defvar my/gptel-f9-keymap (make-sparse-keymap)
+  "F9プレフィックスから始まるgptel操作専用の安全なキーマップ。")
+
+;; gptel 側の基本操作キー
+(define-key my/gptel-f9-keymap (kbd "g") 'gptel)        ; F9 g : チャットバッファ起動
+(define-key my/gptel-f9-keymap (kbd "s") 'gptel-send)   ; F9 s : 選択リージョンの送信
+(define-key my/gptel-f9-keymap (kbd "m") 'gptel-menu)   ; F9 m : コントロールメニュー
+
+;; 【本対策】画像挿入コマンド（v）の定義と、キーマップへの即時静的バインド
+(defun my/gptel-insert-clipboard-image-and-send ()
+  "Org-modeの見出し制約を完全にバイパスし、クリップボードのPNG画像をダイレクトにバッファへ挿入します。"
+  (interactive)
+  (if (derived-mode-p 'org-mode)
+      (let* ((temp-dir (file-name-as-directory my-temporary-dir))
+             ;; 一時保存するユニークな画像ファイル名を動的に生成
+             (img-name (format "clipboard_%s.png" (format-time-string "%Y%m%d_%H%M%S")))
+             (full-path (concat temp-dir img-name))
+             ;; デスクトップ環境に合わせて最適なコマンドを確定
+             (cmd (cond
+                   ((executable-find "wl-paste") (format "wl-paste -t image/png > %s" full-path))
+                   ((executable-find "xclip") (format "xclip -selection clipboard -t image/png -o > %s" full-path))
+                   (t nil))))
+
+        ;; 1. ディレクトリの存在を念のため保証
+        (make-directory temp-dir t)
+
+        ;; 2. クリップボードからのデータ抽出を実行
+        (if (and cmd (eq (shell-command cmd) 0))
+            (progn
+              ;; 3. 見出しチェックを完全に無視して、現在のカーソル位置にインラインリンクをダイレクト書き込み
+              (insert (format "[[file:%s]]\n" full-path))
+              ;; 4. 画像をその場でエディタ上にレンダリング表示させる
+              (org-display-inline-images)
+              ;; 5. 送信モデルを自動的に画像認識対応の 3.1 Pro モデルへシフト
+              (setq gptel-model 'gemini-3.1-pro-preview)
+              (message "クリップボードの画像を直接挿入し、モデルを3.1 Proに切り替えました。F9 s で送信可能です。"))
+          (message "エラー：クリップボードに有効な画像データが見つからないか、抽出に失敗しました。")))
+    (message "この操作は Org-mode のバッファでのみ実行可能です。")))
+
+
+;; パッケージの遅延状態に関係なく、F9 v を即座に有効化
+(define-key my/gptel-f9-keymap (kbd "v") 'my/gptel-insert-clipboard-image-and-send)
+
+;; グローバルマップの [f9] にこのプレフィックスマップを結合
+(define-key global-map [f9] my/gptel-f9-keymap)
+
+;; ========================================================================
+;; 2. パッケージ本体（gptel）の遅延ロード構成
+;; ========================================================================
+(use-package gptel
+  :ensure t
+  :commands (gptel gptel-send gptel-menu)
+  :init
+  ;; 無料枠保護のため、最速かつ制限の緩い「Flash-Lite」を初期モデルに指定
+  (setq gptel-model 'gemini-3.1-flash-lite)
+
+  :config
+  (setq gptel-api-key-from-auth-source nil)
+  (setq gptel-default-mode 'unmarked)
+
+  ;; [Markdown -> Org 自動変換変換フック]
+  (defun my/gptel-convert-md-to-org (beg end)
+    (save-excursion
+      (goto-char beg)
+      (while (re-search-forward "\\*\\*\\([^* \n][^*]*?[^* \n]\\)\\*\\*" end t) (replace-match "*\\1*"))
+      (goto-char beg)
+      (while (re-search-forward "`\\([^`\n]+?\\)`" end t) (replace-match "~\\1~"))))
+  (add-hook 'gptel-post-response-functions #'my/gptel-convert-md-to-org)
+
+  ;; [長文折り返しフック]
+  (add-hook 'gptel-post-stream-hook #'turn-on-visual-line-mode)
+  (defun my/gptel-buffer-setup-visualline ()
+    (turn-on-visual-line-mode)
+    (when (fboundp 'adaptive-wrap-prefix-mode) (adaptive-wrap-prefix-mode 1)))
+  (add-hook 'gptel-mode-hook #'my/gptel-buffer-setup-visualline)
+
+  ;; [モデルリスト定義]
+  (let ((gemini-models-table
+         '((gemini-3.1-flash-lite  . (:description "Gemini 3.1 Flash-Lite (最速・軽量・常用推奨)" :mime-types ("text/plain")))
+           (gemini-3.1-pro-preview . (:description "Gemini 3.1 Pro Preview (最新フラグシップ・画像対応)" :mime-types ("text/plain")))
+           (gemini-3-pro-image     . (:description "Gemini 3 Pro (画像対応プロモデル)" :mime-types ("text/plain")))
+           (gemini-3-flash-preview . (:description "Gemini 3 Flash (標準高速モデル)" :mime-types ("text/plain"))))))
+    (gptel-make-gemini "Gemini" :key (lambda () (getenv "GEMINI_API_KEY")) :models gemini-models-table :stream t))
+  )
+
+;; ========================================================================
+;; 3. 【修正版】画像処理バックエンド（org-download）の構成
+;; ========================================================================
+(use-package org-download
+  :ensure t
+  :after org
+  :config
+  ;; ユーザー環境の my-temporary-dir 変数から動的に一時領域のパスをセット
+  (setq org-download-image-dir my-temporary-dir)
+
+  ;; 【根本対策】再スクショ用のキャプチャコマンド（maim 等）を完全に排除します。
+  ;; クリップボードからデータを「取り出す」だけのコマンド（wl-paste / xclip）のみを厳選定義し、
+  ;; クロスカーソルが出る余地を物理的に抹消します。
+  (setq org-download-screenshot-method
+        (cond
+         ;; Wayland環境の場合：クリップボードから直接PNGを流し込む
+         ((executable-find "wl-paste") "wl-paste -t image/png > %s")
+         ;; X11（標準的なLinux）環境の場合：クリップボードから直接PNGを出力する
+         ((executable-find "xclip") "xclip -selection clipboard -t image/png -o > %s")
+         ;; 万が一どちらのコマンドもシステムに存在しない場合、エラーを吐いて停止させます（再スクショはさせない）
+         (t (error "エラー：クリップボード転送に必要な xclip または wl-clipboard が Debian にインストールされていません。"))))
+  )
+
+;; Generated: 2026-10-15T13:57:00Z
+(defun my/emacs-cleanup-extract-userdefined-paths ()
+  "解析用：init.el をパースし、資産（.git/.org/.md）を含まない純粋なカスタムキャッシュパスのみを安全に抽出します。"
+  (interactive)
+  (let ((init-file (expand-file-name "~/.emacs.d/init.el"))
+        (output-file (expand-file-name "emacs-cleanup-userdefined.txt"))
+        (extracted-paths nil))
+    (if (not (file-exists-p init-file))
+        (error "エラー: ~/.emacs.d/init.el が見つかりません")
+      (with-temp-buffer
+        (insert-file-contents init-file)
+        (goto-char (point-min))
+        (cl-labels ((walk (form)
+                      (cond
+                       ((stringp form)
+                        (when (string-match "^\\(~?/\\|\\.\\./\\)" form)
+                          (let ((expanded (expand-file-name form)))
+                            ;; 【Elisp側フィルター制約】
+                            ;; 1. 絶対に削除してはならない「~/.emacs.d/lisp」およびその配下は無条件で完全に除外
+                            ;; 2. パスが実際に存在し、その中に .git, .org, .md が含まれている場合も即座に除外
+                            (unless (or (string-prefix-p (expand-file-name "~/.emacs.d/lisp") expanded)
+                                        (and (file-directory-p expanded)
+                                             (or (file-exists-p (expand-file-name ".git" expanded))
+                                                 (directory-files expanded t "\\.\\(org\\|md\\)$" t))))
+                              (push form extracted-paths)))))
+                       ((listp form)
+                        (dolist (subform form)
+                          (walk subform))))))
+          (ignore-errors
+            (while t
+              (walk (read (current-buffer)))))))
+
+      ;; 重複排除とソート
+      (setq extracted-paths (sort (delete-dups extracted-paths) 'string<))
+
+      ;; 安全に書き出し
+      (with-temp-file output-file
+        (insert "# Generated: 2026-10-15T13:57:00Z\n")
+        (insert "# ========================================================================\n")
+        (insert "# 安全基準（資産保護フィルター）を通過したユーザー定義キャッシュパス一覧\n")
+        (insert "# ========================================================================\n\n")
+        (dolist (path extracted-paths)
+          (insert (format "%s\n" path))))
+      (message "成功: 安全性が確認された %d 件のパスを %s に抽出しました"
+               (length extracted-paths) output-file))))
+
+(my/emacs-cleanup-extract-userdefined-paths)
+
+cat ~/.emacs.d/emacs-cleanup-userdefined.txt
+
+# Generated: 2026-10-15T13:57:00Z
+# ========================================================================
+# 安全基準（資産保護フィルター）を通過したユーザー定義キャッシュパス一覧
+# ========================================================================
+
 
 (setq org-startup-folded t)
 (recentf-open-files)
