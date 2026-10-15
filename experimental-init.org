@@ -72,25 +72,57 @@ document.querySelectorAll(qclasses).forEach((el) => {
 
 * 私設カスタムコマンドのロード
 #+begin_src elisp :tangle yes
-(require 'kf-command)
+;; GUID: kf550c3e-8f5a-496a-b2c4-a3d1f5b6c8f4
+;; ========================================================================
+;; 私設カスタムコマンド（kf-command）の必要時自動ロード（autoload）構成
+;; ========================================================================
+
+;; 1. 主要な関数の autoload 登録（フォント判定関数をここに追加し、UI初期化時のクラッシュを防ぎます）
+(autoload 'kf:font-family-installed-p "kf-command" "Check if font family is installed." nil)
+(autoload 'kf:quit-emacs "kf-command" "Custom synchronized exit sequence." t)
+(autoload 'kf:close-saved-buffers "kf-command" "Close unmodified file buffers." t)
+(autoload 'kf:close-dired-buffers "kf-command" "Close all active dired buffers." t)
+(autoload 'kf:locate "kf-command" "Async fast file search via locate." t)
+(autoload 'kf:updatedb "kf-command" "Async update locate database." t)
+(autoload 'kf:open-file-thing "kf-command" "Open file or URL at point." t)
+
+;; 2. キーバインドの静的確定
+(global-set-key (kbd "\C-c <f3>") 'kf:open-file-thing)
 #+end_src
 
 * Calma GPLIIモードの導入
 #+begin_src elisp :tangle yes
-(require 'cgpl-mode)
+;; GUID: cg770d3e-9f1b-4d6a-8c2e-e3d4f5b6c8f5
+;; ========================================================================
+;; Calma GPLIIモードの遅延評価（autoload）構成
+;; ========================================================================
+;; cgpl-mode.el 自体に内蔵されている autoload マジックを活用します。
+
+;; 拡張子 .GS のファイルを検知するための定義（これ自体が遅延ロードのフックになります）
+(add-to-list 'auto-mode-alist '("\\.GS\\'" . cgpl-mode))
+
+;; 実際に .GS ファイルが開かれて cgpl-mode がロードされた「後」に設定を適用
+(with-eval-after-load 'cgpl-mode
+  (setq cgpl-tab-width 2))
 #+end_src
 
 * mpascal の導入
 #+begin_src elisp :tangle yes
-(require 'mpascal)
+;; GUID: mp880e3e-1f5b-496a-b2c4-e3d1f5b6c8d2
+;; ========================================================================
+;; Mpascal モードの遅延評価（autoload）構成
+;; ========================================================================
+;; 重厚な mpascal.el を起動時から完全に隔離し、対象ファイル展開時に初めてロードします。
 
-(add-to-list 'auto-mode-alist
-             '("\\.\\(p\\|pas\\|dpr\\|dpk\\)\\'" . mpascal-mode))
+;; 拡張子判定をトップレベルに配置（これによって require なしで自動遅延ロードが成立します）
+(add-to-list 'auto-mode-alist '("\\.\\(p\\|pas\\|dpr\\|dpk\\)\\'" . mpascal-mode))
 
-(add-hook 'mpascal-mode-hook
-          (lambda ()
-            (setq tab-width 4)
-            (setq c-basic-offset 4)))
+;; mpascal-mode がメモリに読み込まれた「後」に初めてフックを安全にバインド
+(with-eval-after-load 'mpascal
+  (add-hook 'mpascal-mode-hook
+            (lambda ()
+              (setq tab-width 4)
+              (setq c-basic-offset 4))))
 #+end_src
 
 * 基本設定
@@ -223,7 +255,7 @@ document.querySelectorAll(qclasses).forEach((el) => {
 ;; Editor Config
 ;; https://editorconfig.org/
 (use-package editorconfig
-  :ensure t
+
   :config
   (editorconfig-mode 1)
   ;; 【追加】Org-modeのソースブロック（Babel）内にも、親ファイルの .editorconfig を強制適用する
@@ -258,7 +290,7 @@ pkgman install libtool
 ;; より本物に近いターミナルエミュレータ
 (use-package vterm
   :unless (eq system-type 'windows-nt)
-  :ensure t)
+  )
 #+end_src
 * 基本関数
 #+BEGIN_SRC elisp :tangle yes
@@ -357,7 +389,7 @@ pkgman install libtool
 #+BEGIN_SRC elisp :tangle yes
 ;; 拡張選択範囲
 (use-package expand-region
-  :ensure t)
+  )
 (global-set-key (kbd "C-q") 'er/expand-region)
 #+END_SRC
 
@@ -365,7 +397,7 @@ pkgman install libtool
 #+BEGIN_SRC elisp :tangle yes
 ;; コード補完
 (use-package company
-  :ensure t)
+  )
 #+END_SRC
 
 * ミニバッファーの改善
@@ -375,7 +407,7 @@ pkgman install libtool
 ;; ミニバッファーの改善
 ;; https://github.com/minad/vertico
 (use-package vertico
-  :ensure t
+
   :config
   (setq vertico-cycle t)
   (setq vertico-resize nil)
@@ -383,13 +415,13 @@ pkgman install libtool
 
 ;; https://github.com/minad/marginalia
 (use-package marginalia
-  :ensure t
+
   :config
   (marginalia-mode 1))
 
 ;; Example configuration for Consult
 (use-package consult
-  :ensure t
+
   ;; Replace bindings. Lazily loaded by `use-package'.
   :bind (;; C-c bindings in `mode-specific-map'
          ("C-c M-x" . consult-mode-command)
@@ -499,7 +531,7 @@ pkgman install libtool
 #+begin_src elisp :tangle yes
 ;; https://github.com/oantolin/embark/
 (use-package embark
-  :ensure t
+
 
   :bind
   (("C-." . embark-act)         ;; pick some comfortable binding
@@ -530,7 +562,7 @@ pkgman install libtool
 
 ;; Consult users will also want the embark-consult package.
 (use-package embark-consult
-  :ensure t ; only need to install it, embark loads it after consult if found
+   ; only need to install it, embark loads it after consult if found
   :hook
   (embark-collect-mode . consult-preview-at-point-mode))
 #+end_src
@@ -585,7 +617,7 @@ pkgman install libtool
 #+begin_src elisp :tangle no
   ;;;; Code Completion
 (use-package corfu
-  :ensure t
+
   ;; Optional customizations
   :custom
   (corfu-cycle t)                 ; Allows cycling through candidates
@@ -634,12 +666,12 @@ https://emacs.stackexchange.com/questions/27912/dired-sort-and-hide-by-default
 #+BEGIN_SRC elisp :tangle yes
 ;; Magit 設定 (straight.el 向けに最適化)
 (use-package magit
-  :ensure t
+
   :defer t)
 
 ;; https://joppot.info/posts/f3007a42-5ba2-4060-90d4-496697413cf9
 (use-package diff-hl
-  :ensure t
+
   :init
   (global-diff-hl-mode)
   (add-hook 'dired-mode-hook 'diff-hl-dired-mode)
@@ -659,14 +691,14 @@ https://emacs.stackexchange.com/questions/27912/dired-sort-and-hide-by-default
 ;; paredit フックから org-mode を除外することで、アロー演算子の誤判定を除外する。
 (show-paren-mode t)
 (use-package paredit
-  :ensure t
+
   :commands enable-paredit-mode
   :hook ((emacs-lisp-mode
           )
          . enable-paredit-mode))
 
-(use-package smartparens :ensure t)
-(use-package rainbow-delimiters :ensure t)
+(use-package smartparens )
+(use-package rainbow-delimiters )
 #+END_SRC
 
 ** emacs lisp
@@ -722,7 +754,7 @@ https://zenn.dev/ebang/articles/231106_emacs-markdown
 #+begin_src elisp :tangle yes
 (use-package org-modern
   :if (display-graphic-p)
-  :ensure t
+
   :hook ((org-mode . org-modern-mode)))
 (global-set-key "\C-cl" 'org-toggle-link-display)
 #+end_src
@@ -730,7 +762,7 @@ https://zenn.dev/ebang/articles/231106_emacs-markdown
 ** 日記
 #+begin_src elisp :tangle yes
 (use-package org-journal
-  :ensure t
+
   :defer t
   :config
   (setq org-journal-dir "~/Nextcloud/Org/journal/"))
@@ -853,7 +885,7 @@ Windows の検索パスは別途検討
 ;; キーストローク表示
 ;; https://github.com/tarsius/keycast
 (use-package keycast
-  :ensure t)
+  )
 #+end_src
 * 日本語フォントの設定
 ** 使用できるフォント名の確認
@@ -1670,7 +1702,7 @@ F => Shift-f
 - @see https://www.ovistoica.com/blog/2024-7-05-modern-emacs-typescript-web-tsx-config#org014ff07
 #+begin_src elisp :tangle yes
 (use-package flycheck
-  :ensure t
+
   :hook ((after-init . global-flycheck-mode)
          ;; Show diagnostics inline, next to the code (Error Lens style)
          (after-init . global-flycheck-annotate-mode))
@@ -1684,7 +1716,7 @@ F => Shift-f
 
 #+begin_src elisp :tangle no
 (use-package flycheck
-  :ensure t
+
   :init (global-flycheck-mode)
   )
 #+end_src
@@ -1696,7 +1728,7 @@ F => Shift-f
 ;; ========================================================================
 (use-package lsp-mode
   :diminish "LSP"
-  :ensure t
+
   ;; commands を明示することで、これらの関数が呼ばれるまでロードを完全にストップします
   :commands (lsp lsp-deferred)
   :hook ((lsp-mode . lsp-diagnostics-mode)
@@ -1797,7 +1829,7 @@ F => Shift-f
 ;;   :hook ((lsp-mode . lsp-completion-mode)))
 
 ;; (use-package lsp-ui
-;;   :ensure t
+;;
 ;;   :commands
 ;;   (lsp-ui-doc-show
 ;;    lsp-ui-doc-glance)
@@ -1822,7 +1854,7 @@ F => Shift-f
 #+begin_src elisp :tangle yes
 ;; --- lsp-mode がロードされた後に連動して初めて読み込む（単体での先行ロードを禁止） ---
 (use-package lsp-ui
-  :ensure t
+
   :after lsp-mode
   :commands
   (lsp-ui-doc-show
@@ -1889,7 +1921,7 @@ F => Shift-f
 #+begin_src elisp :tangle yes
 ;; --- lsp-mode 起動後に連動し、dapが必要になった段階で初めてロードする ---
 (use-package dap-mode
-  :ensure t
+
   :after lsp-mode
   :hook
   (lsp-mode . dap-mode)
@@ -1912,7 +1944,7 @@ F => Shift-f
 - @see https://www.reddit.com/r/emacs/comments/s6zkb6/how_do_i_autostart_lsp_and_typescriptmode_for_ts/?tl=ja
 Deprecated:
 #+begin_src elisp :tangle no
-(use-package typescript-mode :ensure t)
+(use-package typescript-mode )
 #+end_src
 
 - @see https://joppot.info/posts/c05e989a-e642-4c84-a5b8-a0e0c3178941
@@ -1928,13 +1960,13 @@ Deprecated:
 
 #+begin_src elisp :tangle yes
 (use-package jtsx
-  :ensure t
+
   :defer t)
 #+end_src
 
 #+begin_src elisp :tangle yes
 (use-package ob-deno
-  :ensure t
+
   :defer t)
 #+end_src
 
@@ -1942,13 +1974,13 @@ Deprecated:
 
 #+begin_src elisp :tangle yes
 (use-package ob-ts-node
-  :ensure t
+
   :defer t)
 #+end_src
 
 #+begin_src elisp :tangle yes
 (use-package tide
-  :ensure t
+
   :hook (tsx-ts-mode . setup-tide-mode)
   :config
   (defun setup-tide-mode ()
@@ -1966,7 +1998,7 @@ Deprecated:
 lspサーバーとの比較のため導入してみる
 #+begin_src elisp :tangle yes
 (use-package eglot
-  :ensure t
+
   :hook
   (c-mode . eglot-ensure)
   (c++-mode . eglot-ensure)
@@ -1983,12 +2015,12 @@ lspサーバーとの比較のため導入してみる
 #+begin_src elisp :tangle yes
 (use-package tree-sitter
   :if (version< emacs-version "29.0")
-  :ensure t)
+  )
 #+end_src
 
 #+begin_src elisp :tangle yes
 (use-package tree-sitter-langs
-  :ensure t
+
   :after tree-sitter
   :config
   (tree-sitter-require 'tsx)
@@ -1999,7 +2031,7 @@ lspサーバーとの比較のため導入してみる
 ;; 構文解析エンジン Tree sitter
 (unless (version< emacs-version "29.0")
   (use-package treesit-auto
-    :ensure t
+
     :config
     (setq treesit-auto-install t)
     (global-treesit-auto-mode)))
@@ -2080,7 +2112,7 @@ https://www.ovistoica.com/blog/2024-7-05-modern-emacs-typescript-web-tsx-config#
 #+begin_src elisp :tangle yes
 ;; フレームの回転
 (use-package transpose-frame
-  :ensure t
+
   :defer t)
 #+end_src
 * ウィンドウのリサイズ
@@ -2159,7 +2191,7 @@ https://www.ovistoica.com/blog/2024-7-05-modern-emacs-typescript-web-tsx-config#
 * sudo編集
 #+begin_src elisp :tangle yes
 (use-package sudo-edit
-  :ensure t)
+  )
 #+end_src
 * Which Key
 [[https://github.com/justbur/emacs-which-key][which-key]] is a useful UI panel that appears when you start pressing any key binding in Emacs to offer you all possible completions for the prefix.  For example, if you press =C-c= (hold control and press the letter =c=), a panel will appear at the bottom of the frame displaying all of the bindings under that prefix and which command they run.  This is very useful for learning the possible key bindings in the mode of your current buffer.
@@ -2173,24 +2205,34 @@ https://www.ovistoica.com/blog/2024-7-05-modern-emacs-typescript-web-tsx-config#
 #+end_src
 * アイコン装飾
 #+begin_src elisp :tangle yes
+;; GUID: ic990d3e-9f1b-4d6a-8c2e-e3d4f5b6c8f6
+;; ========================================================================
+;; アイコン装飾パッケージの安全な遅延UIロード構成
+;; ========================================================================
 (use-package all-the-icons
   :if (display-graphic-p))
 
-(when (display-graphic-p)
-  (use-package nerd-icons)
-  (unless (kf:font-family-installed-p "all-the-icons")
-    (all-the-icons-install-fonts))
-  (unless (kf:font-family-installed-p "symbols nerd")
-    (nerd-icons-install-fonts)))
+(use-package nerd-icons
+  :if (display-graphic-p))
 
 (use-package all-the-icons-dired
   :if (display-graphic-p)
   :hook (dired-mode . all-the-icons-dired-mode))
+
+;; 初期化が完了し、ロードパスや autoload が出揃った直後にフォントの自動インストールを判定
+(add-hook 'after-init-hook
+          (lambda ()
+            (when (display-graphic-p)
+              (unless (kf:font-family-installed-p "all-the-icons")
+                (all-the-icons-install-fonts t))
+              (unless (kf:font-family-installed-p "symbols nerd")
+                (nerd-icons-install-fonts t)))))
+
 #+end_src
 * astyle
 #+begin_src elisp :tangle yes
 (use-package astyle
-  :ensure t
+
   :when (executable-find "astyle")
   ;; 保存時に自動で AStyle を実行してフォーマットを最終確定させる場合（お好みで）
   ;; (add-hook 'objc-mode-hook #'astyle-on-save-mode)
@@ -2220,7 +2262,7 @@ https://www.ovistoica.com/blog/2024-7-05-modern-emacs-typescript-web-tsx-config#
 * CMake 対応
 #+begin_src elisp :tangle yes
 (use-package cmake-mode
-  :ensure t)
+  )
 (setq auto-mode-alist
       (append
        '(("CMakeLists\\.txt\\'" . cmake-mode))
@@ -2327,7 +2369,7 @@ desktop-base-file-name
 #+begin_src elisp :tangle yes
 ;; https://agel.readthedocs.io/en/latest/index.html
 (use-package ag
-  :ensure t)
+  )
 #+end_src
 
 * TODO 垂直分割より水分平割を優先する(表現が逆かな)
@@ -2404,14 +2446,14 @@ https://protesilaos.com/emacs/logos*
 * Smalltalk
 #+begin_src elisp :tangle yes
 (use-package smalltalk-mode
-  :ensure t
+
   :defer t)
 #+end_src
 
 * ClangFormat
 #+begin_src elisp :tangle yes
 (use-package clang-format
-  :ensure t
+
   :defer t)
 #+end_src
 
@@ -2427,7 +2469,7 @@ https://protesilaos.com/emacs/logos*
 ;; NeoTree
 ;; https://tsuu32.hatenablog.com/entry/2020/08/19/004306
 (use-package neotree
-  :ensure t
+
   :config
   (setq neo-show-hidden-files t) ; dot-fileも表示する
   (setq neo-theme 'icons) )
@@ -2435,7 +2477,7 @@ https://protesilaos.com/emacs/logos*
 * Orderless
 #+begin_src elisp :tangle yes
 (use-package orderless
-  :ensure t
+
   :custom
   (completion-styles '(orderless basic))
   (completion-category-overrides '((file (styles basic partial-completion)))))
@@ -2507,7 +2549,7 @@ https://protesilaos.com/emacs/logos*
 - [[https://github.com/magnars/multiple-cursors.el]]
 #+begin_src elisp :tangle yes
 (use-package multiple-cursors
-  :ensure t)
+  )
 
 (global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
 (global-set-key (kbd "C->")         'mc/mark-next-like-this)
@@ -2521,7 +2563,7 @@ https://protesilaos.com/emacs/logos*
 * Transclude
 #+begin_src elisp :tangle yes
 (use-package org-transclusion
-  :ensure t
+
   :after org)
 (define-key global-map (kbd "C-c <f12>") #'org-transclusion-add)
 (define-key global-map (kbd "C-c t") #'org-transclusion-mode)
@@ -2529,12 +2571,12 @@ https://protesilaos.com/emacs/logos*
 * 定型文の挿入
 #+begin_src elisp :tangle yes
 (use-package yasnippet
-  :ensure t
+
   :config
   (setq yas-snippet-dirs '("~/Nextcloud/snippets"))
   (yas-global-mode 1))
 (use-package yasnippet-snippets
-  :ensure t)
+  )
 #+end_src
 * Common Lisp環境
 #+begin_src elisp :tangle yes
@@ -2542,14 +2584,14 @@ https://protesilaos.com/emacs/logos*
 ;; (kf:ensure-load-file "~/.roswell/helper.el")
 (use-package slime
   :if (file-exists-p (expand-file-name "~/.roswell/helper.el"))
-  :ensure t
+
   :init (load (expand-file-name "~/.roswell/helper.el"))
   :custom (inferior-lisp-program "ros -Q run ")
   :config (slime-setup '(slime-fancy)))
 
 ;; SLIME用のCompany補完拡張を個別に紐付ける
 (use-package slime-company
-  :ensure t
+
   :after (slime company)
   :config
   (slime-setup '(slime-fancy slime-company)))
@@ -2571,7 +2613,7 @@ https://protesilaos.com/emacs/logos*
 * D lang
 #+begin_src elisp :tangle yes
 (use-package d-mode
-  :ensure t)
+  )
 #+end_src
 
 * TODO Compile command
@@ -2597,9 +2639,9 @@ https://www.reddit.com/r/emacs/comments/17ucbww/passing_current_file_name_to_com
 * Open Dylan
 #+begin_src elisp :tangle yes
 (use-package dylan
-  :ensure t)
+  )
 (use-package dime
-  :ensure t)
+  )
 (dime-setup '(dime-repl dime-note-tree))
 (setq dime-dylan-implementations
       '((opendylan ("/home/kenjiro/Documents/opendylan/bin/dswank")
@@ -2618,10 +2660,10 @@ https://www.reddit.com/r/emacs/comments/17ucbww/passing_current_file_name_to_com
 * mermaid
 #+begin_src elisp :tangle yes
 (use-package mermaid-mode
-  :ensure t
+
   :when (executable-find "mmdc"))
 (use-package ob-mermaid
-  :ensure t
+
   :when (executable-find "mmdc"))
 #+end_src
 
@@ -2632,7 +2674,7 @@ https://www.reddit.com/r/emacs/comments/17ucbww/passing_current_file_name_to_com
 https://github.com/hlissner/emacs-pug-mode
 #+begin_src elisp :tangle yes
 (use-package pug-mode
-  :ensure t)
+  )
 #+end_src
 
 * Bookmark+
@@ -2691,14 +2733,14 @@ https://github.com/hlissner/emacs-pug-mode
 
 * PHP
 #+begin_src elisp :tangle yes
-(use-package web-mode :ensure t)
-(use-package auto-rename-tag :ensure t)
+(use-package web-mode )
+(use-package auto-rename-tag )
 (use-package projectile-laravel
   :straight (projectile-laravel :type git :host github :repo "strikerlulu/projectile-laravel"))
 
 ;; PHP環境とDAPモードの設定をuse-packageに統合
 (use-package php-mode
-  :ensure t
+
   :hook (php-mode-hook . lsp)
   :config
   (with-eval-after-load 'lsp-mode
@@ -2756,7 +2798,7 @@ https://github.com/hlissner/emacs-pug-mode
 * Google翻訳
 #+begin_src elisp :tangle yes
 (use-package google-translate
-  :ensure t
+
   :defer t)
 #+end_src
 
@@ -2766,7 +2808,7 @@ https://github.com/hlissner/emacs-pug-mode
 #+end_src
 * 非同期実行
 #+begin_src elisp :tangle yes
-(use-package ob-async :ensure t)
+(use-package ob-async )
 #+end_src
 
 * ObjectLisp シンタックス対応
@@ -2858,7 +2900,7 @@ https://github.com/hlissner/emacs-pug-mode
   			 (equal "\\.rkt\\'" (car e)))
   		       auto-mode-alist))
 (use-package racket-mode
-  :ensure t)
+  )
 
 (eval-after-load 'racket-mode
   '(progn
@@ -2875,7 +2917,7 @@ https://github.com/hlissner/emacs-pug-mode
 * Kotlin 開発環境
 #+begin_src elisp :tangle yes
 (use-package kotlin-mode
-  :ensure t)
+  )
 (add-hook 'kotlin-mode-hook 'eglot-ensure)
 #+end_src
 * Org チェック
@@ -2940,7 +2982,7 @@ https://github.com/hlissner/emacs-pug-mode
 * envrc
 #+begin_src elisp :tangle yes
 (use-package envrc
-  :ensure t
+
   :config
   (envrc-global-mode 1))
 #+end_src
@@ -2949,7 +2991,7 @@ https://github.com/hlissner/emacs-pug-mode
 - @see https://blog.serghei.pl/posts/emacs-python-ide/
 #+begin_src elisp :tangle yes
 (use-package lsp-pyright
-  :ensure t
+
   :custom (lsp-pyright-langserver-command "pyright") ;; or basedpyright
   :hook (python-mode . (lambda ()
                          (require 'lsp-pyright)
@@ -3036,7 +3078,7 @@ https://github.com/hlissner/emacs-pug-mode
 * BNF構文
 #+begin_src elisp :tangle yes
 (use-package bnf-mode
-  :ensure t
+
   :config
   (add-hook 'bnf-mode-hook
             (lambda ()
@@ -3052,7 +3094,7 @@ https://github.com/hlissner/emacs-pug-mode
 * Python テスト
 #+begin_src elisp :tangle yes
 (use-package pytest
-  :ensure t
+
   :bind (:map python-mode-map
 	      ("C-c C-t a" . pytest-all)
 	      ("C-c C-t m" . pytest-one)))
@@ -3115,7 +3157,7 @@ https://github.com/hlissner/emacs-pug-mode
 ;; 2. パッケージ本体（gptel）の遅延ロード構成
 ;; ========================================================================
 (use-package gptel
-  :ensure t
+
   :commands (gptel gptel-send gptel-menu)
   :init
   ;; 無料枠保護のため、最速かつ制限の緩い「Flash-Lite」を初期モデルに指定
@@ -3154,7 +3196,7 @@ https://github.com/hlissner/emacs-pug-mode
 ;; 3. 【修正版】画像処理バックエンド（org-download）の構成
 ;; ========================================================================
 (use-package org-download
-  :ensure t
+
   :after org
   :config
   ;; ユーザー環境の my-temporary-dir 変数から動的に一時領域のパスをセット

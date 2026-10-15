@@ -12,24 +12,58 @@
   (insert "\n")
   (insert "\n"))
 
+(setq gc-cons-threshold 200000000)
+(setq read-process-output-max (* 10 1024 1024)) ;; 8mb
+
+;; 個別の拡張を配下のlispフォルダに入れている
 (when (file-directory-p "~/.emacs.d/lisp")
   (push (expand-file-name "~/.emacs.d/lisp") load-path))
 
-(setq gc-cons-threshold 200000000)
-(setq read-process-output-max (* 10 1024 1024)) ;; 8mb
-;; カスタムコマンドのロード
-(require 'kf-command)
-(require 'mpascal)
-(require 'cgpl-mode)
+;; GUID: kf550c3e-8f5a-496a-b2c4-a3d1f5b6c8f4
+;; ========================================================================
+;; 私設カスタムコマンド（kf-command）の必要時自動ロード（autoload）構成
+;; ========================================================================
 
-(add-to-list 'auto-mode-alist
-             '("\\.\\(p\\|pas\\|dpr\\|dpk\\)\\'" . mpascal-mode))
+;; 1. 主要な関数の autoload 登録（フォント判定関数をここに追加し、UI初期化時のクラッシュを防ぎます）
+(autoload 'kf:font-family-installed-p "kf-command" "Check if font family is installed." nil)
+(autoload 'kf:quit-emacs "kf-command" "Custom synchronized exit sequence." t)
+(autoload 'kf:close-saved-buffers "kf-command" "Close unmodified file buffers." t)
+(autoload 'kf:close-dired-buffers "kf-command" "Close all active dired buffers." t)
+(autoload 'kf:locate "kf-command" "Async fast file search via locate." t)
+(autoload 'kf:updatedb "kf-command" "Async update locate database." t)
+(autoload 'kf:open-file-thing "kf-command" "Open file or URL at point." t)
 
-(add-hook 'mpascal-mode-hook
-          (lambda ()
-            (setq tab-width 4)
-            (setq c-basic-offset 4)))
+;; 2. キーバインドの静的確定
+(global-set-key (kbd "\C-c <f3>") 'kf:open-file-thing)
 
+;; GUID: cg770d3e-9f1b-4d6a-8c2e-e3d4f5b6c8f5
+;; ========================================================================
+;; Calma GPLIIモードの遅延評価（autoload）構成
+;; ========================================================================
+;; cgpl-mode.el 自体に内蔵されている autoload マジックを活用します。
+
+;; 拡張子 .GS のファイルを検知するための定義（これ自体が遅延ロードのフックになります）
+(add-to-list 'auto-mode-alist '("\\.GS\\'" . cgpl-mode))
+
+;; 実際に .GS ファイルが開かれて cgpl-mode がロードされた「後」に設定を適用
+(with-eval-after-load 'cgpl-mode
+  (setq cgpl-tab-width 2))
+
+;; GUID: mp880e3e-1f5b-496a-b2c4-e3d1f5b6c8d2
+;; ========================================================================
+;; Mpascal モードの遅延評価（autoload）構成
+;; ========================================================================
+;; 重厚な mpascal.el を起動時から完全に隔離し、対象ファイル展開時に初めてロードします。
+
+;; 拡張子判定をトップレベルに配置（これによって require なしで自動遅延ロードが成立します）
+(add-to-list 'auto-mode-alist '("\\.\\(p\\|pas\\|dpr\\|dpk\\)\\'" . mpascal-mode))
+
+;; mpascal-mode がメモリに読み込まれた「後」に初めてフックを安全にバインド
+(with-eval-after-load 'mpascal
+  (add-hook 'mpascal-mode-hook
+            (lambda ()
+              (setq tab-width 4)
+              (setq c-basic-offset 4))))
 
 (setq inhibit-startup-message t)
 
@@ -122,7 +156,7 @@
 ;; Editor Config
 ;; https://editorconfig.org/
 (use-package editorconfig
-  :ensure t
+
   :config
   (editorconfig-mode 1)
   ;; 【追加】Org-modeのソースブロック（Babel）内にも、親ファイルの .editorconfig を強制適用する
@@ -132,7 +166,7 @@
 ;; より本物に近いターミナルエミュレータ
 (use-package vterm
   :unless (eq system-type 'windows-nt)
-  :ensure t)
+  )
 
 ;; 基本関数
 (defun replace-in-string (what with in)
@@ -210,17 +244,13 @@
 
 ;; 拡張選択範囲
 (use-package expand-region
-  :ensure t)
+  )
 (global-set-key (kbd "C-q") 'er/expand-region)
-
-;; コード補完
-(use-package company
-  :ensure t)
 
 ;; ミニバッファーの改善
 ;; https://github.com/minad/vertico
 (use-package vertico
-  :ensure t
+
   :config
   (setq vertico-cycle t)
   (setq vertico-resize nil)
@@ -228,13 +258,13 @@
 
 ;; https://github.com/minad/marginalia
 (use-package marginalia
-  :ensure t
+
   :config
   (marginalia-mode 1))
 
 ;; Example configuration for Consult
 (use-package consult
-  :ensure t
+
   ;; Replace bindings. Lazily loaded by `use-package'.
   :bind (;; C-c bindings in `mode-specific-map'
          ("C-c M-x" . consult-mode-command)
@@ -339,43 +369,6 @@
   ;; (keymap-set consult-narrow-map (concat consult-narrow-key " ?") #'consult-narrow-help)
   )
 
-;; https://github.com/oantolin/embark/
-(use-package embark
-  :ensure t
-
-  :bind
-  (("C-." . embark-act)         ;; pick some comfortable binding
-   ("C-;" . embark-dwim)        ;; good alternative: M-.
-   ("C-h B" . embark-bindings)) ;; alternative for `describe-bindings'
-
-  :init
-
-  ;; Optionally replace the key help with a completing-read interface
-  (setq prefix-help-command #'embark-prefix-help-command)
-
-  ;; Show the Embark target at point via Eldoc. You may adjust the
-  ;; Eldoc strategy, if you want to see the documentation from
-  ;; multiple providers. Beware that using this can be a little
-  ;; jarring since the message shown in the minibuffer can be more
-  ;; than one line, causing the modeline to move up and down:
-
-  ;; (add-hook 'eldoc-documentation-functions #'embark-eldoc-first-target)
-  ;; (setq eldoc-documentation-strategy #'eldoc-documentation-compose-eagerly)
-
-  :config
-
-  ;; Hide the mode line of the Embark live/completions buffers
-  (add-to-list 'display-buffer-alist
-               '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
-                 nil
-                 (window-parameters (mode-line-format . none)))))
-
-;; Consult users will also want the embark-consult package.
-(use-package embark-consult
-  :ensure t ; only need to install it, embark loads it after consult if found
-  :hook
-  (embark-collect-mode . consult-preview-at-point-mode))
-
 ;; https://github.com/minad/corfu
 (use-package corfu
   ;; Optional customizations
@@ -420,12 +413,12 @@
 
 ;; Magit 設定 (straight.el 向けに最適化)
 (use-package magit
-  :ensure t
+
   :defer t)
 
 ;; https://joppot.info/posts/f3007a42-5ba2-4060-90d4-496697413cf9
 (use-package diff-hl
-  :ensure t
+
   :init
   (global-diff-hl-mode)
   (add-hook 'dired-mode-hook 'diff-hl-dired-mode)
@@ -442,28 +435,14 @@
 ;; paredit フックから org-mode を除外することで、アロー演算子の誤判定を除外する。
 (show-paren-mode t)
 (use-package paredit
-  :ensure t
+
   :commands enable-paredit-mode
   :hook ((emacs-lisp-mode
           )
          . enable-paredit-mode))
 
-(use-package smartparens :ensure t)
-(use-package rainbow-delimiters :ensure t)
-
-;; emacs lisp
-(add-hook 'emacs-lisp-mode-hook 'paredit-mode)
-(add-hook 'emacs-lisp-mode-hook 'rainbow-delimiters-mode)
-;; (add-hook 'emacs-lisp-mode-hook 'company-mode)
-;; (add-hook 'emacs-lisp-mode-hook 'subword-mode)
-;; (add-hook 'emacs-lisp-mode-hook 'aggressive-indent-mode)
-
-(eval-after-load 'inferior-emacs-lisp-mode
-  '(progn
-     (add-hook 'ielm-mode-hook 'paredit-mode)
-     (define-key paredit-mode-map (kbd "RET") nil)
-     (define-key paredit-mode-map (kbd "C-j") 'paredit-newline)))
-
+(use-package smartparens )
+(use-package rainbow-delimiters )
 
 (use-package markdown-mode
   :mode ("\\.md\\'" . markdown-mode)
@@ -489,15 +468,9 @@
 
 (use-package org-modern
   :if (display-graphic-p)
-  :ensure t
+
   :hook ((org-mode . org-modern-mode)))
 (global-set-key "\C-cl" 'org-toggle-link-display)
-
-(use-package org-journal
-  :ensure t
-  :defer t
-  :config
-  (setq org-journal-dir "~/Nextcloud/Org/journal/"))
 
 ;; <s <tab> でブロック文のテンプレートを挿入
 (require 'org-tempo)
@@ -524,7 +497,7 @@
 ;; キーストローク表示
 ;; https://github.com/tarsius/keycast
 (use-package keycast
-  :ensure t)
+  )
 
 ;; 日本語の範囲をNotoフォントに設定
 (when (display-graphic-p)
@@ -533,7 +506,7 @@
   )
 
 (use-package flycheck
-  :ensure t
+
   :hook ((after-init . global-flycheck-mode)
          ;; Show diagnostics inline, next to the code (Error Lens style)
          (after-init . global-flycheck-annotate-mode))
@@ -550,7 +523,7 @@
 ;; ========================================================================
 (use-package lsp-mode
   :diminish "LSP"
-  :ensure t
+
   ;; commands を明示することで、これらの関数が呼ばれるまでロードを完全にストップします
   :commands (lsp lsp-deferred)
   :hook ((lsp-mode . lsp-diagnostics-mode)
@@ -651,7 +624,7 @@
 ;;   :hook ((lsp-mode . lsp-completion-mode)))
 
 ;; (use-package lsp-ui
-;;   :ensure t
+;;
 ;;   :commands
 ;;   (lsp-ui-doc-show
 ;;    lsp-ui-doc-glance)
@@ -666,7 +639,7 @@
 
 ;; --- lsp-mode がロードされた後に連動して初めて読み込む（単体での先行ロードを禁止） ---
 (use-package lsp-ui
-  :ensure t
+
   :after lsp-mode
   :commands
   (lsp-ui-doc-show
@@ -682,7 +655,7 @@
 
 ;; --- lsp-mode 起動後に連動し、dapが必要になった段階で初めてロードする ---
 (use-package dap-mode
-  :ensure t
+
   :after lsp-mode
   :hook
   (lsp-mode . dap-mode)
@@ -699,14 +672,20 @@
   :config
   (setq typescript-ts-mode-indent-offset 2))
 
-(use-package jtsx :ensure t)
+(use-package jtsx
 
-(use-package ob-deno :ensure t)
+  :defer t)
 
-(use-package ob-ts-node :ensure t)
+(use-package ob-deno
+
+  :defer t)
+
+(use-package ob-ts-node
+
+  :defer t)
 
 (use-package tide
-  :ensure t
+
   :hook (tsx-ts-mode . setup-tide-mode)
   :config
   (defun setup-tide-mode ()
@@ -720,7 +699,7 @@
   (setq company-tooltip-align-annotations t))
 
 (use-package eglot
-  :ensure t
+
   :hook
   (c-mode . eglot-ensure)
   (c++-mode . eglot-ensure)
@@ -733,10 +712,10 @@
 
 (use-package tree-sitter
   :if (version< emacs-version "29.0")
-  :ensure t)
+  )
 
 (use-package tree-sitter-langs
-  :ensure t
+
   :after tree-sitter
   :config
   (tree-sitter-require 'tsx)
@@ -745,14 +724,14 @@
 ;; 構文解析エンジン Tree sitter
 (unless (version< emacs-version "29.0")
   (use-package treesit-auto
-    :ensure t
+
     :config
     (setq treesit-auto-install t)
     (global-treesit-auto-mode)))
 
 ;; フレームの回転
 (use-package transpose-frame
-  :ensure t
+
   :defer t)
 
 ;; C-s <araow keys> でウィンドウのサイズをマウスを使わずに調節する
@@ -827,7 +806,7 @@
 (global-set-key [C-s-right] 'win-resize-minimize-vert)
 
 (use-package sudo-edit
-  :ensure t)
+  )
 
 (use-package which-key
   :defer 0
@@ -836,22 +815,32 @@
   (which-key-mode)
   (setq which-key-idle-delay 1))
 
+;; GUID: ic990d3e-9f1b-4d6a-8c2e-e3d4f5b6c8f6
+;; ========================================================================
+;; アイコン装飾パッケージの安全な遅延UIロード構成
+;; ========================================================================
 (use-package all-the-icons
   :if (display-graphic-p))
 
-(when (display-graphic-p)
-  (use-package nerd-icons)
-  (unless (kf:font-family-installed-p "all-the-icons")
-    (all-the-icons-install-fonts))
-  (unless (kf:font-family-installed-p "symbols nerd")
-    (nerd-icons-install-fonts)))
+(use-package nerd-icons
+  :if (display-graphic-p))
 
 (use-package all-the-icons-dired
   :if (display-graphic-p)
   :hook (dired-mode . all-the-icons-dired-mode))
 
+;; 初期化が完了し、ロードパスや autoload が出揃った直後にフォントの自動インストールを判定
+(add-hook 'after-init-hook
+          (lambda ()
+            (when (display-graphic-p)
+              (unless (kf:font-family-installed-p "all-the-icons")
+                (all-the-icons-install-fonts t))
+              (unless (kf:font-family-installed-p "symbols nerd")
+                (nerd-icons-install-fonts t)))))
+
+
 (use-package astyle
-  :ensure t
+
   :when (executable-find "astyle")
   ;; 保存時に自動で AStyle を実行してフォーマットを最終確定させる場合（お好みで）
   ;; (add-hook 'objc-mode-hook #'astyle-on-save-mode)
@@ -877,14 +866,6 @@
   (add-hook 'c-mode-hook #'my-objc-iron-astyle-setup)
   )
 
-
-(use-package cmake-mode
-  :ensure t)
-(setq auto-mode-alist
-      (append
-       '(("CMakeLists\\.txt\\'" . cmake-mode))
-       '(("\\.cmake\\'" . cmake-mode))
-       auto-mode-alist))
 
 ;; https://qiita.com/tadsan/items/df73c711f921708facdc
 (setq-default show-trailing-whitespace nil)
@@ -938,7 +919,7 @@
 
 ;; https://agel.readthedocs.io/en/latest/index.html
 (use-package ag
-  :ensure t)
+  )
 
 ;; Emacs 30 内蔵の project.el が straight 側の古いキャッシュと衝突するのを防ぐ
 (use-package project
@@ -990,18 +971,14 @@
                . objc-mode))
 
 (use-package smalltalk-mode
-  :ensure t)
+
+  :defer t)
 
 (use-package clang-format
-  :ensure t)
+
+  :defer t)
 
 (add-to-list 'auto-mode-alist '("\\.gsmarkup$" . xml-mode))
-
-(use-package orderless
-  :ensure t
-  :custom
-  (completion-styles '(orderless basic))
-  (completion-category-overrides '((file (styles basic partial-completion)))))
 
 ;; sudo apt install -y emacs-mozc emacs-mozc-bin
 (defun kf:mozc-installed-p ()
@@ -1052,7 +1029,7 @@
 
 
 (use-package multiple-cursors
-  :ensure t)
+  )
 
 (global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
 (global-set-key (kbd "C->")         'mc/mark-next-like-this)
@@ -1062,31 +1039,23 @@
 (global-set-key (kbd "C-:")         'mc/skip-to-previous-like-this)
 
 (use-package org-transclusion
-  :ensure t
+
   :after org)
 (define-key global-map (kbd "C-c <f12>") #'org-transclusion-add)
 (define-key global-map (kbd "C-c t") #'org-transclusion-mode)
-
-(use-package yasnippet
-  :ensure t
-  :config
-  (setq yas-snippet-dirs '("~/Nextcloud/snippets"))
-  (yas-global-mode 1))
-(use-package yasnippet-snippets
-  :ensure t)
 
 ;; https://github.com/roswell/roswell
 ;; (kf:ensure-load-file "~/.roswell/helper.el")
 (use-package slime
   :if (file-exists-p (expand-file-name "~/.roswell/helper.el"))
-  :ensure t
+
   :init (load (expand-file-name "~/.roswell/helper.el"))
   :custom (inferior-lisp-program "ros -Q run ")
   :config (slime-setup '(slime-fancy)))
 
 ;; SLIME用のCompany補完拡張を個別に紐付ける
 (use-package slime-company
-  :ensure t
+
   :after (slime company)
   :config
   (slime-setup '(slime-fancy slime-company)))
@@ -1104,7 +1073,7 @@
 
 
 (use-package d-mode
-  :ensure t)
+  )
 
 (add-hook 'c-mode-hook
           (lambda ()
@@ -1121,9 +1090,9 @@
                          (dylan:exec-name)))))
 
 (use-package dylan
-  :ensure t)
+  )
 (use-package dime
-  :ensure t)
+  )
 (dime-setup '(dime-repl dime-note-tree))
 (setq dime-dylan-implementations
       '((opendylan ("/home/kenjiro/Documents/opendylan/bin/dswank")
@@ -1136,14 +1105,14 @@
     (setq indent-tabs-mode old-indent-tabs-mode)))
 
 (use-package mermaid-mode
-  :ensure t
+
   :when (executable-find "mmdc"))
 (use-package ob-mermaid
-  :ensure t
+
   :when (executable-find "mmdc"))
 
 (use-package pug-mode
-  :ensure t)
+  )
 
 ;; GUID: b4c8d3e1-7f5a-496a-8b2c-e3d2f5b6c8d4
 ;; ========================================================================
@@ -1184,14 +1153,14 @@
 
 (add-hook 'org-mode-hook (lambda () (setq-local tab-width 8)))
 
-(use-package web-mode :ensure t)
-(use-package auto-rename-tag :ensure t)
+(use-package web-mode )
+(use-package auto-rename-tag )
 (use-package projectile-laravel
   :straight (projectile-laravel :type git :host github :repo "strikerlulu/projectile-laravel"))
 
 ;; PHP環境とDAPモードの設定をuse-packageに統合
 (use-package php-mode
-  :ensure t
+
   :hook (php-mode-hook . lsp)
   :config
   (with-eval-after-load 'lsp-mode
@@ -1212,12 +1181,12 @@
        auto-mode-alist))
 
 (use-package google-translate
-  :ensure t
+
   :defer t)
 
 (server-start)
 
-(use-package ob-async :ensure t)
+(use-package ob-async )
 
 (with-eval-after-load 'lisp-mode
   ;; 1. ObjectLispのキーワードリスト（単語をここに追加するだけで反映されます）
@@ -1280,10 +1249,6 @@
 
 (setq geiser-guile-binary (guile-path))
 
-(use-package kotlin-mode
-  :ensure t)
-(add-hook 'kotlin-mode-hook 'eglot-ensure)
-
 (add-hook 'org-mode-hook #'font-lock-ensure)
 
 (with-eval-after-load 'org
@@ -1338,65 +1303,9 @@
 
 
 (use-package envrc
-  :ensure t
+
   :config
   (envrc-global-mode 1))
-
-(use-package lsp-pyright
-  :ensure t
-  :custom (lsp-pyright-langserver-command "pyright") ;; or basedpyright
-  :hook (python-mode . (lambda ()
-                         (require 'lsp-pyright)
-                         (lsp))))  ; or lsp-deferred
-
-(setopt dap-auto-configure-mode t)
-
-(defun my-locate-python-virtualenv ()
-  "Find the Python executable based on the VIRTUAL_ENV environment variable."
-  (when-let ((venv (getenv "VIRTUAL_ENV")))
-    (let ((python-path (expand-file-name "bin/python" venv)))
-      (when (file-executable-p python-path)
-        python-path))))
-
-(with-eval-after-load 'lsp-pyright
-  (add-to-list 'lsp-pyright-python-search-functions
-               #'my-locate-python-virtualenv))
-
-(defmacro company-backend-for-hook (hook backends)
-  `(add-hook ,hook (lambda ()
-                     (set (make-local-variable 'company-backends)
-                          ,backends))))
-
-(defun setup-python-environment ()
-  "Setup a Python development environment in the current buffer."
-  ;; Update the current buffer's environment.
-  (envrc--update)
-
-  ;; Enable YASnippet mode
-  (yas-minor-mode 1)
-
-  ;; Set the `python-shell-interpreter' to the python in PATH.
-  ;; At this moment `envrc' should successfully configure environment.
-  (setq-local python-shell-interpreter (executable-find "python"))
-
-  ;; Setup active backends for `python-mode'.
-  (company-backend-for-hook 'lsp-completion-mode-hook
-                            '((company-capf :with company-yasnippet)
-                              company-dabbrev-code))
-
-  ;; Enable LSP support in Python buffers.
-  (require 'lsp-pyright)
-  (lsp-deferred)
-
-  ;; Enable DAP support in Python buffers.
-  (require 'dap-python)
-  (setq-local dap-python-debugger 'debugpy)
-
-  (dap-mode 1))
-
-;; Configure hooks after `python-mode' is loaded.
-(add-hook 'python-mode-hook #'setup-python-environment)
-;; (add-hook 'python-ts-mode-hook #'setup-python-environment)
 
 (use-package direnv
  :config
@@ -1422,7 +1331,7 @@
   (advice-add 'dap-debug :before #'my/dap-debug-load-project-templates))
 
 (use-package bnf-mode
-  :ensure t
+
   :config
   (add-hook 'bnf-mode-hook
             (lambda ()
@@ -1433,12 +1342,6 @@
               (font-lock-add-keywords
                nil
                '(("^\\s-*\\(;;.*\\)$" 1 font-lock-comment-face t))))))
-
-(use-package pytest
-  :ensure t
-  :bind (:map python-mode-map
-	      ("C-c C-t a" . pytest-all)
-	      ("C-c C-t m" . pytest-one)))
 
 ;; ========================================================================
 ;; 1. 【最優先実行】F9キーマップの生成と基本コマンド（g, s, m, v）の即時バインド
@@ -1494,7 +1397,7 @@
 ;; 2. パッケージ本体（gptel）の遅延ロード構成
 ;; ========================================================================
 (use-package gptel
-  :ensure t
+
   :commands (gptel gptel-send gptel-menu)
   :init
   ;; 無料枠保護のため、最速かつ制限の緩い「Flash-Lite」を初期モデルに指定
@@ -1533,7 +1436,7 @@
 ;; 3. 【修正版】画像処理バックエンド（org-download）の構成
 ;; ========================================================================
 (use-package org-download
-  :ensure t
+
   :after org
   :config
   ;; ユーザー環境の my-temporary-dir 変数から動的に一時領域のパスをセット
