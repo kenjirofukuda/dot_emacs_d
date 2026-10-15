@@ -3183,7 +3183,7 @@ emacsでトラブルが生じた際は一度本処理を行い再起動させる
                (length extracted-paths) output-file))))
 #+end_src
 
-#+begin_src elisp
+#+begin_src elisp :tangle no
 (my/emacs-cleanup-extract-userdefined-paths)
 #+end_src
 
@@ -3191,21 +3191,60 @@ emacsでトラブルが生じた際は一度本処理を行い再起動させる
 : 成功: 安全性が確認された 0 件のパスを /home/kenjiro/.emacs.d/emacs-cleanup-userdefined.txt に抽出しました
 
 
-#+begin_src bash :dir (file-name-directory (buffer-file-name)) :results raw :wrap src text
+#+begin_src bash :tangle no :dir (file-name-directory (buffer-file-name)) :results raw :wrap src text
 cat ~/.emacs.d/emacs-cleanup-userdefined.txt
 #+end_src
 
 #+RESULTS:
-#+begin_src text
+#+begin_src text :tangle no
 # Generated: 2026-10-15T13:57:00Z
 # ========================================================================
 # 安全基準（資産保護フィルター）を通過したユーザー定義キャッシュパス一覧
 # ========================================================================
-
 #+end_src
 
+* 起動プロファイル
+#+begin_src elisp :tangle yes
+;; GUID: 4a3e7b8c-9d2e-41f6-a8b3-c2d1e0f9a4b5
+;; ========================================================================
+;; 起動プロファイル出力（同期実行による確実なファイルアウト）
+;; ========================================================================
+(let* ((profile-dir (expand-file-name "profile" user-emacs-directory))
+       (timestamp (replace-regexp-in-string ":" "-" (format-time-string "%Y-%m-%dT%H%M%S%z")))
+       (log-file (expand-file-name (format "startup_profile_%s.log" timestamp) profile-dir))
+       (init-time (emacs-init-time))
+       (warnings-content "")
+       (messages-content ""))
 
+  ;; 0. profileディレクトリが存在しない場合は自動作成
+  (unless (file-directory-p profile-dir)
+    (make-directory profile-dir t))
 
+  ;; 1. *Warnings* バッファの内容を取得（存在する場合のみ）
+  (when (get-buffer "*Warnings*")
+    (with-current-buffer "*Warnings*"
+      (setq warnings-content (buffer-string))))
+
+  ;; 2. *Messages* バッファの内容を取得
+  (when (get-buffer "*Messages*")
+    (with-current-buffer "*Messages*"
+      (setq messages-content (buffer-string))))
+
+  ;; 3. 指定フォーマットでファイルへ同期出力
+  (with-temp-file log-file
+    (insert (format "Emacs Total Startup Time: %s\n" init-time))
+    (insert "========================================================================\n")
+    (insert " Emacs Startup Profile: *Warnings*\n")
+    (insert "========================================================================\n")
+    (insert warnings-content)
+    (insert "\n===== \n")
+    (insert "========================================================================\n")
+    (insert " Emacs Startup Profile: *Messages*\n")
+    (insert "========================================================================\n")
+    (insert messages-content))
+
+  (message "[SUCCESS] Startup profile written to: %s" log-file))
+#+end_src
 * 末尾
 #+BEGIN_SRC elisp :tangle yes
 (setq org-startup-folded t)

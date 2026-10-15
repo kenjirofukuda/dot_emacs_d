@@ -1577,15 +1577,45 @@
       (message "成功: 安全性が確認された %d 件のパスを %s に抽出しました"
                (length extracted-paths) output-file))))
 
-(my/emacs-cleanup-extract-userdefined-paths)
+;; GUID: 4a3e7b8c-9d2e-41f6-a8b3-c2d1e0f9a4b5
+;; ========================================================================
+;; 起動プロファイル出力（同期実行による確実なファイルアウト）
+;; ========================================================================
+(let* ((profile-dir (expand-file-name "profile" user-emacs-directory))
+       (timestamp (replace-regexp-in-string ":" "-" (format-time-string "%Y-%m-%dT%H%M%S%z")))
+       (log-file (expand-file-name (format "startup_profile_%s.log" timestamp) profile-dir))
+       (init-time (emacs-init-time))
+       (warnings-content "")
+       (messages-content ""))
 
-cat ~/.emacs.d/emacs-cleanup-userdefined.txt
+  ;; 0. profileディレクトリが存在しない場合は自動作成
+  (unless (file-directory-p profile-dir)
+    (make-directory profile-dir t))
 
-# Generated: 2026-10-15T13:57:00Z
-# ========================================================================
-# 安全基準（資産保護フィルター）を通過したユーザー定義キャッシュパス一覧
-# ========================================================================
+  ;; 1. *Warnings* バッファの内容を取得（存在する場合のみ）
+  (when (get-buffer "*Warnings*")
+    (with-current-buffer "*Warnings*"
+      (setq warnings-content (buffer-string))))
 
+  ;; 2. *Messages* バッファの内容を取得
+  (when (get-buffer "*Messages*")
+    (with-current-buffer "*Messages*"
+      (setq messages-content (buffer-string))))
+
+  ;; 3. 指定フォーマットでファイルへ同期出力
+  (with-temp-file log-file
+    (insert (format "Emacs Total Startup Time: %s\n" init-time))
+    (insert "========================================================================\n")
+    (insert " Emacs Startup Profile: *Warnings*\n")
+    (insert "========================================================================\n")
+    (insert warnings-content)
+    (insert "\n===== \n")
+    (insert "========================================================================\n")
+    (insert " Emacs Startup Profile: *Messages*\n")
+    (insert "========================================================================\n")
+    (insert messages-content))
+
+  (message "[SUCCESS] Startup profile written to: %s" log-file))
 
 (setq org-startup-folded t)
 (recentf-open-files)

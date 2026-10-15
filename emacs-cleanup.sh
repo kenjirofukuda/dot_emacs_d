@@ -1,82 +1,90 @@
-#!/bin/bash
-# Generated: 2026-10-15T14:15:00Z
+#!/usr/bin/env bash
 
-FIXED_TARGETS="emacs-cleanup-target.txt"
-USER_TARGETS="emacs-cleanup-userdefined.txt"
-COMBINED_LIST="/tmp/emacs-cleanup-combined-all.txt"
-RM_F="echo rm -f"
+# Generated: a3b92f7c-7d9a-4c12-b91c-f2b3e8da4ea2 | 2026-10-15T15:36:00Z
 
-echo "========================================================================"
-echo " Emacs Dual-Source Cache & Temporary Files Cleanup Script (Secure-v3)"
-echo "========================================================================"
+set -euo pipefail
 
-# 1. 安全対策：Emacs稼働チェック
+# 設定ファイルの定義
+TARGET_FILE="emacs-cleanup-target.txt"
+
+DRY_RUN=false
+
+# 引数の解析 (--dry-run のチェック)
+for arg in "$@"; do
+    if [[ "$arg" == "--dry-run" ]]; then
+        DRY_RUN=true
+        echo "=== DRY-RUN MODE: 実際の削除は行われません ==="
+    fi
+done
+
+# --- 事前チェック: Emacsプロセスの稼働確認 ---
 if pgrep -x "emacs" > /dev/null; then
-    echo "[ERROR] Emacsプロセスがまだ稼働しています。"
-    echo "        安全な一掃のため、一度Emacsを完全に終了してから再実行してください。"
+    echo "エラー: Emacsプロセスが稼働中です。" >&2
+    echo "データを破損する恐れがあるため、Emacsを完全に終了してから再実行してください。" >&2
     exit 1
 fi
 
-# 2. 定義ファイルの存在確認
-if [ ! -f "$FIXED_TARGETS" ]; then
-    echo "[ERROR] 固定対象定義ファイル '$FIXED_TARGETS' が見つかりません。"
+# ターゲット設定ファイルの存在確認
+if [[ ! -f "$TARGET_FILE" ]]; then
+    echo "エラー: $TARGET_FILE が見つかりません。" >&2
     exit 1
 fi
 
-# 3. リストの合成
-"$RM_F" "$COMBINED_LIST"
-cat "$FIXED_TARGETS" > "$COMBINED_LIST"
+# メイン処理のループ
+while IFS= read -r line || [[ -n "$line" ]]; do
+    # 空行やコメント行（#で始まる行）をスキップ
+    [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]] && continue
 
-if [ -f "$USER_TARGETS" ]; then
-    echo "[INFO] ユーザー定義ファイル '$USER_TARGETS' を統合します。"
-    cat "$USER_TARGETS" >> "$COMBINED_LIST"
-fi
+    # 前後の空白や末尾のスラッシュを削除してクリーンなパスを生成
+    target_item=$(echo "$line" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's|/*$||')
 
-echo "[INFO] 安全性検査およびクリーンアップ処理を開始します..."
+    # パス内のチルダ (~) を現在のホームディレクトリ ($HOME) に置換・展開
+    if [[ "$target_item" == "~"* ]]; then
+        full_path_pattern="${target_item/#\~/$HOME}"
+    else
+        full_path_pattern="$target_item"
+    fi
 
-# 4. 合成リストを1行ずつ読み込み、安全に削除を実行
-while IFS= read -r line || [ -n "$line" ]; do
+    # ワイルドカード（*, ?など）が含まれているかを判定し、パスを展開
+    # 展開結果を配列に入れる（ファイルが存在しない場合はそのままパターン文字列が残るのを防ぐため nullglob を一時有効化）
+    shopt -s nullglob
+    expanded_paths=($full_path_pattern)
+    shopt -u nullglob
 
-    # ========================================================================
-    # 【バグ修正】case文の#コメント誤認を完全に回避する if 構造への置き換え
-    # ========================================================================
-    # 1. 空行、または2. 先頭が「#」で始まるコメント行であるかを安全に判定します。
-    if [ -z "$line" ] || [[ "$line" == \#* ]]; then
+    # 展開したパスが空（＝合致するファイル・フォルダが1つもない）ならスキップ
+    if [[ ${#expanded_paths[@]} -eq 0 ]]; then
         continue
     fi
 
-    # パスを展開（~ を絶対パスへ変換）
-    eval expanded_path="$line"
-
-    if [ -d "$expanded_path" ]; then
-        # 【防御ガード1】 ホーム、ルート、重要な基本ディレクトリの完全破壊を防ぐ
-        if [ "$expanded_path" = "$HOME" ] || [ "$expanded_path" = "/" ] || [ "$expanded_path" = "$HOME/" ]; then
-            echo " -> [安全ブロック] 危険なベースパスのため拒否: $expanded_path"
+    # 展開された各パスに対して処理を実行
+    for full_path in "${expanded_paths[@]}"; do
+        # 対象が実際に存在するか確認
+        if [[ ! -e "$full_path" ]]; then
             continue
         fi
 
-        # 【防御ガード2】 大切な資産（.git, .org, .md）を保持するディレクトリを完全に保護
-        if find "$expanded_path" -maxdepth 4 \( -name ".git" -o -name "*.org" -o -name "*.md" \) -print -quit | grep -q .; then
-            echo " -> [資産保護ブロック] 配下に .git/.org/.md の存在を検知したため、削除をスキップしました: $expanded_path"
-            continue
+        # --- 保護ルールチェック (単なるパス連結による直下チェック) ---
+        if [[ -d "$full_path" ]]; then
+            if [[ -e "$full_path/.git" || -e "$full_path/.org" || -e "$full_path/.md" ]]; then
+                echo "保護: ${full_path} の直下に保護対象 (.git/.org/.md) が検出されたためスキップします。"
+                continue
+            fi
         fi
 
-        echo " -> 削除中: $expanded_path"
-        rm -rf "$expanded_path"
-
-        # システム一時領域の器のみ再構築
-        if [ "$expanded_path" = "/tmp/emacs-temporary/" ]; then
-            mkdir -p "$expanded_path"
-            chmod 700 "$expanded_path"
+        # --- 削除またはドライランの実行 ---
+        if [[ "$DRY_RUN" == true ]]; then
+            echo "rm -rf \"$full_path\""
+        else
+            echo "削除中: $full_path"
+            rm -rf "$full_path"
         fi
-    else
-        echo " -> スキップ (存在しません): $expanded_path"
-    fi
-done < "$COMBINED_LIST"
+    done
 
-# 一時合成ファイルのクリーンアップ
-"$RM_F" "$COMBINED_LIST"
+done < "$TARGET_FILE"
 
-echo "------------------------------------------------------------------------"
-echo "[SUCCESS] 安全基準を満たした不要キャッシュ群の一掃が完了しました。"
-echo "========================================================================"
+if [[ "$DRY_RUN" == true ]]; then
+    echo "=== DRY-RUN 終了 ==="
+else
+    echo "クリーンアップが完了しました。"
+fi
+

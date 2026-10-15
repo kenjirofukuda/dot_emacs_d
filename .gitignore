@@ -91,3 +91,4 @@ experimental-init.*
 /.dap-breakpoints
 /.extension/
 /emacs-cleanup-userdefined.txt
+/profile/
