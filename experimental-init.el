@@ -1569,16 +1569,15 @@
     (gptel-make-gemini "Gemini" :key (lambda () (getenv "GEMINI_API_KEY")) :models gemini-models-table :stream t))
   )
 
-;; GUID: kf880d4f-9e2c-41f6-b8c3-a3d2f5b6c8f8
+;; GUID: kf880d4f-9e2c-41f6-b8c3-a3d2f5b6c8fb
 ;; ========================================================================
-;; gptel: 複数ファイルのプロパティ指定に対応した動的コンテキスト結合ロード
+;; gptel: 複数ファイルのプロパティ指定に対応した動的コンテキスト結合ロード（最新版対応）
 ;; ========================================================================
-(defun my/gptel-load-multiple-contexts-from-property ()
-  "Orgプロパティからスペース区切りの複数パスを抽出し、全ファイルを結合してシステムプロンプトへ挿入します。"
+(defun my/gptel-inject-multiple-contexts-from-property (&rest _args)
+  "Orgプロパティから複数ファイルを読み込み、最新の gptel 変数構造に完全同期させます。"
   (when (derived-mode-p 'org-mode)
     (let ((raw-paths (org-entry-get (point) "gptel-context-file" t)))
       (when (and raw-paths (not (string-empty-p raw-paths)))
-        ;; split-string-and-unquote を使い、スペース区切りのパスを正確にリスト化
         (let ((path-list (split-string-and-unquote raw-paths))
               (combined-content ""))
           (with-temp-buffer
@@ -1586,22 +1585,30 @@
               (let ((expanded-path (expand-file-name path)))
                 (if (file-exists-p expanded-path)
                     (progn
-                      ;; ファイルごとの境界がAIに分かるようヘッダーを動的に挿入
                       (insert (format "\n--- [File Context: %s] ---\n" path))
                       (insert-file-contents expanded-path)
                       (goto-char (point-max)))
-                  ;; ファイルが存在しない場合はメッセージを出力（捏造・サイレントエラーの防止）
                   (message "[gptel-context] 警告: ファイルが見つかりません: %s" path))))
             (setq combined-content (buffer-string)))
 
-          ;; 結合されたテキストが存在する場合のみ、一時的なシステムプロンプトとしてセット
+          ;; 最新の gptel 内部変数およびパブリック変数へ二重に強制注入
           (unless (string-empty-p combined-content)
-            (setq-local gptel-backend-properties
-                        `(:system ,combined-content))))))))
+            ;; 1. 最新の仕組み (gptel-system-prompt) をバッファローカルで固定
+            (setq-local gptel-system-prompt combined-content)
+            ;; 2. 旧・新の過渡期におけるメニュー（Transient）のバグを回避するため、内部キャッシュ変数も強制同期
+            (setq-local gptel--system-message combined-content)
+            (setq-local gptel-system-message combined-content)
+            (message "[gptel-context] プロパティから外部資料 %d 件をシステムプロンプトへ注入しました。" (length path-list))))))))
 
-;; 送信直前のフックを新しい関数に差し替え
-(remove-hook 'gptel-pre-response-hook 'my/gptel-load-context-from-property)
-(add-hook 'gptel-pre-response-hook #'my/gptel-load-multiple-contexts-from-property)
+;; 過去の古いアドバイスとフックの登録を一度物理的に完全抹消
+(advice-remove 'gptel-menu #'my/gptel-inject-multiple-contexts-from-property)
+(advice-remove 'gptel-send #'my/gptel-inject-multiple-contexts-from-property)
+(remove-hook 'gptel-pre-response-hook 'my/gptel-load-multiple-contexts-from-property)
+
+;; 【確実なフック】メニュー展開時と送信処理時の両方の直前に、最新変数をバインドする
+(advice-add 'gptel-menu :before #'my/gptel-inject-multiple-contexts-from-property)
+(advice-add 'gptel-send :before #'my/gptel-inject-multiple-contexts-from-property)
+
 
 ;; ========================================================================
 ;; 3. 【修正版】画像処理バックエンド（org-download）の構成
