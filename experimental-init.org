@@ -3194,6 +3194,40 @@ https://github.com/hlissner/emacs-pug-mode
     (gptel-make-gemini "Gemini" :key (lambda () (getenv "GEMINI_API_KEY")) :models gemini-models-table :stream t))
   )
 
+;; GUID: kf880d4f-9e2c-41f6-b8c3-a3d2f5b6c8f8
+;; ========================================================================
+;; gptel: 複数ファイルのプロパティ指定に対応した動的コンテキスト結合ロード
+;; ========================================================================
+(defun my/gptel-load-multiple-contexts-from-property ()
+  "Orgプロパティからスペース区切りの複数パスを抽出し、全ファイルを結合してシステムプロンプトへ挿入します。"
+  (when (derived-mode-p 'org-mode)
+    (let ((raw-paths (org-entry-get (point) "gptel-context-file" t)))
+      (when (and raw-paths (not (string-empty-p raw-paths)))
+        ;; split-string-and-unquote を使い、スペース区切りのパスを正確にリスト化
+        (let ((path-list (split-string-and-unquote raw-paths))
+              (combined-content ""))
+          (with-temp-buffer
+            (dolist (path path-list)
+              (let ((expanded-path (expand-file-name path)))
+                (if (file-exists-p expanded-path)
+                    (progn
+                      ;; ファイルごとの境界がAIに分かるようヘッダーを動的に挿入
+                      (insert (format "\n--- [File Context: %s] ---\n" path))
+                      (insert-file-contents expanded-path)
+                      (goto-char (point-max)))
+                  ;; ファイルが存在しない場合はメッセージを出力（捏造・サイレントエラーの防止）
+                  (message "[gptel-context] 警告: ファイルが見つかりません: %s" path))))
+            (setq combined-content (buffer-string)))
+
+          ;; 結合されたテキストが存在する場合のみ、一時的なシステムプロンプトとしてセット
+          (unless (string-empty-p combined-content)
+            (setq-local gptel-backend-properties
+                        `(:system ,combined-content))))))))
+
+;; 送信直前のフックを新しい関数に差し替え
+(remove-hook 'gptel-pre-response-hook 'my/gptel-load-context-from-property)
+(add-hook 'gptel-pre-response-hook #'my/gptel-load-multiple-contexts-from-property)
+
 ;; ========================================================================
 ;; 3. 【修正版】画像処理バックエンド（org-download）の構成
 ;; ========================================================================
