@@ -206,5 +206,25 @@ Debian環境でpolkitが設定されている場合は、グラフィカル、�
 				(kill-buffer " kf-updatedb-log")))))))
 
 
+(defvar kf:last-begin nil "Last used begin string.")
+(defvar kf:last-end nil "Last used end string.")
+
+(defun kf:insert-begin-end (begin end)
+  "Insert BEGIN before and END after the region."
+  (interactive
+   (list (read-string "Begin: " kf:last-begin)
+         (read-string "End: " kf:last-end)))
+  (setq kf:last-begin begin
+        kf:last-end end)
+  (save-excursion
+    (let ((start (region-beginning))
+          (e (region-end)))
+      (goto-char e)
+      (if (= (char-before) ?\n)
+          (insert end "\n")
+        (insert "\n" end "\n"))
+      (goto-char start)
+      (insert begin "\n"))))
+
 (message "kf-command loaded...")
 (provide 'kf-command)

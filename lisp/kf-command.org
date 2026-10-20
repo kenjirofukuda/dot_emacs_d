@@ -333,7 +333,6 @@ org-babel-shell-names
 #+RESULTS:
 https://github.com/kenjirofukuda/gdsfeel-js.git
 
-
 * locate ラッパー
 #+begin_src elisp :tangle yes
 ;;; === kf-locate-module.el ===
@@ -394,6 +393,41 @@ Debian環境でpolkitが設定されている場合は、グラフィカル、�
 
 #+RESULTS:
 : kf:updatedb
+
+* マークアップリージョンの前後に行を挿入
+#+begin_src elisp :tangle yes
+(defvar kf:last-begin nil "Last used begin string.")
+(defvar kf:last-end nil "Last used end string.")
+
+(defun kf:insert-begin-end (begin end)
+  "Insert BEGIN before and END after the region."
+  (interactive
+   (list (read-string "Begin: " kf:last-begin)
+         (read-string "End: " kf:last-end)))
+  (setq kf:last-begin begin
+        kf:last-end end)
+  (save-excursion
+    (let ((start (region-beginning))
+          (e (region-end)))
+      (goto-char e)
+      (if (= (char-before) ?\n)
+          (insert end "\n")
+        (insert "\n" end "\n"))
+      (goto-char start)
+      (insert begin "\n"))))
+#+end_src
+
+
+#+begin_example
+arumojiretu
+#+end_example
+
+#+begin_example
+arumojiretu
+#+end_example
+
+
+
 
 * フッタ
 #+BEGIN_SRC elisp :tangle yes
