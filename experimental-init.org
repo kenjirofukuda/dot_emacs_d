@@ -2705,6 +2705,38 @@ https://github.com/hlissner/emacs-pug-mode
   )
 #+end_src
 
+** ブックマークをNextcloud配下に移動
+#+begin_src elisp :tangle yes
+(defvar my/bookmarks-path (file-name-concat
+  			   (expand-file-name "~/Nextcloud/hosts")
+  			   (safe-host-name-string) "emacs" "bookmarks")
+  "Nextcloudに統合したbookmarksファイルパス")
+
+(defvar my/default-bookmarks-path (file-name-concat
+  				   user-emacs-directory
+  				   "bookmarks")
+  "emacs標準のbookmarksファイルパス(利用目的としてはconst)")
+
+(when (file-directory-p (expand-file-name "~/Nextcloud"))
+  ;; Nextcloud構築済みの環境の場合保存先を確保
+  (make-directory (file-name-parent-directory my/bookmarks-path) t)
+  ;; 移行済みなら、古いファイルを削除
+  (when (and (file-exists-p my/bookmarks-path)
+  	     (string= (expand-file-name bookmark-default-file)
+  		      (expand-file-name my/bookmarks-path))
+  	     (file-exists-p my/default-bookmarks-path))
+    (delete-file my/default-bookmarks-path))
+  ;; 新しいロケーションに移動する
+  (when (and (file-exists-p my/default-bookmarks-path)
+  	     (not (file-exists-p my/bookmarks-path)))
+    ;; プロセスがロックしているかもしれないので念の為コピー
+    (copy-file my/default-bookmarks-path my/bookmarks-path)
+    (setq bookmark-default-file my/bookmarks-path)
+    (setq bmkp-last-as-first-bookmark-file my/bookmarks-path)
+    (bookmark-save)))
+#+end_src
+
+
 * TailwindCSS
 #+begin_src elisp :tangle yes
 (use-package lsp-tailwindcss
@@ -2983,8 +3015,13 @@ https://github.com/hlissner/emacs-pug-mode
 
 * envrc
 #+begin_src elisp :tangle yes
+;; Generated: 2026-10-18T17:30:00Z
+;; GUID: py990e4f-9e2c-41f6-b8c3-a3d2f5b6c8fc
+;; ========================================================================
+;; direnv / envrc 安全連携ガード付き Python 開発環境構成
+;; ========================================================================
 (use-package envrc
-
+  :straight t
   :config
   (envrc-global-mode 1))
 #+end_src
@@ -3020,7 +3057,11 @@ https://github.com/hlissner/emacs-pug-mode
 (defun setup-python-environment ()
   "Setup a Python development environment in the current buffer."
   ;; Update the current buffer's environment.
-  (envrc--update)
+  ;; 1. envrc パッケージがメモリに展開されており、かつ direnv 許可環境であるか動的判定
+  (when (and (fboundp 'envrc-allow-p)
+             (envrc-allow-p))
+    ;; 公開された同期関数を安全に呼び出し（void-function を完全ブロック）
+    (envrc-update))
 
   ;; Enable YASnippet mode
   (yas-minor-mode 1)
@@ -3051,11 +3092,11 @@ https://github.com/hlissner/emacs-pug-mode
 * direnv
 #+begin_src elisp :tangle yes
 (use-package direnv
- :config
- (direnv-mode))
+  :config
+  (direnv-mode))
 ;; Setup buffer-local direnv integration for Emacs.
 (when (executable-find "direnv")
-  (add-hook 'after-init-hook #'envrc-global-mode))
+  (add-hook 'after-init-hook 'envrc-global-mode))
 #+end_src
 
 * debug.el 自動読み込み
@@ -3259,6 +3300,25 @@ https://github.com/hlissner/emacs-pug-mode
   )
 #+end_src
 
+* PDFツール
+#+begin_src bash :tangle no :dir /sudo::
+sudo apt install -y libpoppler-glib-dev libpoppler-private-dev
+#+end_src
+
+#+begin_src elisp :tangle yes
+;; GUID: pd990d3e-9f1b-4d6a-8c2e-e3d4f5b6c8fa
+;; ========================================================================
+;; pdf-tools: DocView を完全に置き換える高精細アンチエイリアスPDF環境
+;; ========================================================================
+(use-package pdf-tools
+  :magic ("%PDF" . pdf-view-mode)
+  :config
+  ;; 起動時にバックエンド（epdfview）の自動ビルド・インストールを実行
+  (pdf-tools-install :no-query)
+  ;; ページめくりや表示を滑らかにするための基本設定
+  (setq pdf-view-continuous t))
+#+end_src
+
 * emacs環境のクリーンナップ
 emacsでトラブルが生じた際は一度本処理を行い再起動させること。
 #+begin_src elisp :tangle yes
@@ -3371,6 +3431,28 @@ cat ~/.emacs.d/emacs-cleanup-userdefined.txt
 
   (message "[SUCCESS] Startup profile written to: %s" log-file))
 #+end_src
+
+* HTMLエクスポート時にtranslate=noを挿入
+#+begin_src elisp :tangle yes
+(defun my-org-html-translate-no-filter (text backend info)
+  "HTMLエクスポート時にsrcブロックとexampleブロックにtranslate=\"no\"を自動付加する"
+  (when (org-export-derived-backend-p backend 'html)
+    ;; src-block と example-block のコンテナクラスの div タグに属性を差し込む
+    (setq text (replace-regexp-in-string
+                "class=\"org-src-container\""
+                "class=\"org-src-container\" translate=\"no\""
+                text))
+    (setq text (replace-regexp-in-string
+                "class=\"example\""
+                "class=\"example\" translate=\"no\""
+                text)))
+  text)
+
+;; 最終出力（body）の直前にフィルタを適用
+(with-eval-after-load 'ox
+  (add-to-list 'org-export-filter-body-functions 'my-org-html-translate-no-filter))
+#+end_src
+
 * 末尾
 #+BEGIN_SRC elisp :tangle yes
 (setq org-startup-folded t)

@@ -1204,6 +1204,34 @@
   ;; [...] your :init and :config
   )
 
+(defvar my/bookmarks-path (file-name-concat
+  			   (expand-file-name "~/Nextcloud/hosts")
+  			   (safe-host-name-string) "emacs" "bookmarks")
+  "Nextcloudに統合したbookmarksファイルパス")
+
+(defvar my/default-bookmarks-path (file-name-concat
+  				   user-emacs-directory
+  				   "bookmarks")
+  "emacs標準のbookmarksファイルパス(利用目的としてはconst)")
+
+(when (file-directory-p (expand-file-name "~/Nextcloud"))
+  ;; Nextcloud構築済みの環境の場合保存先を確保
+  (make-directory (file-name-parent-directory my/bookmarks-path) t)
+  ;; 移行済みなら、古いファイルを削除
+  (when (and (file-exists-p my/bookmarks-path)
+  	     (string= (expand-file-name bookmark-default-file)
+  		      (expand-file-name my/bookmarks-path))
+  	     (file-exists-p my/default-bookmarks-path))
+    (delete-file my/default-bookmarks-path))
+  ;; 新しいロケーションに移動する
+  (when (and (file-exists-p my/default-bookmarks-path)
+  	     (not (file-exists-p my/bookmarks-path)))
+    ;; プロセスがロックしているかもしれないので念の為コピー
+    (copy-file my/default-bookmarks-path my/bookmarks-path)
+    (setq bookmark-default-file my/bookmarks-path)
+    (setq bmkp-last-as-first-bookmark-file my/bookmarks-path)
+    (bookmark-save)))
+
 (use-package lsp-tailwindcss
   :straight '(lsp-tailwindcss :type git :host github :repo "merrickluo/lsp-tailwindcss")
   :init (setq lsp-tailwindcss-add-on-mode t)
@@ -1377,8 +1405,13 @@
   (define-key org-mode-map (kbd "C-c C-v e") 'my/org-babel-execute-buffer-no-eval-query))
 
 
+;; Generated: 2026-10-18T17:30:00Z
+;; GUID: py990e4f-9e2c-41f6-b8c3-a3d2f5b6c8fc
+;; ========================================================================
+;; direnv / envrc 安全連携ガード付き Python 開発環境構成
+;; ========================================================================
 (use-package envrc
-
+  :straight t
   :config
   (envrc-global-mode 1))
 
@@ -1410,7 +1443,11 @@
 (defun setup-python-environment ()
   "Setup a Python development environment in the current buffer."
   ;; Update the current buffer's environment.
-  (envrc--update)
+  ;; 1. envrc パッケージがメモリに展開されており、かつ direnv 許可環境であるか動的判定
+  (when (and (fboundp 'envrc-allow-p)
+             (envrc-allow-p))
+    ;; 公開された同期関数を安全に呼び出し（void-function を完全ブロック）
+    (envrc-update))
 
   ;; Enable YASnippet mode
   (yas-minor-mode 1)
@@ -1439,11 +1476,11 @@
 ;; (add-hook 'python-ts-mode-hook #'setup-python-environment)
 
 (use-package direnv
- :config
- (direnv-mode))
+  :config
+  (direnv-mode))
 ;; Setup buffer-local direnv integration for Emacs.
 (when (executable-find "direnv")
-  (add-hook 'after-init-hook #'envrc-global-mode))
+  (add-hook 'after-init-hook 'envrc-global-mode))
 
 (defun my/dap-debug-load-project-templates (&rest _args)
   "dap-debug の実行直前に、.git または projectile から debug.el を自動ロードします。"
@@ -1633,6 +1670,18 @@
          (t (error "エラー：クリップボード転送に必要な xclip または wl-clipboard が Debian にインストールされていません。"))))
   )
 
+;; GUID: pd990d3e-9f1b-4d6a-8c2e-e3d4f5b6c8fa
+;; ========================================================================
+;; pdf-tools: DocView を完全に置き換える高精細アンチエイリアスPDF環境
+;; ========================================================================
+(use-package pdf-tools
+  :magic ("%PDF" . pdf-view-mode)
+  :config
+  ;; 起動時にバックエンド（epdfview）の自動ビルド・インストールを実行
+  (pdf-tools-install :no-query)
+  ;; ページめくりや表示を滑らかにするための基本設定
+  (setq pdf-view-continuous t))
+
 ;; Generated: 2026-10-15T13:57:00Z
 (defun my/emacs-cleanup-extract-userdefined-paths ()
   "解析用：init.el をパースし、資産（.git/.org/.md）を含まない純粋なカスタムキャッシュパスのみを安全に抽出します。"
@@ -1718,6 +1767,24 @@
     (insert messages-content))
 
   (message "[SUCCESS] Startup profile written to: %s" log-file))
+
+(defun my-org-html-translate-no-filter (text backend info)
+  "HTMLエクスポート時にsrcブロックとexampleブロックにtranslate=\"no\"を自動付加する"
+  (when (org-export-derived-backend-p backend 'html)
+    ;; src-block と example-block のコンテナクラスの div タグに属性を差し込む
+    (setq text (replace-regexp-in-string
+                "class=\"org-src-container\""
+                "class=\"org-src-container\" translate=\"no\""
+                text))
+    (setq text (replace-regexp-in-string
+                "class=\"example\""
+                "class=\"example\" translate=\"no\""
+                text)))
+  text)
+
+;; 最終出力（body）の直前にフィルタを適用
+(with-eval-after-load 'ox
+  (add-to-list 'org-export-filter-body-functions 'my-org-html-translate-no-filter))
 
 (setq org-startup-folded t)
 
