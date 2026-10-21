@@ -335,42 +335,65 @@ https://github.com/kenjirofukuda/gdsfeel-js.git
 
 * locate ラッパー
 #+begin_src elisp :tangle yes
-;;; === kf-locate-module.el ===
-;; Generated: 2026-10-13T06:27:00Z
-;; GUID: 4a2b9c3d-7e1f-4a8b-9c2d-5e6f7a8b9c0d
-(defun kf:locate (search-string)
-  "仮想コンソールを開くことなく、locateコマンドを非同期に実行してファイルを高速検索します。
-結果はミニバッファで一行ずつ選択（completing-read）でき、選択したファイルを即座に開きます。"
-  (interactive "sLocate file: ")
-  (if (string-empty-p search-string)
+;; GUID: kf770b2c-4d3e-5f6a-8b9c-0d1e2f3a4b5c
+;; ========================================================================
+;; 外部変数による柔軟な除外パターン管理と、自動ノイズフィルター付き高速ファイル検索
+;; ========================================================================
+
+(defcustom kf:locate-ignore-patterns
+  '("/\\.git/"
+    "/\\.cache/"
+    "/node_modules/"
+    "~\$"                  ; バックアップファイル（末尾にチルダ）
+    "^/tmp/"              ; テンポラリ領域
+    )
+  "`kf:locate' でファイル検索を行う際、検索結果から完全に除外（パージ）する正規表現のリスト。"
+  :type '(repeat string)
+  :group 'kf-commands)
+
+(defun kf:locate (search-regexp)
+  "locate コマンドをバックエンドに使い、ベースネームに対して正規表現検索を行います。
+結果から `kf:locate-ignore-patterns' にマッチするパス、および『ディレクトリ自体』を完全に除外します。
+入力例： kf-command\\.org\$"
+  (interactive "sLocate (Regexp for Basename): ")
+  (if (string-empty-p search-regexp)
       (user-error "検索クエリが空です")
     (let ((default-directory "/")
-	  (output-buffer (generate-new-buffer " kf-locate-output"))
-	  (exit-code nil))
+          (output-buffer (generate-new-buffer " kf-locate-output"))
+          (filtered-lines nil)
+          (exit-code nil))
       (unwind-protect
-	  (progn
-	    ;; 同期または非同期でlocateコマンドの出力を一時バッファに格納
-	    ;; 高速なインデックス検索のため、通常のファイル走査より著しく高速です
-	    (setq exit-code (call-process "locate" nil output-buffer nil search-string))
-	    (if (not (eq exit-code 0))
-		(message "locateコマンドがエラーを返しました（終了コード: %s）" exit-code)
-	      (with-current-buffer output-buffer
-		(let ((lines nil))
-		  (goto-char (point-min))
-		  (while (not (eobp))
-		    (let ((line (buffer-substring-no-properties (line-beginning-position) (line-end-position))))
-		      (unless (string-empty-p line)
-			(push line lines)))
-		    (forward-line 1))
-		  (if (null lines)
-		      (message "マッチするファイルは見つかりませんでした: %s" search-string)
-		    ;; 補完インターフェース（Vertico, Selectrum, 又は標準のcompleting-read）で選択
-		    (let ((chosen-file (completing-read "Select file: " (nreverse lines) nil t)))
-		      (when (and chosen-file (file-exists-p chosen-file))
-			(find-file chosen-file))))))))
-	;; 一時バッファを確実にクリーンアップ
-	(when (buffer-live-p output-buffer)
-	  (kill-buffer output-buffer))))))
+          (progn
+            ;; -b (basename) と -r (regexp) を指定して locate を実行
+            (setq exit-code (call-process "locate" nil output-buffer nil "-b" "-r" search-regexp))
+            (if (not (eq exit-code 0))
+                (message "locateコマンドがエラーを返しました（終了コード: %s）" exit-code)
+              (with-current-buffer output-buffer
+                (goto-char (point-min))
+                (while (not (eobp))
+                  (let ((line (buffer-substring-no-properties (line-beginning-position) (line-end-position))))
+                    (unless (string-empty-p line)
+                      ;; 【洗練されたリスト駆動フィルター】
+                      ;; 外部変数に登録されたパターンのいずれか一つでもマッチするか、
+                      ;; または対象がディレクトリである場合は即座にスキップします
+                      (unless (or (seq-some (lambda (pattern) (string-match-p pattern line))
+                                            kf:locate-ignore-patterns)
+                                  (file-directory-p line))
+                        (push line filtered-lines))))
+                  (forward-line 1)))
+
+              ;; フィルタリングされたクリーンな結果をユーザーに提示
+              (if (null filtered-lines)
+                  (message "マッチする有効なファイルは見つかりませんでした: %s" search-regexp)
+                (let ((chosen-file (completing-read "Select file: " (nreverse filtered-lines) nil t)))
+                  (when (and chosen-file (file-exists-p chosen-file))
+                    (find-file-other-window chosen-file))))))
+
+        ;; 一時バッファを確実にクリーンアップ
+        (when (buffer-live-p output-buffer)
+          (kill-buffer output-buffer))))))
+
+
 (defun kf:updatedb ()
   "仮想コンソールを開くことなく、locateコマンドのデータベース(updatedb)を非同期プロセスで更新します。
 一般ユーザー環境での実行を想定し、必要に応じてpkexecまたはsudo経由で実行します。
