@@ -228,61 +228,56 @@ Debian環境でpolkitが設定されている場合は、グラフィカル、�
 
 ;; GUID: kf990e5f-9e2c-41f6-b8c3-a3d2f5b6c8fd
 ;; ========================================================================
-;; クリップボードのマークダウン（見出し・リンク完全対応版）をOrg文法へ一括変換挿入
+;; クリップボードのMarkdownをOrg文法へ一括クリーン変換挿入（正規表現修正版）
 ;; ========================================================================
 
 (defun kf:paste-markdown-as-org ()
-  "クリップボード内のMarkdownテキストを取得し、見出し・コード・リンクを完全なOrg文法に変換して挿入します。"
+  "クリップボード内のMarkdownテキストを、見出し・コード・リンクを含めてOrg文法に変換して挿入します。"
   (interactive)
   (let ((text (gui-get-selection 'CLIPBOARD 'STRING)))
     (if (and text (not (string-empty-p text)))
         (with-temp-buffer
-          ;; 1. 一時バッファにクリップボードのテキストを挿入
           (insert text)
-          (goto-char (point-min))
 
-          ;; 2. マークダウンの見出し (^#+ 行) を Orgの見出し (* 行) に動体変換
-          ;; 行頭の # の数を正確にカウントし、残りのタイトルテキストを確実に保持します
+          ;; 1. 見出しの置換 (^#+ -> *)
+          (goto-char (point-min))
           (while (re-search-forward "^\\(#+\\) +.*\$" nil t)
             (let* ((hashes (match-string 1))
-                   (title-text (match-string 2))
+                   (title (match-string 2))
                    (stars (make-string (length hashes) ?*)))
-              (replace-match (concat stars " " title-text) t t)))
-          (goto-char (point-min))
+              (replace-match (concat stars " " title) t t)))
 
-          ;; 3. マークダウンの太字 (**text**) を Orgの強調 (*text*) に変換
+          ;; 2. 太字の置換 (**text** -> *text*)
+          (goto-char (point-min))
           (while (re-search-forward "\\*\\*\\([^* \n][^*]*?[^* \n]\\)\\*\\*" nil t)
             (replace-match "*\\1*"))
-          (goto-char (point-min))
 
-          ;; 4. マークダウンのインラインコード (`code`) を Orgのコード (~code~) に変換
+          ;; 3. インラインコードの置換 (`code` -> ~code~)
+          (goto-char (point-min))
           (while (re-search-forward "`\\([^`\n]+?\\)`" nil t)
             (replace-match "~\\1~"))
-          (goto-char (point-min))
 
-          ;; 5. マークダウンのリンク [テキスト](URL) を Orgリンク [[URL][テキスト]] に変換
-          ;; URLの完全性を維持するため、削ることなくそのまま結合します
+          ;; 4. リンクの置換 ([text](URL) -> [[URL][text]])
+          (goto-char (point-min))
           (while (re-search-forward "\\[\\([^]]+\\)\\](\\([^)]+\\))" nil t)
             (replace-match "[[\\2][\\1]]" t t))
-          (goto-char (point-min))
 
-          ;; 6. マークダウンのコードブロック (```lang ... ```) を Org-babel 形式に変換
-          ;; 最短一致を確実に機能させるため、[ \n]* 形式の確実な正規表現に修正しました
-          (while (re-search-forward "^```\\([a-zA-Z0-9_-]*\\)\n\\(\\(?:.\Vert{}\n\\)*?\\)```" nil t)
+          ;; 5. コードブロックの置換 (```lang ... ``` -> #+begin_src)
+          ;; 最短一致を確実に機能させるため、[ \n]* の複雑な否定表現からシンプルな文字クラスに変更
+          (goto-char (point-min))
+          (while (re-search-forward "^```\\([a-zA-Z0-9_-]*\\)\n\\([^\0]*?\\)^```" nil t)
             (let ((lang (match-string 1))
                   (body (match-string 2)))
               (if (string-empty-p lang)
                   (replace-match (format "#+begin_example\n%s#+end_example" body) t t)
                 (replace-match (format "#+begin_src %s\n%s#+end_src" lang body) t t))))
 
-          ;; 7. 最終変換されたテキストの挿入処理
-          (let ((converted-text (buffer-string)))
-            (if (not (string-empty-p converted-text))
-                (with-current-buffer (current-buffer)
-                  (insert converted-text)
-                  (message "Markdown文法からOrg文法への一括変換・ペーストが成功しました。"))
-              (message "警告: 変換後のテキストが空になりました。"))))
-      (message "エラー：クリップボードからテキストデータを取得できませんでした。")))))
+          ;; 6. 変換結果のバッファ挿入
+          (let ((converted (buffer-string)))
+            (with-current-buffer (car (buffer-list))
+              (insert converted)
+              (message "MarkdownからOrg文法へのクリーン変換ペーストが完了しました。"))))
+      (message "エラー：クリップボードからテキストデータを取得できませんでした。"))))
 
 (message "kf-command loaded...")
 (provide 'kf-command)
