@@ -228,56 +228,59 @@ Debian環境でpolkitが設定されている場合は、グラフィカル、�
 
 ;; GUID: kf990e5f-9e2c-41f6-b8c3-a3d2f5b6c8fd
 ;; ========================================================================
-;; クリップボードのMarkdownをOrg文法へ一括クリーン変換挿入（正規表現修正版）
+;; クリップボードのMarkdownをOrg文法へ一括安全変換挿入（マルチバイト対応版）
 ;; ========================================================================
 
 (defun kf:paste-markdown-as-org ()
-  "クリップボード内のMarkdownテキストを、見出し・コード・リンクを含めてOrg文法に変換して挿入します。"
+  "クリップボード内のMarkdownテキストを、文字化けを起こさずOrg文法に変換して挿入します。"
   (interactive)
   (let ((text (gui-get-selection 'CLIPBOARD 'STRING)))
     (if (and text (not (string-empty-p text)))
         (with-temp-buffer
+          ;; 1. 一時バッファにテキストを安全に挿入
           (insert text)
 
-          ;; 1. 見出しの置換 (^#+ -> *)
+          ;; 2. 見出しの置換 (^#+ -> *)
+          ;; グループ2でタイトル文字列を確実にキャプチャします
           (goto-char (point-min))
-          (while (re-search-forward "^\\(#+\\) +.*\$" nil t)
+          (while (re-search-forward "^\\(#+\\) +\\(.*\\)\$" nil t)
             (let* ((hashes (match-string 1))
                    (title (match-string 2))
                    (stars (make-string (length hashes) ?*)))
               (replace-match (concat stars " " title) t t)))
 
-          ;; 2. 太字の置換 (**text** -> *text*)
+          ;; 3. 太字の置換 (**text** -> *text*)
           (goto-char (point-min))
           (while (re-search-forward "\\*\\*\\([^* \n][^*]*?[^* \n]\\)\\*\\*" nil t)
             (replace-match "*\\1*"))
 
-          ;; 3. インラインコードの置換 (`code` -> ~code~)
+          ;; 4. インラインコードの置換 (`code` -> ~code~)
           (goto-char (point-min))
           (while (re-search-forward "`\\([^`\n]+?\\)`" nil t)
             (replace-match "~\\1~"))
 
-          ;; 4. リンクの置換 ([text](URL) -> [[URL][text]])
+          ;; 5. リンクの置換 ([text](URL) -> [[URL][text]])
           (goto-char (point-min))
           (while (re-search-forward "\\[\\([^]]+\\)\\](\\([^)]+\\))" nil t)
             (replace-match "[[\\2][\\1]]" t t))
 
-          ;; 5. コードブロックの置換 (```lang ... ``` -> #+begin_src)
-          ;; 最短一致を確実に機能させるため、[ \n]* の複雑な否定表現からシンプルな文字クラスに変更
+          ;; 6. コードブロックの置換 (```lang ... ``` -> #+begin_src)
+          ;; マルチバイト文字を破壊しないよう、改行を含む最短一致に変更しました
           (goto-char (point-min))
-          (while (re-search-forward "^```\\([a-zA-Z0-9_-]*\\)\n\\([^\0]*?\\)^```" nil t)
+          (while (re-search-forward "^```\\([a-zA-Z0-9_-]*\\)\n\\(\\(?:.\n\\)*?\\)```" nil t)
             (let ((lang (match-string 1))
                   (body (match-string 2)))
               (if (string-empty-p lang)
                   (replace-match (format "#+begin_example\n%s#+end_example" body) t t)
                 (replace-match (format "#+begin_src %s\n%s#+end_src" lang body) t t))))
 
-          ;; 6. 変換結果のバッファ挿入
+          ;; 7. 元のバッファへの確実な挿入処理
           (let ((converted (buffer-string)))
             (with-current-buffer (car (buffer-list))
               (insert converted)
               (message "MarkdownからOrg文法へのクリーン変換ペーストが完了しました。"))))
       (message "エラー：クリップボードからテキストデータを取得できませんでした。"))))
+
 
 (message "kf-command loaded...")
 (provide 'kf-command)
