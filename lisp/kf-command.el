@@ -229,25 +229,76 @@ Debian環境でpolkitが設定されている場合は、グラフィカル、�
 				(kill-buffer " kf-updatedb-log")))))))
 
 
-(defvar kf:last-begin nil "Last used begin string.")
-(defvar kf:last-end nil "Last used end string.")
+;; GUID: kf660d5e-6a7b-8c9d-0e1f-2a3b4c5d6e7f
+;; ========================================================================
+;; 自動外枠パージ機能を搭載したマークアップ用インサート・置換コマンド
+;; ========================================================================
+(defvar kf:last-begin nil "最後に使用した開始マークアップ文字列")
+(defvar kf:last-end nil "最後に使用した終了マークアップ文字列")
 
 (defun kf:insert-begin-end (begin end)
-  "Insert BEGIN before and END after the region."
+  "選択リージョンの前後に BEGIN と END を挿入します。
+もしリージョンの直前・直後が既に別のブロック（#+begin_... 等）で囲まれている場合は、
+古いマークアップを自動的にパージ（除去）して上書き置換を行います。"
   (interactive
    (list (read-string "Begin: " kf:last-begin)
          (read-string "End: " kf:last-end)))
   (setq kf:last-begin begin
         kf:last-end end)
-  (save-excursion
-    (let ((start (region-beginning))
-          (e (region-end)))
-      (goto-char e)
-      (if (= (char-before) ?\n)
-          (insert end "\n")
-        (insert "\n" end "\n"))
-      (goto-char start)
-      (insert begin "\n"))))
+
+  (if (not (use-region-p))
+      (user-error "リージョンが選択されていません")
+    (let* ((start (region-beginning))
+           (e (region-end))
+           (has-outer-block nil)
+           (outer-beg-pos nil)
+           (outer-end-pos nil))
+
+      ;; --- 鉄壁の既存マークアップ（外枠）事前検知ロジック ---
+      (save-excursion
+        ;; 1. リージョンの直前に "#+begin_" で始まる行があるかチェック
+        (goto-char start)
+        (forward-line -1)
+        (let ((prev-line (buffer-substring-no-properties (line-beginning-position) (line-end-position))))
+          (when (string-match-p "^\\s-*#\\+begin_" prev-line)
+            (setq outer-beg-pos (cons (line-beginning-position) (1+ (line-end-position))))))
+
+        ;; 2. リージョンの直後に "#+end_" で始まる行があるかチェック
+        (goto-char e)
+        ;; リージョン末尾が改行コード自体を掴んでいる場合の補正
+        (when (and (= (char-before) ?\n) (< start (point))) (forward-char -1))
+        (forward-line 1)
+        (let ((next-line (buffer-substring-no-properties (line-beginning-position) (line-end-position))))
+          (when (string-match-p "^\\s-*#\\+end_" next-line)
+            (setq outer-end-pos (cons (line-beginning-position) (if (eobp) (line-end-position) (1+ (line-end-position))))))))
+
+      ;; 上下の両方にマーカーが存在していれば、パージ（置換）モードを確定
+      (setq has-outer-block (and outer-beg-pos outer-end-pos))
+
+      ;; --- 本番のテキスト変形処理 ---
+      (save-excursion
+        (if has-outer-block
+            ;; 【パターンA】上下の古いマークアップを消し去って、ダイレクトに上書き（添付3の挙動）
+            (let ((content (buffer-substring-no-properties start e)))
+              ;; 終了タグ行を削除
+              (delete-region (car outer-end-pos) (cdr outer-end-pos))
+              ;; 開始タグ行からコンテンツ末尾までを一旦すべて削除して綺麗にする
+              (delete-region (car outer-beg-pos) e)
+              ;; 新しい定義で再配置
+              (goto-char (car outer-beg-pos))
+              (insert begin "\n" content)
+              ;; コンテンツ末尾が改行で終わっていない場合の安全な改行補正
+              (if (= (char-before) ?\n) (insert end "\n") (insert "\n" end "\n"))
+              (message "既存のブロック構造を %s に昇格・置換しました。" begin))
+
+          ;; 【パターンB】周囲に何もないため、通常の新規挿入を行う（添付1から2への安全な移行）
+          (goto-char e)
+          (if (= (char-before) ?\n)
+              (insert end "\n")
+            (insert "\n" end "\n"))
+          (goto-char start)
+          (insert begin "\n")
+          (message "新しく %s ブロックを適用しました。" begin))))))
 
 ;; GUID: kf990e5f-9e2c-41f6-b8c3-a3d2f5b6c8fd
 ;; ========================================================================
