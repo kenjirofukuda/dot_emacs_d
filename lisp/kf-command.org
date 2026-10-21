@@ -463,66 +463,62 @@ arumojiretu
 #+begin_src elisp :tangle yes
 ;; GUID: kf990e5f-9e2c-41f6-b8c3-a3d2f5b6c8fd
 ;; ========================================================================
-;; 外部コマンド連携による文字化け・正規表現エラー皆無のMarkdown→Org変換ペースト
+;; pandoc外部ツールおよび一時ファイル連携による確実なMarkdown→Org変換ペースト
 ;; ========================================================================
 
 (defun kf:paste-markdown-as-org ()
-  "クリップボードのMarkdownを外部コマンド経由でUTF-8として安全に取得し、Org文法に変換して挿入します。"
+  "クリップボードのMarkdownを、外部ツールpandocを利用して確実にOrg文法に変換して挿入します。"
   (interactive)
-  (let* ((cmd (cond
-               ((executable-find "wl-paste") "wl-paste -t text/plain")
-               ((executable-find "xclip") "xclip -selection clipboard -o -t UTF8_STRING")
-               (t nil)))
-         (text (when cmd
-                 (let ((coding-system-for-read 'utf-8))
-                   (shell-command-to-string cmd)))))
+  (let* (;; 1. システムに応じた一時ディレクトリ内のユニークなファイルパスを確定
+         ;; 質問者様の構成済み一時領域（my-temporary-dir）を活用します
+         (temp-dir (file-name-as-directory my-temporary-dir))
+         (md-file (concat temp-dir "clipboard_input.md"))
+         (org-file (concat temp-dir "clipboard_output.org"))
 
-    (if (and text (not (string-empty-p text)))
-        (with-temp-buffer
-          ;; バッファのマルチバイト属性を明示的に保証
-          (set-buffer-multibyte t)
-          (insert text)
+         ;; 2. 環境に存在する最適なクリップボード取得コマンドを確定
+         (clip-cmd (cond
+                    ((executable-find "wl-paste") "wl-paste -t text/plain")
+                    ((executable-find "xclip") "xclip -selection clipboard -o -t UTF8_STRING")
+                    (t nil))))
 
-          ;; 1. 見出しの置換 (^#+ タイトル -> * タイトル)
-          ;; タイトル文字列全体を正確にグループ2でキャプチャします
-          (goto-char (point-min))
-          (while (re-search-forward "^\\(#+\\) +.*\$" nil t)
-            (let* ((hashes (match-string 1))
-                   (title (match-string 2))
-                   (stars (make-string (length hashes) ?*)))
-              (replace-match (concat stars " " title) t t)))
+    ;; 事前に一時ディレクトリの存在を保証
+    (make-directory temp-dir t)
 
-          ;; 2. 太字の置換 (**text** -> *text*)
-          (goto-char (point-min))
-          (while (re-search-forward "\\*\\*\\([^* \n][^*]*?[^* \n]\\)\\*\\*" nil t)
-            (replace-match "*\\1*"))
+    (if (and clip-cmd (executable-find "pandoc"))
+        ;; 3. クリップボードから生データをUTF-8テキストとして一時ファイルへ確実に書き出し
+        (let ((coding-system-for-read 'utf-8)
+              (coding-system-for-write 'utf-8)
+              (raw-markdown (shell-command-to-string clip-cmd)))
 
-          ;; 3. インラインコードの置換 (`code` -> ~code~)
-          (goto-char (point-min))
-          (while (re-search-forward "`\\([^`\n]+?\\)`" nil t)
-            (replace-match "~\\1~"))
+          (if (and raw-markdown (not (string-empty-p raw-markdown)))
+              (progn
+                ;; Markdownの生データをファイルへ書き出し
+                (with-temp-file md-file
+                  (insert raw-markdown))
 
-          ;; 4. リンクの置換 ([text](URL) -> [[URL][text]])
-          (goto-char (point-min))
-          (while (re-search-forward "\\[\\([^]]+\\)\\](\\([^)]+\\))" nil t)
-            (replace-match "[[\\2][\\1]]" t t))
+                ;; 4. pandoc外部プロセスを呼び出し、MarkdownからOrg-modeへ超高精度に変換
+                ;; --wrap=none を付加することで、日本語の単語境界で意図しない改行が挟まるのを防ぎます
+                (shell-command (format "pandoc -f markdown -t org %s -o %s --wrap=none"
+                                       (shell-quote-argument md-file)
+                                       (shell-quote-argument org-file)))
 
-          ;; 5. コードブロックの置換 (```lang ... ``` -> #+begin_src)
-          ;; エラーの原因となっていた複雑なネストを廃止し、最も安全なマルチライン最短一致に変更
-          (goto-char (point-min))
-          (while (re-search-forward "^```\\([a-zA-Z0-9_-]*\\)\n\\([^\0]*?\\)^```" nil t)
-            (let ((lang (match-string 1))
-                  (body (match-string 2)))
-              (if (string-empty-p lang)
-                  (replace-match (format "#+begin_example\n%s#+end_example" body) t t)
-                (replace-match (format "#+begin_src %s\n%s#+end_src" lang body) t t))))
+                ;; 5. 変換されたOrgファイルをマルチバイトを維持したままバッファへ流し込み
+                (if (file-exists-p org-file)
+                    (let ((converted-content (with-temp-buffer
+                                               (insert-file-contents org-file)
+                                               (buffer-string))))
 
-          ;; 6. 変換結果のバッファ挿入処理
-          (let ((converted (buffer-string)))
-            (with-current-buffer (current-buffer)
-              (insert converted)
-              (message "MarkdownからOrg文法への完全な変換ペーストが完了しました。"))))
-      (message "エラー：外部コマンドによるクリップボードからのUTF-8テキスト取得に失敗しました。"))))
+                      ;; 現在開いているカレントバッファのカーソル位置へダイレクト挿入
+                      (insert converted-content)
+                      (message "pandocを介した高精度なOrg文法変換ペーストが成功しました。")
+
+                      ;; 使用済みの一時ファイルを安全にクリーンアップ
+                      (ignore-errors
+                        (delete-file md-file)
+                        (delete-file org-file)))
+                  (message "エラー：pandocによるOrgファイルの生成に失敗しました。")))
+            (message "エラー：クリップボードから有効なテキストデータを取得できませんでした。")))
+      (message "エラー：システムに xclip/wl-clipboard または pandoc が見つかりません。"))))
 #+end_src
 
 
