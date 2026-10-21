@@ -226,5 +226,55 @@ Debian環境でpolkitが設定されている場合は、グラフィカル、�
       (goto-char start)
       (insert begin "\n"))))
 
+;; GUID: kf990e5f-9e2c-41f6-b8c3-a3d2f5b6c8fd
+;; ========================================================================
+;; クリップボードのマークダウン（見出し対応版）をOrg-mode文法に自動変換してペースト
+;; ========================================================================
+
+(defun kf:paste-markdown-as-org ()
+  "クリップボード内のMarkdownテキストを取得し、見出しを含む文法をOrg-modeに変換して挿入します。"
+  (interactive)
+  (let ((text (gui-get-selection 'CLIPBOARD 'STRING)))
+    (if (and text (not (string-empty-p text)))
+        (with-temp-buffer
+          ;; 1. 一時バッファにクリップボードのテキストを挿入
+          (insert text)
+          (goto-char (point-min))
+
+          ;; 2. マークダウンの見出し (^#+ ) を Orgの見出し (* ) に動的変換
+          ;; 行頭の # の数をカウントし、同じ数の * に置換します
+          (while (re-search-forward "^\\(#+\\) +.*\$" nil t)
+            (let* ((hashes (match-string 1))
+                   (title-text (match-string 2))
+                   (stars (make-string (length hashes) ?*)))
+              (replace-match (concat stars title-text) t t)))
+          (goto-char (point-min))
+
+          ;; 3. マークダウンの太字 (**text**) を Orgの強調 (*text*) に変換
+          (while (re-search-forward "\\*\\*\\([^* \n][^*]*?[^* \n]\\)\\*\\*" nil t)
+            (replace-match "*\\1*"))
+          (goto-char (point-min))
+
+          ;; 4. マークダウンのインラインコード (`code`) を Orgのコード (~code~) に変換
+          (while (re-search-forward "`\\([^`\n]+?\\)`" nil t)
+            (replace-match "~\\1~"))
+          (goto-char (point-min))
+
+          ;; 5. マークダウンのコードブロック (```lang ... ```) を Org-babel (#+begin_src) に変換
+          (while (re-search-forward "^```\\([a-zA-Z0-9_-]*\\)\n\\(\\(?:\n\Vert{}.\\)*?\\)```" nil t)
+            (let ((lang (match-string 1))
+                  (body (match-string 2)))
+              (if (string-empty-p lang)
+                  (replace-match (format "#+begin_example\n%s#+end_example" body) t t)
+                (replace-match (format "#+begin_src %s\n%s#+end_src" lang body) t t))))
+
+          ;; 6. 変換後のテキストを現在のOrgバッファのカーソル位置へ挿入
+          (let ((converted-text (buffer-string)))
+            (with-current-buffer (current-buffer)
+              (insert converted-text)
+              (message "Markdownの見出し・コードをOrg文法へ変換してペーストしました。"))))
+      (message "エラー：クリップボードが空か、有効なテキストデータがありません。"))))
+
+
 (message "kf-command loaded...")
 (provide 'kf-command)
