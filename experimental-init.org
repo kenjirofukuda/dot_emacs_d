@@ -3453,6 +3453,17 @@ cat ~/.emacs.d/emacs-cleanup-userdefined.txt
   (add-to-list 'org-export-filter-body-functions 'my-org-html-translate-no-filter))
 #+end_src
 
+* クリップボードイメージの挿入
+#+begin_src elisp :tangle yes
+;; 既存の静的確定エリアや autoload 登録エリアに追加
+(autoload 'kf:insert-clipboard-image "kf-command" "Save and insert clipboard image into Org buffer." t)
+
+;; 例：C-c C-x v または使い慣れたキーマップへ静的バインド
+(with-eval-after-load 'org
+  (define-key org-mode-map (kbd "C-c C-x v") 'kf:insert-clipboard-image))
+
+#+end_src
+
 * 末尾
 #+BEGIN_SRC elisp :tangle yes
 (setq org-startup-folded t)
