@@ -510,7 +510,7 @@ arumojiretu
 
 
 * 大文字単語の抽出
-#+begin_src elisp
+#+begin_src elisp :tangle yes
 (defun kf:extract-uppercase-words ()
   "現在開いているバッファから、2文字以上のすべて大文字の単語を重複なく抽出し、
 別バッファにソートして出力します。"
@@ -644,7 +644,7 @@ arumojiretu
 #+end_src
 
 * org-block内のコンテンツリージョンを選択する
-#+begin_src elisp
+#+begin_src elisp :tangle yes
 ;; GUID: kf550c4e-5d6a-7b8c-9d0e-1f2a3b4c5d6f
 ;; ========================================================================
 ;; パース状態に依存せずブロックの内側を100%確実にリージョン選択するコマンド（修正版）
@@ -691,7 +691,7 @@ arumojiretu
 #+end_src
 
 * AI回答をソースブロック化
-#+begin_src elisp
+#+begin_src elisp :tangle yes
 ;; GUID: kf0b2c3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d
 ;; ========================================================================
 ;; 【文字単位完全固定】1文字もコードを失わない定型コード自動Srcブロック化コマンド
@@ -759,7 +759,7 @@ arumojiretu
 #+end_src
 
 * AI 回答をテーブル化
-#+begin_src elisp
+#+begin_src elisp :tangle yes
 ;; GUID: kfc50f88-7a8b-9c0d-1e2f-3a4b5c6d7e8f
 ;; ========================================================================
 ;; 【完全固定版】タブ区切りテキストの自動Orgテーブル変換コマンド（バグ完全根絶版）

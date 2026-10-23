@@ -300,6 +300,33 @@ Debian環境でpolkitが設定されている場合は、グラフィカル、�
           (insert begin "\n")
           (message "新しく %s ブロックを適用しました。" begin))))))
 
+(defun kf:extract-uppercase-words ()
+  "現在開いているバッファから、2文字以上のすべて大文字の単語を重複なく抽出し、
+別バッファにソートして出力します。"
+  (interactive) ; これがあることで M-x からコマンドとして呼び出せるようになります
+  (let ((words '())
+        (case-fold-search nil) ; 大文字小文字を厳密に区別する
+        (current-buf-name (buffer-name)))
+    (save-excursion
+      (goto-char (point-min))
+      ;; 2文字以上の大文字（およびアンダースコア）のみを検索
+      (while (re-search-forward "\\_<[A-Z_]\\{2,\\}\\_>" nil t)
+        (add-to-list 'words (match-string-no-properties 0))))
+
+    ;; 抽出結果を入れるバッファの作成と出力
+    (if words
+        (let ((output-buf (get-buffer-create "*Extracted Words*")))
+          (with-current-buffer output-buf
+            (erase-buffer)
+            ;; 読みやすさのためにヘッダー（コメント）を挿入
+            (insert (format ";; Extracted from %s\n" current-buf-name))
+            (insert (mapconcat 'identity (sort words 'string<) "\n"))
+            (insert "\n"))
+          (pop-to-buffer output-buf)
+          (message "すべて大文字の単語を %d 件抽出しました。" (length words)))
+      (message "すべて大文字の単語は見つかりませんでした。"))))
+
+
 ;; GUID: kf990e5f-9e2c-41f6-b8c3-a3d2f5b6c8fd
 ;; ========================================================================
 ;; ラインパーサー方式による文字化け・エラー皆無のMarkdown→Org変換ペースト
@@ -396,6 +423,181 @@ Debian環境でpolkitが設定されている場合は、グラフィカル、�
               (message "画像を保存・挿入しました: %s" img-name))
           (message "エラー：クリップボードに有効な画像データが見つからないか、抽出に失敗しました。")))
     (message "この操作は Org-mode のバッファでのみ実行可能です。")))
+
+;; GUID: kf550c4e-5d6a-7b8c-9d0e-1f2a3b4c5d6f
+;; ========================================================================
+;; パース状態に依存せずブロックの内側を100%確実にリージョン選択するコマンド（修正版）
+;; ========================================================================
+(defun kf:select-org-block-content ()
+  "現在のカーソルが属する Org ブロックの内側のコンテンツ範囲を、パース状態に関わらず確実に選択します。"
+  (interactive)
+  (if (not (derived-mode-p 'org-mode))
+      (user-error "このコマンドは Org-mode でのみ利用可能です")
+    (let* ((element (org-element-at-point))
+           (type (org-element-type element)))
+      ;; 対象が各種ブロック要素である場合のみ実行
+      (if (memq type '(src-block example-block quote-block special-block center-block comment-block verse-block))
+          (let ((element-beg (org-element-property :begin element))
+                (element-end (org-element-property :end element))
+                (beg nil)
+                (end nil))
+            (save-excursion
+              ;; 1. ブロックの開始位置から、最初の #+begin_ 行の「次の行の先頭」をコンテンツ開始位置とする
+              (goto-char element-beg)
+              (while (and (< (point) element-end)
+                          (not (looking-at "^\\s-*#\\+begin_")))
+                (forward-line 1))
+              (forward-line 1)
+              (setq beg (point))
+
+              ;; 2. ブロックの終了位置から、直前の #+end_ 行の「行頭（＝中身の改行終端）」をコンテンツ終了位置とする
+              (goto-char element-end)
+              ;; ブロック末尾の空白や改行を安全にスキップして #+end_ を探す
+              (while (and (> (point) beg)
+                          (not (looking-at "^\\s-*#\\+end_")))
+                (forward-line -1))
+              (setq end (point)))
+
+            ;; 3. 計算された確定ポイントで確実にリージョンを選択
+            (if (and beg end (< beg end))
+                (progn
+                  (goto-char beg)
+                  (push-mark end t t)
+                  (activate-mark)
+                  (message "ブロック内のコンテンツ（%d〜%d）を確実に選択しました。" beg end))
+              (user-error "ブロックの中身が空、または範囲を特定できませんでした")))
+        (user-error "カーソルが Org ブロックの内部にありません")))))
+
+;; GUID: kf0b2c3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d
+;; ========================================================================
+;; 【文字単位完全固定】1文字もコードを失わない定型コード自動Srcブロック化コマンド
+;; ========================================================================
+(defun kf:convert-plain-code-to-src-block ()
+  "カーソル位置のブロックを全自動で解析し、コードの末尾のカッコを完全に維持して #+begin_src に構造化します。"
+  (interactive)
+  (if (not (derived-mode-p 'org-mode))
+      (user-error "このコマンドは Org-mode のバッファでのみ実行可能です")
+    (let ((case-fold-search nil)
+          (end-marker "^コードは注意してご使用ください。")
+          (beg-pos nil)
+          (end-pos nil)
+          (lang-name nil)
+          (content ""))
+
+      (save-excursion
+        (beginning-of-line)
+        ;; 1. カーソル位置から「下方向」へ、一番近い定型文（終了マーカー）を探す
+        (if (re-search-forward end-marker nil t)
+            (progn
+              ;; 終了マーカーの「行末（改行含む全体）」を削除対象の終端（end-pos）とする
+              (setq end-pos (match-end 0))
+
+              ;; 🚨 【バグ対策】コードの本当の末尾（注意文の直前の行の末尾）の位置を厳密に保持
+              (goto-char (match-beginning 0))
+              (let ((code-end-point (point)))
+
+                ;; 2. そこから「上方向」へ1行ずつ遡り、本物の言語名（アルファベット単独行）を探す
+                (let ((searching t))
+                  (while (and searching (not (bobp)))
+                    (forward-line -1)
+                    (let ((cur-line (string-trim (buffer-substring-no-properties (line-beginning-position) (line-end-position)))))
+                      ;; コメントや記号を含まない、完全にアルファベット・数字・ハイフン等の「1単語のみの行」
+                      (when (and (not (string-empty-p cur-line))
+                                 (string-match-p "^[a-zA-Z0-9_-]+$" cur-line))
+                        (setq lang-name cur-line)
+                        ;; 言語名行の「行頭」を削除対象の先頭（beg-pos）とする
+                        (setq beg-pos (line-beginning-position))
+
+                        ;; 🚨 【バグ対策】言語名の「次の行の行頭」から、注意文の「直前の行の末尾」までを
+                        ;; 文字数ベースで完璧に安全退避（content）。行移動による誤差を完全に根絶。
+                        (save-excursion
+                          (goto-char (line-end-position))
+                          (forward-char 1)
+                          (setq content (buffer-substring-no-properties (point) code-end-point)))
+                        (setq searching nil)))))))
+          (user-error "下方に終了マーカー『コードは注意してご使用ください。』が見つかりませんでした")))
+
+      ;; --- 文字ポイントが完全に一致した場合のみ一括置換を実行 ---
+      (if (and beg-pos end-pos lang-name)
+          (save-excursion
+            ;; 検出した範囲（言語名から定型文全体まで）を一括パージ
+            (delete-region beg-pos end-pos)
+            (goto-char beg-pos)
+            ;; 退避させておいた純粋なコンテンツを一切損なわずにソースブロックとして再配置
+            (insert (format "#+begin_src %s\n" (downcase lang-name)))
+            (insert content)
+            ;; コンテンツ末尾に必ず改行を維持して美しく閉じる
+            (unless (= (char-before) ?\n)
+              (insert "\n"))
+            (insert "#+end_src\n")
+            (message "コード末尾のカッコを完全に維持し、#+begin_src %s へ構造化しました！" lang-name))
+        (user-error "上方の言語名（開始行）の自動検知に失敗しました。ファイル構造保護のため中断します")))))
+
+;; GUID: kfc50f88-7a8b-9c0d-1e2f-3a4b5c6d7e8f
+;; ========================================================================
+;; 【完全固定版】タブ区切りテキストの自動Orgテーブル変換コマンド（バグ完全根絶版）
+;; ========================================================================
+(defun kf:convert-plain-table-to-org-table ()
+  "現在のカーソル位置から上下に連続するタブ（TAB）を含んだ行の塊を自動で検知し、
+Org-modeのテーブルに変換して、確実に『1行目（ヘッダー）の直下』に仕切り線を挿入します。"
+  (interactive)
+  (if (not (derived-mode-p 'org-mode))
+      (user-error "このコマンドは Org-mode のバッファでのみ利用可能です")
+    (let ((beg nil)
+          (end nil)
+          (current-guid "kfc50f88-7a8b-9c0d-1e2f-3a4b5c6d7e8f"))
+
+      ;; 1. 変換前のプレーンテキストの境界を特定する（ここは位置を戻したいのでsave-excursionを使用）
+      (save-excursion
+        (beginning-of-line)
+        (if (not (string-match-p "\t" (buffer-substring-no-properties (line-beginning-position) (line-end-position))))
+            (user-error "現在の行にタブ（TAB）が見つかりません")
+
+          (let ((searching t))
+            (while (and searching (not (bobp)))
+              (let ((cur-line (buffer-substring-no-properties (line-beginning-position) (line-end-position))))
+                (if (and (not (string-empty-p cur-line))
+                         (string-match-p "\t" cur-line))
+                    (forward-line -1)
+                  (forward-line 1)
+                  (setq searching nil))))
+            (setq beg (line-beginning-position)))
+
+          (goto-char beg)
+          (let ((searching t))
+            (while (and searching (not (eobp)))
+              (let ((cur-line (buffer-substring-no-properties (line-beginning-position) (line-end-position))))
+                (if (and (not (string-empty-p cur-line))
+                         (string-match-p "\t" cur-line))
+                    (forward-line 1)
+                  (setq searching nil))))
+            (setq end (line-beginning-position)))))
+
+      ;; --- 2. テーブル変換と線引き処理（ここからはsave-excursionを完全排除） ---
+      (when (and beg end (< beg end))
+        ;; 領域を指定して Org-mode 標準のテーブル変換を実行
+        (org-table-convert-region beg end '(16))
+
+        ;; 🚨【バグの根本原因のパージ】
+        ;; 変換後のバッファの先頭（1行目）の位置へと、何の制約（save-excursion）もなく完全に移動
+        (goto-char beg)
+        (forward-line 0)
+
+        (if (org-at-table-p)
+            (progn
+              ;; 確実にテーブルの最上部（1行目 A B C の行頭）にカーソルを固定
+              (goto-char (org-table-begin))
+              ;; そこから物理的に「1行だけ」下に進めて、正真正銘の2行目（D E F の行頭）にカチッと着地
+              (forward-line 1)
+
+              ;; 2行目の行頭で実行することで、その「直上（＝1行目のすぐ下）」に確実に水平仕切り線が挿入されます
+              (org-table-insert-hline)
+              ;; 最後にテーブル全体をきれいに再整列
+              (org-table-align)
+
+              ;; 新しい固有GUIDを含んだ完了メッセージを出力
+              (message "Executed: kf:convert-plain-table-to-org-table [GUID: %s] -> ヘッダー仕切りを完璧に挿入しました！" current-guid))
+          (message "警告: テーブル変換は行われましたが、Orgテーブル構造として認識されませんでした。"))))))
 
 (message "kf-command loaded...")
 (provide 'kf-command)
