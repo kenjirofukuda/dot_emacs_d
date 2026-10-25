@@ -405,8 +405,14 @@ Debian環境でpolkitが設定されている場合は、グラフィカル、�
              (full-path (concat target-dir img-name))
              ;; 保存用ディレクトリ、およびクリップボード抽出コマンドの確定
              (cmd (cond
-                   ((executable-find "wl-paste") (format "wl-paste -t image/png > %S" full-path))
-                   ((executable-find "xclip") (format "xclip -selection clipboard -t image/png -o > %S" full-path))
+                    ((and
+                       (eq (frame-parameter nil 'window-system) 'pgtk)
+                       (executable-find "wl-paste"))
+                      (format "wl-paste -t image/png > %S" full-path))
+                    ((and
+                       (eq (frame-parameter nil 'window-system) 'x)
+                       (executable-find "xclip"))
+                     (format "xclip -selection clipboard -t image/png -o > %S" full-path))
                    (t nil))))
 
         ;; 1. 保存先ディレクトリ（~/Pictures/Screenshots/）の存在を保証

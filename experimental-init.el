@@ -1786,6 +1786,14 @@
 (with-eval-after-load 'ox
   (add-to-list 'org-export-filter-body-functions 'my-org-html-translate-no-filter))
 
+;; 既存の静的確定エリアや autoload 登録エリアに追加
+(autoload 'kf:insert-clipboard-image "kf-command" "Save and insert clipboard image into Org buffer." t)
+
+;; 例：C-c C-x v または使い慣れたキーマップへ静的バインド
+(with-eval-after-load 'org
+  (define-key org-mode-map (kbd "C-c C-x v") 'kf:insert-clipboard-image))
+
+
 (setq org-startup-folded t)
 
 (setq custom-file (options-file-name))
