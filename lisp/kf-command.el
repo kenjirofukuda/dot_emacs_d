@@ -605,5 +605,71 @@ Org-modeのテーブルに変換して、確実に『1行目（ヘッダー）�
               (message "Executed: kf:convert-plain-table-to-org-table [GUID: %s] -> ヘッダー仕切りを完璧に挿入しました！" current-guid))
           (message "警告: テーブル変換は行われましたが、Orgテーブル構造として認識されませんでした。"))))))
 
+;; GUID: kf05dlang-dap-api-match-20261026
+;; ========================================================================
+;; D言語用：DAPテンプレート強制インジェクト＆内部仕様適合起動コマンド
+;; ========================================================================
+
+(defun kf:dap-dlang-ensure-project-template ()
+  "現在開いているバッファのdubプロジェクト名を解析し、DAPデバッグテンプレートを動的に登録して即座に起動します。"
+  (interactive)
+  ;; 成功の有無に関わらず、GUIDを即座にmessage出力
+  (message "[GUID: kf:dap-dlang-ensure-project-template-v20261026-api]")
+
+  (let* ((proj-root (if (fboundp 'projectile-project-root)
+                        (projectile-project-root)
+                      default-directory))
+         (dub-json-path (expand-file-name "dub.json" proj-root))
+         (dub-sdl-path (expand-file-name "dub.sdl" proj-root))
+         (project-name nil))
+
+    ;; 1. マニフェストファイルからプロジェクト名の抽出
+    (cond
+     ((file-exists-p dub-json-path)
+      (with-temp-buffer
+        (insert-file-contents dub-json-path)
+        (goto-char (point-min))
+        (when (re-search-forward "\"name\"\\s-*:\\s-*\"\\([^\"]+\\)\"" nil t)
+          (setq project-name (match-string 1)))))
+     ((file-exists-p dub-sdl-path)
+      (with-temp-buffer
+        (insert-file-contents dub-sdl-path)
+        (goto-char (point-min))
+        (when (re-search-forward "^\\s-*name\\s-+\"\\([^\"]+\\)\"" nil t)
+          (setq project-name (match-string 1))))))
+
+    ;; 2. ファイルから取れなかった場合はディレクトリ名でフォールバック
+    (unless project-name
+      (setq project-name (file-name-nondirectory (directory-file-name proj-root))))
+
+    ;; 3. テンプレートの強制生成とインジェクト
+    (if project-name
+        (let* ((binary-path (expand-file-name project-name proj-root))
+               (template-name (format "Dlang :: Run debug (%s)" project-name)))
+
+          ;; 動的な設定マップへの登録処理
+          (dap-register-debug-template
+           template-name
+           (list :type "gdb"
+                 :request "launch"
+                 :name template-name
+                 :target binary-path
+                 :cwd proj-root
+                 :dap-compilation "dub build --build=debug"))
+
+          (message "[SUCCESS] DAPデバッグテンプレート '%s' を確立しました。" template-name)
+
+          ;; 💡【解決対策】dap-debug の内部仕様に完全に適合させます。
+          ;; 登録済みの設定名を直接呼び出す場合は、リスト構造ではなく plist のフラットな形式で
+          ;; :config 引数に登録したテンプレート名を文字列で引き渡すのが正しいAPI呼び出しとなります。
+          (dap-debug (list :config template-name)))
+
+      (error "エラー: プロジェクトルートまたはマニフェストファイルを特定できませんでした"))))
+
+
+;; 💡 静的確定エリアへのキーバインド登録例（例として C-c l d A にバインド）
+(with-eval-after-load 'd-mode
+  (define-key d-mode-map (kbd "C-c l d A") 'kf:dap-dlang-ensure-project-template))
+
 (message "kf-command loaded...")
 (provide 'kf-command)

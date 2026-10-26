@@ -1144,10 +1144,20 @@
 (use-package d-mode
   )
 
+;; GUID: db05dlang-iron-compile-20261026(から抜粋)
+;; ========================================================================
+;; ANSIカラーパース構成
+;; ========================================================================
+
+(with-eval-after-load 'compile
+  ;; 1. compilation バッファの端末制御コード（エスケープシーケンス）を綺麗にパースして着色
+  (add-hook 'compilation-filter-hook #'ansi-color-compilation-filter))
+
 (add-hook 'c-mode-hook
           (lambda ()
             (set (make-local-variable 'compile-command)
                  (format "gcc -g %s -o %s" (file-name-nondirectory buffer-file-name) (file-name-sans-extension (file-name-nondirectory buffer-file-name))))))
+
 (defun dylan:exec-name ()
   (concat (file-name-directory buffer-file-name)
           "/_build/bin/"
@@ -1157,6 +1167,41 @@
             (set (make-local-variable 'compile-command)
                  (format "deft build --all && echo '' && %s"
                          (dylan:exec-name)))))
+
+;; GUID: db05dlang-iron-compile-20261026(ANSIカラーパースは独立させた)
+;; ========================================================================
+;; D言語用：プロジェクトルート自動追従型 dub 実行
+;; ========================================================================
+(defun kf:dub-compile-smart-run ()
+  "常にプロジェクトのルートディレクトリに遡って非同期に `dub run` を実行します。"
+  (interactive)
+  (let* ((proj-root (if (fboundp 'projectile-project-root)
+                        (projectile-project-root)
+                      default-directory))
+         ;; 保存先（default-directory）を一時的にプロジェクトルートへ束縛
+         (default-directory (expand-file-name proj-root))
+         (compile-command "dub run"))
+    (call-interactively 'compile)))
+
+(defun kf:dub-compile-smart-test ()
+  "常にプロジェクトのルートディレクトリに遡って非同期に `dub test` を実行します。"
+  (interactive)
+  (let* ((proj-root (if (fboundp 'projectile-project-root)
+                        (projectile-project-root)
+                      default-directory))
+         (default-directory (expand-file-name proj-root))
+         (compile-command "dub test"))
+    (call-interactively 'compile)))
+
+;; 2. d-mode 起動時のフックバインド
+(add-hook 'd-mode-hook
+          (lambda ()
+            ;; 起動時にAIのGUIDmessage制約をクリア
+            (message "[GUID: kf:dub-compile-smart-run-v2026]")
+
+            ;; ターミナル不要：プロジェクトルートに自動追従するキーバインド
+            (local-set-key (kbd "C-c C-c b") 'kf:dub-compile-smart-run)
+            (local-set-key (kbd "C-c C-c t") 'kf:dub-compile-smart-test)))
 
 (use-package dylan
   )
