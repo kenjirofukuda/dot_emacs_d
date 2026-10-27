@@ -1651,6 +1651,16 @@
     (gptel-make-gemini "Gemini" :key (lambda () (getenv "GEMINI_API_KEY")) :models gemini-models-table :stream t))
   )
 
+  ;; ========================================================================
+  ;; Ollama ローカルバックエンド連携 (F9 g / F9 s でローカルAI駆動)
+  ;; ========================================================================
+  (when (executable-find "ollama")
+    (gptel-make-ollama "Ollama"
+      :host "localhost:11434"
+      :stream t
+      :models '((qwen2.5:7b :description "Qwen 2.5 7B (現在ダウンロード中)")
+                (deepseek-r1:7b :description "DeepSeek R1 7B (Reasoningモデル)"))))
+
 ;; GUID: kf880d4f-9e2c-41f6-b8c3-a3d2f5b6c8fb
 ;; ========================================================================
 ;; gptel: 複数ファイルのプロパティ指定に対応した動的コンテキスト結合ロード（最新版対応）
@@ -1696,7 +1706,6 @@
 ;; 3. 【修正版】画像処理バックエンド（org-download）の構成
 ;; ========================================================================
 (use-package org-download
-
   :after org
   :config
   ;; ユーザー環境の my-temporary-dir 変数から動的に一時領域のパスをセット
@@ -1838,6 +1847,23 @@
 (with-eval-after-load 'org
   (define-key org-mode-map (kbd "C-c C-x v") 'kf:insert-clipboard-image))
 
+
+;; GUID: rs202610-7f5a-496a-8b2c-e3d2f5b6c8d4
+;; ========================================================================
+;; Rust 開発環境の安全な遅延 LSP 構成（rust-mode 起動時に lsp をトリガー）
+;; ========================================================================
+(use-package rust-mode
+  :defer t
+  :mode "\\.rs\\'"
+  :hook (rust-mode . lsp-deferred)
+  :config
+  ;; 保存時に自動で rustfmt による整形を確定させる
+  (setq rust-format-on-save t))
+
+;; rust-analyzer 側の詳細設定（lsp-mode がロードされた後に適用）
+(with-eval-after-load 'lsp-mode
+  ;; クロップ表示などの挙動調整（必要に応じて）
+  (setq lsp-rust-analyzer-server-display-inlay-hints t))
 
 (setq org-startup-folded t)
 

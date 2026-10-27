@@ -3290,6 +3290,16 @@ https://github.com/hlissner/emacs-pug-mode
     (gptel-make-gemini "Gemini" :key (lambda () (getenv "GEMINI_API_KEY")) :models gemini-models-table :stream t))
   )
 
+  ;; ========================================================================
+  ;; Ollama ローカルバックエンド連携 (F9 g / F9 s でローカルAI駆動)
+  ;; ========================================================================
+  (when (executable-find "ollama")
+    (gptel-make-ollama "Ollama"
+      :host "localhost:11434"
+      :stream t
+      :models '((qwen2.5:7b :description "Qwen 2.5 7B (現在ダウンロード中)")
+                (deepseek-r1:7b :description "DeepSeek R1 7B (Reasoningモデル)"))))
+
 ;; GUID: kf880d4f-9e2c-41f6-b8c3-a3d2f5b6c8fb
 ;; ========================================================================
 ;; gptel: 複数ファイルのプロパティ指定に対応した動的コンテキスト結合ロード（最新版対応）
@@ -3335,7 +3345,6 @@ https://github.com/hlissner/emacs-pug-mode
 ;; 3. 【修正版】画像処理バックエンド（org-download）の構成
 ;; ========================================================================
 (use-package org-download
-
   :after org
   :config
   ;; ユーザー環境の my-temporary-dir 変数から動的に一時領域のパスをセット
@@ -3520,6 +3529,38 @@ cat ~/.emacs.d/emacs-cleanup-userdefined.txt
 #+end_src
 
 
+* Rust 開発環境 (LSP / rust-analyzer)
+#+begin_src elisp :tangle yes
+;; GUID: rs202610-7f5a-496a-8b2c-e3d2f5b6c8d4
+;; ========================================================================
+;; Rust 開発環境の安全な遅延 LSP 構成（rust-mode 起動時に lsp をトリガー）
+;; ========================================================================
+(use-package rust-mode
+  :defer t
+  :mode "\\.rs\\'"
+  :hook (rust-mode . lsp-deferred)
+  :config
+  ;; 保存時に自動で rustfmt による整形を確定させる
+  (setq rust-format-on-save t))
+
+;; rust-analyzer 側の詳細設定（lsp-mode がロードされた後に適用）
+(with-eval-after-load 'lsp-mode
+  ;; クロップ表示などの挙動調整（必要に応じて）
+  (setq lsp-rust-analyzer-server-display-inlay-hints t))
+#+end_src
+
+** 💡 事前準備（ターミナルでの一瞬の作業）
+
+rust-mode 自体は straight.el が自動で取得しますが、LSPの本体である rust-analyzer は Rust ツールチェーン側から取得する必要があります。
+ダウンロードの合間などに、ターミナルで以下をサクッと実行しておいてください。
+
+#+begin_src bash :tangle no
+# asdfで管理している最新の Rust ツールチェーンに rust-analyzer コンポーネントを追加
+rustup component add rust-analyzer
+
+# asdf 側に shims を再認識させる
+asdf reshim rust
+#+end_src
 
 * 末尾
 #+BEGIN_SRC elisp :tangle yes
