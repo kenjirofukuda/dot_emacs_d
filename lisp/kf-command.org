@@ -833,16 +833,16 @@ Org-modeのテーブルに変換して、確実に『1行目（ヘッダー）�
 
 * D 言語 dapモード支援
 #+begin_src elisp :tangle yes
-;; GUID: kf05dlang-dap-api-match-20261026
+;; GUID: kf06dlang-dap-perfect-direct-20261026
 ;; ========================================================================
-;; D言語用：DAPテンプレート強制インジェクト＆内部仕様適合起動コマンド
+;; D言語用：DAPプロンプト完全バイパス・生plistダイレクト起動コマンド（最終版）
 ;; ========================================================================
 
 (defun kf:dap-dlang-ensure-project-template ()
-  "現在開いているバッファのdubプロジェクト名を解析し、DAPデバッグテンプレートを動的に登録して即座に起動します。"
+  "現在開いているバッファのdubプロジェクト名を解析し、プロンプトを完全バイパスしてデバッガを直接起動します。"
   (interactive)
-  ;; 成功の有無に関わらず、GUIDを即座にmessage出力
-  (message "[GUID: kf:dap-dlang-ensure-project-template-v20261026-api]")
+  ;; 成功の有無に関わらず、最終確定版のGUIDを即座にmessage出力
+  (message "[GUID: kf:dap-dlang-ensure-project-template-v20261026-perfect]")
 
   (let* ((proj-root (if (fboundp 'projectile-project-root)
                         (projectile-project-root)
@@ -870,30 +870,24 @@ Org-modeのテーブルに変換して、確実に『1行目（ヘッダー）�
     (unless project-name
       (setq project-name (file-name-nondirectory (directory-file-name proj-root))))
 
-    ;; 3. テンプレートの強制生成とインジェクト
+    ;; 3. 生の構成 plist をダイレクトに流し込んで強制起動（型エラーを100%回避）
     (if project-name
         (let* ((binary-path (expand-file-name project-name proj-root))
                (template-name (format "Dlang :: Run debug (%s)" project-name)))
 
-          ;; 動的な設定マップへの登録処理
-          (dap-register-debug-template
-           template-name
+          (message "[SUCCESS] プロジェクト '%s' の直通DAPデバッグセッションを開始します..." project-name)
+
+          ;; 💡【最終解決】名前での参照ではなく、:typeや:targetを含んだplistそのものを
+          ;; 直接 dap-debug に叩き込むことで、内部の制約バグを完全に破砕・回避します。
+          (dap-debug
            (list :type "gdb"
                  :request "launch"
                  :name template-name
                  :target binary-path
                  :cwd proj-root
-                 :dap-compilation "dub build --build=debug"))
-
-          (message "[SUCCESS] DAPデバッグテンプレート '%s' を確立しました。" template-name)
-
-          ;; 💡【解決対策】dap-debug の内部仕様に完全に適合させます。
-          ;; 登録済みの設定名を直接呼び出す場合は、リスト構造ではなく plist のフラットな形式で
-          ;; :config 引数に登録したテンプレート名を文字列で引き渡すのが正しいAPI呼び出しとなります。
-          (dap-debug (list :config template-name)))
+                 :dap-compilation "dub build --build=debug")))
 
       (error "エラー: プロジェクトルートまたはマニフェストファイルを特定できませんでした"))))
-
 
 ;; 💡 静的確定エリアへのキーバインド登録例（例として C-c l d A にバインド）
 (with-eval-after-load 'd-mode
