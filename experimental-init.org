@@ -3253,8 +3253,11 @@ https://github.com/hlissner/emacs-pug-mode
 ;; ========================================================================
 ;; 2. パッケージ本体（gptel）の遅延ロード構成
 ;; ========================================================================
+;; [GUID: my/gptel-init-rx-perfect-v20261028]
+;; バイトコンパイルの順序バグ(Issue #1576)を物理的に回避するため、コンパイルを一時停止します。
+;; バッファパース部分の正規表現は Profile 制約に基づき、すべて rx 構文へ完全リファクタリング。
 (use-package gptel
-
+  :straight (:host github :repo "karthink/gptel" :build (:not compile))
   :commands (gptel gptel-send gptel-menu)
   :init
   ;; 無料枠保護のため、最速かつ制限の緩い「Flash-Lite」を初期モデルに指定
@@ -3262,15 +3265,28 @@ https://github.com/hlissner/emacs-pug-mode
 
   :config
   (setq gptel-api-key-from-auth-source nil)
-  (setq gptel-default-mode 'unmarked)
+  (setq gptel-default-mode 'org-mode)
 
   ;; [Markdown -> Org 自動変換変換フック]
   (defun my/gptel-convert-md-to-org (beg end)
     (save-excursion
+      ;; 1. 太字変換の rx 構文化: **text** -> *text*
       (goto-char beg)
-      (while (re-search-forward "\\*\\*\\([^* \n][^*]*?[^* \n]\\)\\*\\*" end t) (replace-match "*\\1*"))
+      (while (re-search-forward
+              (rx "**"
+                  (group (not (any "* " "\n"))
+                         (zero-or-more (not (any "*" "\n")))
+                         (not (any "* " "\n")))
+                  "**")
+              end t)
+        (replace-match "*\\1*"))
+
+      ;; 2. インラインコード変換の rx 構文化: `code` -> ~code~
       (goto-char beg)
-      (while (re-search-forward "`\\([^`\n]+?\\)`" end t) (replace-match "~\\1~"))))
+      (while (re-search-forward
+              (rx "`" (group (one-or-more (not (any "`" "\n")))) "`")
+              end t)
+        (replace-match "~\\1~"))))
   (add-hook 'gptel-post-response-functions #'my/gptel-convert-md-to-org)
 
   ;; [長文折り返しフック]
@@ -3289,17 +3305,17 @@ https://github.com/hlissner/emacs-pug-mode
     (gptel-make-gemini "Gemini" :key (lambda () (getenv "GEMINI_API_KEY")) :models gemini-models-table :stream t))
   )
 
-  ;; ========================================================================
-  ;; Ollama ローカルバックエンド連携 (F9 g / F9 s でローカルAI駆動)
-  ;; ========================================================================
-  (when (executable-find "ollama")
-    (gptel-make-ollama "Ollama"
-      :host "localhost:11434"
-      :stream t
-      :models '((qwen2.5:7b :description "Qwen 2.5 7B )")
-		(qwen3-coder-next:latest :description "Qwen3 Coder Next")
-		(qwen2.5-coder:7b :description "Qwen Coder 2.5 7B )")
-                (deepseek-r1:7b :description "DeepSeek R1 7B (Reasoningモデル)"))))
+;; ========================================================================
+;; Ollama ローカルバックエンド連携 (F9 g / F9 s でローカルAI駆動)
+;; ========================================================================
+(when (executable-find "ollama")
+  (gptel-make-ollama "Ollama"
+    :host "localhost:11434"
+    :stream t
+    :models '((qwen2.5:7b :description "Qwen 2.5 7B )")
+	      (qwen3-coder-next:latest :description "Qwen3 Coder Next")
+	      (qwen2.5-coder:7b :description "Qwen Coder 2.5 7B )")
+              (deepseek-r1:7b :description "DeepSeek R1 7B (Reasoningモデル)"))))
 
 ;; GUID: kf880d4f-9e2c-41f6-b8c3-a3d2f5b6c8fb
 ;; ========================================================================
