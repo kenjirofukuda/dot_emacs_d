@@ -327,107 +327,139 @@ Debian環境でpolkitが設定されている場合は、グラフィカル、�
       (message "すべて大文字の単語は見つかりませんでした。"))))
 
 
+;; GUID: kf00clip-env-perfect-direct-20261028
+;; ========================================================================
+;; クロスプラットフォーム対応：ウィンドウシステム直結型クリップボード判定・取得コア
+;; ========================================================================
+
+(defun kf:get-clipboard-command-by-type (data-type)
+  "現在の `window-system' に基づき、最適なクリップボードコマンド文字列を返します。
+DATA-TYPE には 'text / \"text\" または 'image / \"image\" を指定します。"
+  ;; 起動時に確実に最新のGUIDをメッセージ出力
+  (message "[GUID: kf:get-clipboard-command-by-type-v20261028-fixed]")
+
+  (let ((ws (frame-parameter nil 'window-system))
+        ;; 引数が文字列（"text"）で来てもシンボル（'text）で来ても一意にシンボル化してガード
+        (type-sym (if (stringp data-type) (intern data-type) data-type)))
+
+    (cond
+     ;; 1. Windows環境
+     ((eq system-type 'windows-nt)
+      (if (eq type-sym 'text)
+          "powershell.exe -NoProfile -Command \"Get-Clipboard\""
+        nil))
+
+     ;; 2. macOS (Darwin) 環境
+     ((eq system-type 'darwin)
+      (if (eq type-sym 'text) "pbpaste" "pbpaste -Prefer png"))
+
+     ;; 3. Linux / BSD (Wayland環境)
+     ((or (eq ws 'pgtk)
+          (string= (getenv "XDG_SESSION_TYPE") "wayland"))
+      (if (executable-find "wl-paste")
+          (if (eq type-sym 'text) "wl-paste -t text/plain" "wl-paste -t image/png")
+        nil))
+
+     ;; 4. Linux / BSD (X11環境)
+     ((or (eq ws 'x)
+          (string= (getenv "XDG_SESSION_TYPE") "x11"))
+      (if (executable-find "xclip")
+          (if (eq type-sym 'text)
+              "xclip -selection clipboard -o -t UTF8_STRING"
+            "xclip -selection clipboard -t image/png -o")
+        nil))
+
+     ;; 5. ターミナル環境 (フォールバック)
+     t (if (eq type-sym 'text)
+           (cond ((executable-find "wl-paste") "wl-paste -t text/plain")
+                 ((executable-find "xclip") "xclip -selection clipboard -o -t UTF8_STRING")
+                 (t nil))
+         nil))))
+
 ;; GUID: kf990e5f-9e2c-41f6-b8c3-a3d2f5b6c8fd
 ;; ========================================================================
-;; ラインパーサー方式による文字化け・エラー皆無のMarkdown→Org変換ペースト
+;; ラインパーサー方式による文字化け・エラー皆無のMarkdown→Org変換ペースト（判定集約版）
 ;; ========================================================================
 
 (defun kf:paste-markdown-as-org ()
-  "クリップボードのMarkdownを安全に取得し、行単位のクリーンな置換で確実にOrg文法に変換して挿入します。"
+  "共通判定関数を介してクリップボードのMarkdownを安全に取得し、Org文法に変換して挿入します。"
   (interactive)
-  (let* ((cmd (cond
-               ((executable-find "wl-paste") "wl-paste -t text/plain")
-               ((executable-find "xclip") "xclip -selection clipboard -o -t UTF8_STRING")
-               (t nil)))
-         (text (when cmd
-                 (let ((coding-system-for-read 'utf-8))
-                   (shell-command-to-string cmd)))))
+  (message "[GUID: kf:paste-markdown-as-org-v20261028-perfect]")
+  (let ((cmd (kf:get-clipboard-command-by-type 'text)))
+    (if (not cmd)
+        (message "エラー：現在の環境で利用可能なテキストクリップボードコマンドがありません。")
+      (let ((text (let ((coding-system-for-read 'utf-8))
+                    (shell-command-to-string cmd))))
+        (if (and text (not (string-empty-p text)))
+            (with-temp-buffer
+              (set-buffer-multibyte t)
+              (insert text)
 
-    (if (and text (not (string-empty-p text)))
-        (with-temp-buffer
-          ;; バッファをマルチバイトに固定し、文字列を安全に展開
-          (set-buffer-multibyte t)
-          (insert text)
+              ;; 1. 【見出し変換】
+              (goto-char (point-min))
+              (while (re-search-forward (rx "^" (group (one-or-more "#")) (one-or-more " ") (group (zero-or-more (not "\n"))) "$") nil t)
+                (let* ((hashes (match-string 1))
+                       (title (match-string 2))
+                       (stars (make-string (length hashes) ?*)))
+                  (replace-match (concat stars " " title) t t)))
 
-          ;; 1. 【見出し変換】安全に行頭の # 列を検出し、タイトル文字列（.*）を完全に保持して * に置換
-          (goto-char (point-min))
-          (while (re-search-forward "^\\(#+\\) +.*\$" nil t)
-            (let* ((hashes (match-string 1))
-                   (title (match-string 2))
-                   (stars (make-string (length hashes) ?*)))
-              (replace-match (concat stars " " title) t t)))
+              ;; 2. 【コードブロック変換】
+              (goto-char (point-min))
+              (while (re-search-forward (rx "^```" (group (one-or-more (any alnum "_-"))) "\$") nil t)
+                (replace-match "#+begin_src \\1" t))
+              (goto-char (point-min))
+              (while (re-search-forward (rx "^```$") nil t)
+                (replace-match "#+end_src" t))
 
-          ;; 2. 【コードブロック変換】``` だけで構成される行を個別に置換（マルチライン正規表現のバグを回避）
-          ;; 行頭の ```lang を検知して #+begin_src lang に変換します
-          (goto-char (point-min))
-          (while (re-search-forward "^```\\([a-zA-Z0-9_-]+\\)$" nil t)
-            (replace-match "#+begin_src \\1" t))
-          ;; 閉じの ``` または言語指定のない ``` 行を #+end_src / #+begin_example に安全トグル置換
-          (goto-char (point-min))
-          (while (re-search-forward "^```\$" nil t)
-            (replace-match "#+end_src" t))
+              ;; 3. 【インラインコード変換】
+              (goto-char (point-min))
+              (while (re-search-forward (rx "`" (group (one-or-more (not (any "`" "\n")))) "`") nil t)
+                (replace-match "~\\1~"))
 
-          ;; 3. 【インラインコード変換】`code` -> ~code~
-          (goto-char (point-min))
-          (while (re-search-forward "`\\([^`\n]+?\\)`" nil t)
-            (replace-match "~\\1~"))
+              ;; 4. 【太字変換】
+              (goto-char (point-min))
+              (while (re-search-forward (rx "**" (group (not (any "* " "\n")) (zero-or-more (not (any "*" "\n"))) (not (any "* " "\n"))) "**") nil t)
+                (replace-match "*\\1*"))
 
-          ;; 4. 【太字変換】**text** -> *text*
-          (goto-char (point-min))
-          (while (re-search-forward "\\*\\*\\([^* \n][^*]*?[^* \n]\\)\\*\\*" nil t)
-            (replace-match "*\\1*"))
+              ;; 5. 【リンク変換】
+              (goto-char (point-min))
+              (while (re-search-forward (rx "[" (group (one-or-more (not "]"))) "]" "(" (group (one-or-more (not ")"))) ")") nil t)
+                (replace-match "[[\\2][\\1]]" t t))
 
-          ;; 5. 【リンク変換】[text](URL) -> [[URL][text]]
-          (goto-char (point-min))
-          (while (re-search-forward "\\[\\([^]]+\\)\\](\\([^)]+\\))" nil t)
-            (replace-match "[[\\2][\\1]]" t t))
-
-          ;; 6. カレントバッファへの確実な挿入
-          (let ((converted (buffer-string)))
-            (with-current-buffer (car (buffer-list))
-              (insert converted)
-              (message "MarkdownからOrg文法への確実な変換ペーストが完了しました。"))))
-      (message "エラー：クリップボードからUTF-8テキストデータを取得できませんでした。"))))
-
+              (let ((converted (buffer-string)))
+                (with-current-buffer (car (buffer-list))
+                  (insert converted)
+                  (message "MarkdownからOrg文法への確実な変換ペーストが完了しました。"))))
+          (message "エラー：クリップボードからテキストデータを取得できませんでした。"))))))
 
 ;; GUID: kf0a1b2c-3d4e-5f6a-7b8c-9d0e1f2a3b4c
 ;; ========================================================================
-;; クリップボードの画像を永続保存し、Org-modeへダイレクト挿入する汎用コマンド
+;; クリップボードの画像を永続保存し、Org-modeへダイレクト挿入する汎用コマンド（判定集約版）
 ;; ========================================================================
+
 (defun kf:insert-clipboard-image ()
-  "クリップボードのPNG画像データを ~/Pictures/Screenshots/ 配下に永続保存し、
+  "共通判定関数を介してクリップボードのPNG画像データを永続保存し、
 現在のOrgバッファのカーソル位置にインラインリンクとして挿入・表示します。"
   (interactive)
+  (message "[GUID: kf:insert-clipboard-image-v20261028-perfect]")
   (if (derived-mode-p 'org-mode)
-      (let* ((target-dir (expand-file-name "~/Pictures/Screenshots/"))
-             ;; GNOMEスクリーンショットの標準規則（ハイフン区切り）に準拠したファイル名生成
-             (img-name (format-time-string "Screenshot from %Y-%m-%d %H-%M-%S.png"))
-             (full-path (concat target-dir img-name))
-             ;; 保存用ディレクトリ、およびクリップボード抽出コマンドの確定
-             (cmd (cond
-                    ((and
-                       (eq (frame-parameter nil 'window-system) 'pgtk)
-                       (executable-find "wl-paste"))
-                      (format "wl-paste -t image/png > %S" full-path))
-                    ((and
-                       (eq (frame-parameter nil 'window-system) 'x)
-                       (executable-find "xclip"))
-                     (format "xclip -selection clipboard -t image/png -o > %S" full-path))
-                   (t nil))))
+      (let ((base-cmd (kf:get-clipboard-command-by-type 'image)))
+        (if (not base-cmd)
+            (message "エラー：現在の環境（またはOS）はクリップボード画像抽出に対応していないか、コマンドがありません。")
+          (let* ((target-dir (expand-file-name "~/Pictures/Screenshots/"))
+                 (img-name (format-time-string "Screenshot from %Y-%m-%d %H-%M-%S.png"))
+                 (full-path (concat target-dir img-name))
+                 (final-cmd (format "%s > %S" base-cmd full-path)))
 
-        ;; 1. 保存先ディレクトリ（~/Pictures/Screenshots/）の存在を保証
-        (unless (file-directory-p target-dir)
-          (make-directory target-dir t))
+            (unless (file-directory-p target-dir)
+              (make-directory target-dir t))
 
-        ;; 2. クリップボードからの画像データ抽出とファイル書き出し
-        (if (and cmd (eq (shell-command cmd) 0))
-            (progn
-              ;; 3. 現在のカーソル位置に生のOrgリンクをダイレクトに書き込み
-              (insert (format "[[file:%s]]\n" full-path))
-              ;; 4. 挿入された画像をエディタ上で即座にインライン表示
-              (org-display-inline-images)
-              (message "画像を保存・挿入しました: %s" img-name))
-          (message "エラー：クリップボードに有効な画像データが見つからないか、抽出に失敗しました。")))
+            (if (eq (shell-command final-cmd) 0)
+                (progn
+                  (insert (format "[[file:%s]]\n" full-path))
+                  (org-display-inline-images)
+                  (message "画像を保存・挿入しました: %s" img-name))
+              (message "エラー：クリップボードから画像データの抽出に失敗しました。")))))
     (message "この操作は Org-mode のバッファでのみ実行可能です。")))
 
 ;; GUID: kf550c4e-5d6a-7b8c-9d0e-1f2a3b4c5d6f

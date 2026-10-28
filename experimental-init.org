@@ -3356,29 +3356,34 @@ https://github.com/hlissner/emacs-pug-mode
 ;; 【確実なフック】メニュー展開時と送信処理時の両方の直前に、最新変数をバインドする
 (advice-add 'gptel-menu :before #'my/gptel-inject-multiple-contexts-from-property)
 (advice-add 'gptel-send :before #'my/gptel-inject-multiple-contexts-from-property)
-
-
+;; GUID: od202610-8f5a-496a-b2c4-a3d1f5b6c8f4
 ;; ========================================================================
 ;; 3. 【修正版】画像処理バックエンド（org-download）の構成
 ;; ========================================================================
 (use-package org-download
   :after org
   :config
+  (message "[GUID: org-download-init-v20261028-perfect]")
+
   ;; ユーザー環境の my-temporary-dir 変数から動的に一時領域のパスをセット
   (setq org-download-image-dir my-temporary-dir)
 
-  ;; 【根本対策】再スクショ用のキャプチャコマンド（maim 等）を完全に排除します。
-  ;; クリップボードからデータを「取り出す」だけのコマンド（wl-paste / xclip）のみを厳選定義し、
-  ;; クロスカーソルが出る余地を物理的に抹消します。
-  (setq org-download-screenshot-method
-        (cond
-         ;; Wayland環境の場合：クリップボードから直接PNGを流し込む
-         ((executable-find "wl-paste") "wl-paste -t image/png > %s")
-         ;; X11（標準的なLinux）環境の場合：クリップボードから直接PNGを出力する
-         ((executable-find "xclip") "xclip -selection clipboard -t image/png -o > %s")
-         ;; 万が一どちらのコマンドもシステムに存在しない場合、エラーを吐いて停止させます（再スクショはさせない）
-         (t (error "エラー：クリップボード転送に必要な xclip または wl-clipboard が Debian にインストールされていません。"))))
+  ;; 【根本対策】共通判定ロジックを活用し、再スクショ（クロスカーソル）の余地を物理的に抹消
+  ;; クリップボードからデータを「取り出す」だけのコマンドのみを遅延バインドします。
+  (let ((base-img-cmd (kf:get-clipboard-command-by-type 'image)))
+    (if base-img-cmd
+        ;; 取得した生のコマンドに、org-downloadが要求するファイルパス出力（ > %s）を結合
+        (setq org-download-screenshot-method (concat base-img-cmd " > %s"))
+
+      ;; 万が一クリップボード画像コマンドが特定できない環境の場合の安全なフォールバック
+      (setq org-download-screenshot-method
+            (cond
+             ((executable-find "wl-paste") "wl-paste -t image/png > %s")
+             ((executable-find "xclip") "xclip -selection clipboard -t image/png -o > %s")
+             (t (error "エラー：現在の環境に適したクリップボード転送コマンドが利用できません。"))))))
   )
+
+
 #+end_src
 
 * PDFツール
