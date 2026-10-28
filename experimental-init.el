@@ -789,7 +789,6 @@
 
 ;; フレームの回転
 (use-package transpose-frame
-
   :defer t)
 
 ;; C-s <araow keys> でウィンドウのサイズをマウスを使わずに調節する
@@ -1658,7 +1657,9 @@
     (gptel-make-ollama "Ollama"
       :host "localhost:11434"
       :stream t
-      :models '((qwen2.5:7b :description "Qwen 2.5 7B (現在ダウンロード中)")
+      :models '((qwen2.5:7b :description "Qwen 2.5 7B )")
+		(qwen3-coder-next:latest :description "Qwen3 Coder Next")
+		(qwen2.5-coder:7b :description "Qwen Coder 2.5 7B )")
                 (deepseek-r1:7b :description "DeepSeek R1 7B (Reasoningモデル)"))))
 
 ;; GUID: kf880d4f-9e2c-41f6-b8c3-a3d2f5b6c8fb
@@ -1866,6 +1867,7 @@
   (setq lsp-rust-analyzer-server-display-inlay-hints t))
 
 (setq org-startup-folded t)
+(setq org-agenda-files '("~/"))
 
 (setq custom-file (options-file-name))
 (if (file-exists-p custom-file)
