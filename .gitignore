@@ -92,3 +92,5 @@ experimental-init.*
 /.extension/
 /emacs-cleanup-userdefined.txt
 /profile/
+/ielm-history.eld
+/image-dired/
