@@ -36,6 +36,8 @@
 ;; 2. キーバインドの静的確定
 (global-set-key (kbd "\C-c <f3>") 'kf:open-file-thing)
 
+;; 自動ロードされないので強制ロードに変更
+(require 'cgpl-mode)
 ;; GUID: cg770d3e-9f1b-4d6a-8c2e-e3d4f5b6c8f5
 ;; ========================================================================
 ;; Calma GPLIIモードの遅延評価（autoload）構成
@@ -543,6 +545,75 @@
   '(lisp . t)
   (cons 'mermaid  (executable-find "mmdc"))
   ))
+
+;; Generated: 2026-10-29T12:15:00Z
+;; [GUID: f6c51d9e-8a2b-4d6a-b2c4-e3d1f5b6c8fd]
+(defun kf:ensure-image-external-converter ()
+  "EmacsがPNGイメージタイプを認識できない場合のフォールバックとして外部コンバータを有効化します。"
+  (message "[GUID: kf:ensure-image-external-converter-v20261029-perfect]")
+  (setq image-use-external-converter t)
+  t)
+
+(kf:ensure-image-external-converter)
+
+;; Generated: 2026-10-29T12:55:00Z
+;; [GUID: f8a74b3c-4d5e-6f7a-8b9c-0d1e2f3a4b5c]
+(defun kf:org-babel-plantuml-setup ()
+  "Java環境由来の汚染ログを自動で切り捨て、純粋なXML構造のみに補正してインライン表示を自動化します。"
+  (message "[GUID: kf:org-babel-plantuml-setup-v20261029-trim-perfect]")
+
+  ;; 1. 依存パッケージの確保
+  (use-package plantuml-mode
+    :straight t
+    :defer t)
+
+  ;; 2. Debian 13環境のjarロケーションを設定
+  (let ((debian-plantuml-jar "/usr/share/plantuml/plantuml.jar")
+        (alternative-jar "/usr/share/chart/plantuml.jar"))
+    (setq org-plantuml-jar-path
+          (cond ((file-exists-p debian-plantuml-jar) debian-plantuml-jar)
+                ((file-exists-p alternative-jar) alternative-jar)
+                t "/usr/share/plantuml/plantuml.jar")))
+
+  ;; デフォルトヘッダー引数の初期化
+  (setq org-babel-default-header-args:plantuml
+        '((:results . "file")
+          (:exports . "results")))
+
+  ;; 3. Babelバックエンドへ結合
+  (with-eval-after-load 'org
+    (add-to-list 'org-babel-load-languages '(plantuml . t))
+    (org-babel-do-load-languages 'org-babel-load-languages org-babel-load-languages))
+  t)
+
+;; 🚨 【鉄壁自動化パッチ】最初の「</svg>」を検知して以降のログを物理的に全消去するアドバイス
+(defun kf:org-babel-execute-plantuml-purge-log-advice (orig-fun &rest args)
+  "Babel実行直後にファイルを精査し、ユーザーの実証に基づき最初の </svg> までの純粋なデータだけを抽出します。"
+  (message "[GUID: kf:org-babel-execute-plantuml-purge-log-advice-v20261029-ironclad]")
+  (let ((result (apply orig-fun args)))
+    (when (and (stringp result) (file-exists-p result) (string-match-p "\\.svg$" result))
+      (with-temp-buffer
+        (insert-file-contents result)
+        (goto-char (point-min))
+        ;; 【rx構文による安全な境界検出】
+        ;; 先頭のゴミを無視して、最初の有効な xml宣言 または svgタグ の開始位置（beg）を捉える
+        (let ((beg (and (re-search-forward (rx (or "<?xml" "<svg")) nil t) (match-beginning 0)))
+              ;; 最初の </svg> の終了位置（end）を確実に捕捉する
+              (end (and (goto-char (point-min)) (search-forward "</svg>" nil t) (point))))
+          (when (and beg end (< beg end))
+            (let ((clean-svg (buffer-substring-no-properties beg end)))
+              (erase-buffer)
+              (insert clean-svg "\n")
+              ;; 完全に正常化したXMLテキストで物理ファイルを静かに上書き
+              (write-region (point-min) (point-max) result nil 'silent))))))
+    result))
+
+;; ob-plantuml のロード完了時にアドバイスを強制結合
+(with-eval-after-load 'ob-plantuml
+  (advice-add 'org-babel-execute:plantuml :around #'kf:org-babel-execute-plantuml-purge-log-advice))
+
+;; 即時実行して環境を完全自動化へ昇格
+(kf:org-babel-plantuml-setup)
 
 (setq browse-url-browser-function 'eww-browse-url)
 
