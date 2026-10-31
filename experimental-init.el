@@ -612,6 +612,9 @@
 (with-eval-after-load 'ob-plantuml
   (advice-add 'org-babel-execute:plantuml :around #'kf:org-babel-execute-plantuml-purge-log-advice))
 
+(with-eval-after-load 'plantuml-mode
+  (setq plantuml-executable-args '("--quiet")))
+
 ;; 即時実行して環境を完全自動化へ昇格
 (kf:org-babel-plantuml-setup)
 

@@ -697,5 +697,17 @@ Org-modeのテーブルに変換して、確実に『1行目（ヘッダー）�
 (with-eval-after-load 'd-mode
   (define-key d-mode-map (kbd "C-c l d A") 'kf:dap-dlang-ensure-project-template))
 
+(defun kf:replace-formfeed-with-hr ()
+  "バッファ内のすべての FORM FEED (^L) 文字を、Org-mode の水平線 '-----' に置換します。"
+  (interactive)
+  (save-excursion
+    (goto-char (point-min))
+    (let ((count 0))
+      ;; \C-l 文字を検索（非表示テキストも対象にしたい場合は search-invisible を t に）
+      (while (search-forward "\C-l" nil t)
+        (replace-match "\n-----\n" t t)
+        (setq count (1+ count)))
+      (message "置換が完了しました。%d 個の ^L を水平線に変換しました。" count))))
+
 (message "kf-command loaded...")
 (provide 'kf-command)
