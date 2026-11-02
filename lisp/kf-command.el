@@ -709,5 +709,32 @@ Org-modeのテーブルに変換して、確実に『1行目（ヘッダー）�
         (setq count (1+ count)))
       (message "置換が完了しました。%d 個の ^L を水平線に変換しました。" count))))
 
+(defun kf:insert-cgpl ()
+  "CALMA GPLIIソースコードブロックの挿入と変換."
+  (interactive)
+  (kf:insert-begin-end "#+begin_src cgpl -n" "#+end_src"))
+
+(defun kf:delete-empty-lines-region (start end)
+  "選択したリージョン内の空行（スペース/タブのみの行を含む）を削除します。"
+  (interactive "r")
+  (save-excursion
+    (save-restriction
+      (narrow-to-region start end)
+      (goto-char (point-min))
+      (flush-lines "^[[:space:]]*$"))))
+
+;; 好きなキーバインド（例: C-c d）に割り当てる場合
+(global-set-key (kbd "C-c d") 'kf:delete-empty-lines-region)
+
+(defun kf:replace-buffer-with-clipboard ()
+  "バッファの全内容を削除し、クリップボードの内容で完全に置き換えます。"
+  (interactive)
+  (widen)
+  (delete-region (point-min) (point-max))
+  (clipboard-yank))
+
+;; 例: C-c v にショートカットキーを割り当てる場合
+(global-set-key (kbd "C-c v") 'kf:replace-buffer-with-clipboard)
+
 (message "kf-command loaded...")
 (provide 'kf-command)

@@ -2769,6 +2769,36 @@ https://www.reddit.com/r/emacs/comments/17ucbww/passing_current_file_name_to_com
             (local-set-key (kbd "C-c C-c t") 'kf:dub-compile-smart-test)))
 #+end_src
 
+* Quickrun (コードの即時実行環境)
+#+begin_src elisp :tangle yes
+;; GUID: qr202611-8f5a-496a-b2c4-a3d1f5b6c8f5
+;; ========================================================================
+;; quickrun: カレントバッファを自動判別して非同期に1発実行するモダン環境
+;; ========================================================================
+
+(use-package quickrun
+  :commands (quickrun quickrun-region)
+  :init
+  ;; 1. キーバインドの静的確定（C-c q で実行、C-c s-q でリージョン実行）
+  (global-set-key (kbd "C-c q") 'quickrun)
+  (global-set-key (kbd "C-c Q") 'quickrun-region)
+
+  :config
+  (message "[GUID: kf:quickrun-setup-v20261102]")
+
+  ;; 2. 実行用バッファ（出力画面）がポップアップした際に、自動でそのバッファにフォーカスを移す
+  (setq quickrun-focus-p t)
+
+  ;; 3. すでに実行バッファが開いている場合は、新しく開き直さずに再利用する
+  (setq quickrun-option-share-p t)
+
+  ;; 4. 【追加調整】D言語等でお使いの ANSI カラーエスケープシーケンスを、出力バッファ側でもパースさせる
+  (with-eval-after-load 'quickrun
+    (add-hook 'quickrun-after-run-hook #'ansi-color-compilation-filter))
+  )
+#+end_src
+
+
 * Open Dylan
 #+begin_src elisp :tangle yes
 (use-package dylan
@@ -3661,6 +3691,51 @@ rustup component add rust-analyzer
 
 # asdf 側に shims を再認識させる
 asdf reshim rust
+#+end_src
+
+* Ruby 環境
+#+begin_src elisp :tangle yes
+;; GUID: rb202611-lsp-ironclad-v20261102
+;; ========================================================================
+;; Ruby 開発環境：ローカル Gem 環境変数ガード付き LSP 起動構成
+;; ========================================================================
+
+;; 1. 各種 Ruby 関連ファイルを自動的に ruby-ts-mode で開くようマッピング
+(unless (version< emacs-version "29.0")
+  (add-to-list 'auto-mode-alist '("\\.rb\\'" . ruby-ts-mode))
+  (add-to-list 'auto-mode-alist '("Gemfile\\'" . ruby-ts-mode))
+  (add-to-list 'auto-mode-alist '("Rakefile\\'" . ruby-ts-mode))
+  (add-to-list 'auto-mode-alist '("\\.gemspec\\'" . ruby-ts-mode)))
+
+;; 2. ruby-ts-mode 起動時に lsp を遅延トリガー
+(add-hook 'ruby-ts-mode-hook #'lsp-deferred)
+
+;; 3. lsp-mode 側へのローカル Gem 環境変数ガードと優先サーバー割り当て
+(with-eval-after-load 'lsp-mode
+  (message "[GUID: kf:ruby-lsp-ironclad-setup-v20261102]")
+
+  (let* ((ruby-ver-major-minor "3.3.0")
+         (user-gem-bin (expand-file-name (concat "~/.local/share/gem/ruby/" ruby-ver-major-minor "/bin")))
+         (user-gem-home (expand-file-name (concat "~/.local/share/gem/ruby/" ruby-ver-major-minor))))
+
+    (when (file-directory-p user-gem-bin)
+      ;; ① Emacs 本体の実行パス群へ追加
+      (setenv "PATH" (concat user-gem-bin ":" (getenv "PATH")))
+      (push user-gem-bin exec-path)
+
+      ;; ② ruby-lsp の内部プロセスが参照する固有の環境変数（LSPプロセス専用環境）を完全固定
+      ;; これにより、ruby-lspの奥で動く exec('bundle') が絶対に失敗しなくなります
+      (setq lsp-env-sugar-setfenv `(("PATH" . ,(concat user-gem-bin ":" (getenv "PATH")))
+                                    ("GEM_HOME" . ,user-gem-home)))
+
+      (message "[ruby-lsp] 内部プロセス用環境変数を厳格にバインドしました。")))
+
+  ;; プロジェクトの有無に関わらず、グローバルの ruby-lsp を単体で自立駆動させる設定
+  (setq lsp-ruby-lsp-use-bundler nil)
+  (setq lsp-ruby-lsp-bundler-path nil)
+
+  ;; インデント幅を標準の「2」に強制同期
+  (setq ruby-ts-mode-indent-offset 2))
 #+end_src
 
 * 末尾

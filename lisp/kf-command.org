@@ -75,6 +75,7 @@ C-c C-c ;; が簡単かも
 #+begin_src elisp
 (kf:font-family-installed-p "iosevka")
 (kf:font-family-installed-p "noto serif cjk")
+(kf:font-family-installed-p "dec")
 #+end_src
 
 #+RESULTS:
@@ -959,7 +960,41 @@ Org-modeのテーブルに変換して、確実に『1行目（ヘッダー）�
         (setq count (1+ count)))
       (message "置換が完了しました。%d 個の ^L を水平線に変換しました。" count))))
 #+end_src
+* cgpl-mode支援
+#+begin_src elisp :tangle yes
+(defun kf:insert-cgpl ()
+  "CALMA GPLIIソースコードブロックの挿入と変換."
+  (interactive)
+  (kf:insert-begin-end "#+begin_src cgpl -n" "#+end_src"))
+#+end_src
 
+* 空行削除
+#+begin_src elisp :tangle yes
+(defun kf:delete-empty-lines-region (start end)
+  "選択したリージョン内の空行（スペース/タブのみの行を含む）を削除します。"
+  (interactive "r")
+  (save-excursion
+    (save-restriction
+      (narrow-to-region start end)
+      (goto-char (point-min))
+      (flush-lines "^[[:space:]]*$"))))
+
+;; 好きなキーバインド（例: C-c d）に割り当てる場合
+(global-set-key (kbd "C-c d") 'kf:delete-empty-lines-region)
+#+end_src
+
+* クリップボードでバッファを完全置換
+#+begin_src elisp :tangle yes
+(defun kf:replace-buffer-with-clipboard ()
+  "バッファの全内容を削除し、クリップボードの内容で完全に置き換えます。"
+  (interactive)
+  (widen)
+  (delete-region (point-min) (point-max))
+  (clipboard-yank))
+
+;; 例: C-c v にショートカットキーを割り当てる場合
+(global-set-key (kbd "C-c v") 'kf:replace-buffer-with-clipboard)
+#+end_src
 * フッタ
 #+BEGIN_SRC elisp :tangle yes
 (message "kf-command loaded...")
