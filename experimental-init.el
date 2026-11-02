@@ -2029,6 +2029,57 @@
   ;; インデント幅を標準の「2」に強制同期
   (setq ruby-ts-mode-indent-offset 2))
 
+;; GUID: ir202611-inf-ruby-ts-smie-ironclad-v20261103
+;; ========================================================================
+;; inf-ruby: ruby-ts-mode (Tree-sitter) での C-x C-e を完璧に保証する構成
+;; ========================================================================
+
+(use-package inf-ruby
+  :straight t
+  :commands (inf-ruby inf-ruby-console-auto)
+  :init
+  (add-hook 'ruby-ts-mode-hook 'inf-ruby-minor-mode)
+  (add-hook 'ruby-mode-hook 'inf-ruby-minor-mode)
+
+  :config
+  (message "[GUID: kf:inf-ruby-ironclad-setup-v20261103]")
+
+  (setq inf-ruby-scroll-to-bottom-on-output t)
+  (with-eval-after-load 'lsp-mode
+    (when (boundp 'user-gem-bin)
+      (setq inf-ruby-default-implementation "ruby")))
+
+  ;; ========================================================================
+  ;; 【SMIEエラー完全撃墜パッチ】
+  ;; ruby-ts-mode (Tree-sitter) の時は、古い SMIE 境界判定を物理的に遮断
+  ;; ========================================================================
+  (with-eval-after-load 'inf-ruby
+    (defun kf:inf-ruby-ts-safe-send-last-sexp ()
+      "ruby-ts-mode の時は Tree-sitter の AST 判定を使い、古い SMIE を完全にバイパスします。"
+      (interactive)
+      (if (derived-mode-p 'ruby-ts-mode)
+          ;; ① Tree-sitter バッファの時の安全な領域算出
+          (let ((forward-sexp-function #'treesit-forward-sexp)
+                (backward-sexp-function #'treesit-backward-sexp)
+                (end (point))
+                (beg (save-excursion
+                       (backward-sexp)
+                       (point))))
+            (ruby-send-region beg end))
+        ;; ② 古い ruby-mode の時は本来の判定をそのまま呼ぶ
+        (let ((forward-sexp-function #'smie-next-sexp)
+              (backward-sexp-function #'smie-backward-sexp)
+              (end (point))
+              (beg (save-excursion
+                     (ruby-backward-sexp)
+                     (point))))
+          (ruby-send-region beg end))))
+
+    ;; inf-ruby がマイナーモードに登録している C-x C-e (ruby-send-last-sexp) を
+    ;; 安全な Tree-sitter 互換関数へ完全にバインド差し替え
+    (define-key inf-ruby-minor-mode-map (kbd "C-x C-e") #'kf:inf-ruby-ts-safe-send-last-sexp))
+  )
+
 (setq org-startup-folded t)
 (setq org-agenda-files '("~/"))
 
