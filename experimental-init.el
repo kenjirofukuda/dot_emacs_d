@@ -2049,24 +2049,27 @@
     (when (boundp 'user-gem-bin)
       (setq inf-ruby-default-implementation "ruby")))
 
-  ;; ========================================================================
-  ;; 【SMIEエラー完全撃墜パッチ】
-  ;; ruby-ts-mode (Tree-sitter) の時は、古い SMIE 境界判定を物理的に遮断
+
+   ;; ========================================================================
+  ;; 【ノード誤認対策・完全版】ruby-ts-mode で C-x C-e を狙った1行だけ飛ばす
   ;; ========================================================================
   (with-eval-after-load 'inf-ruby
     (defun kf:inf-ruby-ts-safe-send-last-sexp ()
-      "ruby-ts-mode の時は Tree-sitter の AST 判定を使い、古い SMIE を完全にバイパスします。"
+      "ruby-ts-mode の時は、ファイル全体のノードに引っ張られないよう、
+現在の行、またはカーソル直前の1式を確実に切り出して irb へ送信します。"
       (interactive)
       (if (derived-mode-p 'ruby-ts-mode)
-          ;; ① Tree-sitter バッファの時の安全な領域算出
-          (let ((forward-sexp-function #'treesit-forward-sexp)
-                (backward-sexp-function #'treesit-backward-sexp)
-                (end (point))
+          ;; ① ruby-ts-mode (Tree-sitter) の場合の堅牢な切り出し
+          (let ((end (point))
                 (beg (save-excursion
-                       (backward-sexp)
-                       (point))))
+                       ;; 行頭、または直前の式の開始位置の近い方を採用
+                       (let ((line-start (line-beginning-position)))
+                         (backward-sexp)
+                         (if (< (point) line-start)
+                             line-start
+                           (point))))))
             (ruby-send-region beg end))
-        ;; ② 古い ruby-mode の時は本来の判定をそのまま呼ぶ
+        ;; ② 古い ruby-mode の時は本来の判定を呼ぶ
         (let ((forward-sexp-function #'smie-next-sexp)
               (backward-sexp-function #'smie-backward-sexp)
               (end (point))
@@ -2075,8 +2078,7 @@
                      (point))))
           (ruby-send-region beg end))))
 
-    ;; inf-ruby がマイナーモードに登録している C-x C-e (ruby-send-last-sexp) を
-    ;; 安全な Tree-sitter 互換関数へ完全にバインド差し替え
+    ;; キーマップへの再登録
     (define-key inf-ruby-minor-mode-map (kbd "C-x C-e") #'kf:inf-ruby-ts-safe-send-last-sexp))
   )
 
