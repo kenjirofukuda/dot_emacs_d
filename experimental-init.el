@@ -1328,23 +1328,25 @@
 ;; blockdiag (packetdiag) & D2 メモリマップ描画環境の統合
 ;; ========================================================================
 
-;; --- 1. blockdiag 構成 (packetdiag を Org-Babel で有効化) ---
+;; --- 1. blockdiag 構成 (メンテナ変更版のフォークを明示的に指定) ---
 (use-package ob-blockdiag
-  :straight (:host github :repo "gregsexton/ob-blockdiag")
+  ;; 削除されたオリジナルに代わり、現在稼働しているフォークリポジトリを指定
+  :straight (:type git :host github :repo "corpix/ob-blockdiag")
   :defer t
   :after org
   :config
-  ;; GUID: bd202611-blockdiag-ironclad-v20261103
-  (message "[GUID: kf:org-babel-blockdiag-setup-v20261103]")
+  ;; GUID: bd202611-blockdiag-refactor-v20261103
+  (message "[GUID: kf:org-babel-blockdiag-setup-v20261103-v2]")
 
   ;; Babel に blockdiag を登録
   (with-eval-after-load 'org
     (add-to-list 'org-babel-load-languages '(blockdiag . t))
     (org-babel-do-load-languages 'org-babel-load-languages org-babel-load-languages)))
 
+
 ;; --- 2. D2 構成 (d2-mode および Babel バックエンドの確保) ---
 (use-package d2-mode
-  :straight (:host github :repo "terlar/d2-mode")
+  :straight (:type git :host github :repo "terlar/d2-mode")
   :defer t
   :mode (rx ".d2" eos) ; rx構文による安全な拡張子マッピング
   :config

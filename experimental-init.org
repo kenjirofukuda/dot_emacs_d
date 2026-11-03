@@ -2834,48 +2834,50 @@ https://www.reddit.com/r/emacs/comments/17ucbww/passing_current_file_name_to_com
 : /snap/bin/mmdc
 * その他のダイアグラムツール
 #+begin_src elisp :tangle yes
-;; ========================================================================
-;; blockdiag (packetdiag) & D2 メモリマップ描画環境の統合
-;; ========================================================================
+  ;; ========================================================================
+  ;; blockdiag (packetdiag) & D2 メモリマップ描画環境の統合
+  ;; ========================================================================
 
-;; --- 1. blockdiag 構成 (packetdiag を Org-Babel で有効化) ---
-(use-package ob-blockdiag
-  :straight (:host github :repo "gregsexton/ob-blockdiag")
-  :defer t
-  :after org
-  :config
-  ;; GUID: bd202611-blockdiag-ironclad-v20261103
-  (message "[GUID: kf:org-babel-blockdiag-setup-v20261103]")
+  ;; --- 1. blockdiag 構成 (メンテナ変更版のフォークを明示的に指定) ---
+  (use-package ob-blockdiag
+    ;; 削除されたオリジナルに代わり、現在稼働しているフォークリポジトリを指定
+    :straight (:type git :host github :repo "corpix/ob-blockdiag")
+    :defer t
+    :after org
+    :config
+    ;; GUID: bd202611-blockdiag-refactor-v20261103
+    (message "[GUID: kf:org-babel-blockdiag-setup-v20261103-v2]")
 
-  ;; Babel に blockdiag を登録
-  (with-eval-after-load 'org
-    (add-to-list 'org-babel-load-languages '(blockdiag . t))
-    (org-babel-do-load-languages 'org-babel-load-languages org-babel-load-languages)))
+    ;; Babel に blockdiag を登録
+    (with-eval-after-load 'org
+      (add-to-list 'org-babel-load-languages '(blockdiag . t))
+      (org-babel-do-load-languages 'org-babel-load-languages org-babel-load-languages)))
 
-;; --- 2. D2 構成 (d2-mode および Babel バックエンドの確保) ---
-(use-package d2-mode
-  :straight (:host github :repo "terlar/d2-mode")
-  :defer t
-  :mode (rx ".d2" eos) ; rx構文による安全な拡張子マッピング
-  :config
-  ;; GUID: d2202611-d2lang-ironclad-v20261103
-  (message "[GUID: kf:d2-mode-ironclad-setup-v20261103]")
 
-  ;; D2の出力をデフォルトでSVGに設定
-  (setq d2-output-format "svg")
+  ;; --- 2. D2 構成 (d2-mode および Babel バックエンドの確保) ---
+  (use-package d2-mode
+    :straight (:type git :host github :repo "terlar/d2-mode")
+    :defer t
+    :mode (rx ".d2" eos) ; rx構文による安全な拡張子マッピング
+    :config
+    ;; GUID: d2202611-d2lang-ironclad-v20261103
+    (message "[GUID: kf:d2-mode-ironclad-setup-v20261103]")
 
-  ;; 保存時の自動フォーマットを有効化 (任意)
-  (add-hook 'd2-mode-hook #'d2-format-on-save-mode))
+    ;; D2の出力をデフォルトでSVGに設定
+    (setq d2-output-format "svg")
 
-(use-package ob-d2
-  :straight (:host github :repo "swaroopch/ob-d2")
-  :defer t
-  :after (org d2-mode)
-  :config
-  ;; Babel に d2 を登録
-  (with-eval-after-load 'org
-    (add-to-list 'org-babel-load-languages '(d2 . t))
-    (org-babel-do-load-languages 'org-babel-load-languages org-babel-load-languages)))
+    ;; 保存時の自動フォーマットを有効化 (任意)
+    (add-hook 'd2-mode-hook #'d2-format-on-save-mode))
+
+  (use-package ob-d2
+    :straight (:host github :repo "swaroopch/ob-d2")
+    :defer t
+    :after (org d2-mode)
+    :config
+    ;; Babel に d2 を登録
+    (with-eval-after-load 'org
+      (add-to-list 'org-babel-load-languages '(d2 . t))
+      (org-babel-do-load-languages 'org-babel-load-languages org-babel-load-languages)))
 
 #+end_src
 * pug-mode
