@@ -714,6 +714,11 @@ Org-modeのテーブルに変換して、確実に『1行目（ヘッダー）�
   (interactive)
   (kf:insert-begin-end "#+begin_src cgpl -n" "#+end_src"))
 
+(defun kf:insert-exmaple ()
+  "CALMA GPLIIソースコードブロックの挿入と変換."
+  (interactive)
+  (kf:insert-begin-end "#+begin_example" "#+end_example"))
+
 (defun kf:delete-empty-lines-region (start end)
   "選択したリージョン内の空行（スペース/タブのみの行を含む）を削除します。"
   (interactive "r")

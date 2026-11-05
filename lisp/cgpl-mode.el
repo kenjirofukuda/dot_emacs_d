@@ -45,32 +45,61 @@
   (interactive)
   (let ((indent-offset cgpl-tab-width)
         (current-indent 0))
-    (save-excursion
-      (forward-line -1)
-      (while (and (not (bobp))
-                  (looking-at (rx (and (zero-or-more (any " \t\r")) eol))))
-        (forward-line -1))
+    save-excursion
+    (forward-line -1)
+    (while (and (not (bobp))
+             (looking-at (rx (and (zero-or-more (any " \t\r")) eol))))
+      (forward-line -1))
 
-      (back-to-indentation)
-      (setq current-indent (current-indentation))
+    (back-to-indentation)
+    (setq current-indent (current-indentation))
 
-      (when (looking-at (rx (and (zero-or-more not-newline)
-                                 word-start
-                                 (or "THEN" "DO" "ELSE" "ELIF" "PROCEDURE" "FUNCTION" "OF" ":")
-                                 word-end
-                                 (zero-or-more (any " \t"))
-                                 (zero-or-more (and "|" (zero-or-more not-newline)))
-                                 eol)))
-        (setq current-indent (+ current-indent indent-offset))))
+    (when (looking-at (rx (and (zero-or-more not-newline)
+                            word-start
+                            (or "THEN" "DO" "ELSE" "ELIF" "PROCEDURE" "FUNCTION" "OF")
+                            word-end
+                            (zero-or-more (any " \t"))
+                            (zero-or-more (and "|" (zero-or-more not-newline)))
+                            eol)))
+
+      (setq current-indent (+ current-indent indent-offset)))
+
+    (when (looking-at (rx (and (zero-or-more not-newline)
+                            word-start
+                            "OUT"
+                            word-end
+                            (zero-or-more (any " \t"))
+                            ":"
+                            )))
+      (setq current-indent (+ current-indent indent-offset)))
+
+    (when (looking-at (rx "CASE" (+? nonl) ":"))
+      (setq current-indent (+ current-indent indent-offset))
+      )
+
+
 
     (back-to-indentation)
     (when (looking-at (rx (and word-start
-                               (or "ENDSUB" "ELSE" "ELIF" "UNTIL" "ENDDO" "ENDIF" "ENDSWITCH" "CASE" "OUT")
+                               (or "ELSE" "ELIF" "UNTIL" "ENDDO" "ENDIF" "ENDSWITCH")
                                word-end)))
       (setq current-indent (max 0 (- current-indent indent-offset))))
 
-    (indent-line-to current-indent)))
+    (when (looking-at (rx (and (zero-or-more not-newline)
+                            word-start
+                            "OUT"
+                            word-end
+                            (zero-or-more (any " \t"))
+                            ":"
+                            )))
+      (setq current-indent (max 0 (- current-indent indent-offset))))
 
+    (when (looking-at (rx "CASE" (+? nonl) ":"))
+      (setq current-indent (max 0 (- current-indent indent-offset)))
+        )
+
+    (indent-line-to current-indent))
+)
 ;; ========================================================================
 ;; 構造化されたフォーマッタ実装群
 ;; ========================================================================
@@ -81,20 +110,20 @@
     (goto-char (point-min))
     (let ((inhibit-read-only t))
       (while (re-search-forward
-              (rx (and (zero-or-more (any " \t"))
-                       (or (and ":" (zero-or-more (any " \t")) "=")
-                           (and "<" (zero-or-more (any " \t")) (or "=" ">"))
-                           (and ">" (zero-or-more (any " \t")) "=")
-                           (and (or "<" ">" "=" "+" "-" "*" "%"))
-                           (and word-start (or "AND" "OR") word-end))
-                       (zero-or-more (any " \t"))))
-              nil t)
+               (rx (and (zero-or-more (any " \t"))
+                     (or (and ":" (zero-or-more (any " \t")) "=")
+                       (and "<" (zero-or-more (any " \t")) (or "=" ">"))
+                       (and ">" (zero-or-more (any " \t")) "=")
+                       (and (or "<" ">" "=" "+" "-" "*" "%"))
+                       (and word-start (or "AND" "OR") word-end))
+                     (zero-or-more (any " \t"))))
+               nil t)
         (let ((beg (match-beginning 0))
-              (end (match-end 0))
-              (matched-str (match-string 0)))
+               (end (match-end 0))
+               (matched-str (match-string 0)))
           (unless (syntax-ppss-context (syntax-ppss beg))
             (let* ((pure-token (replace-regexp-in-string (rx (one-or-more (any " \t"))) "" matched-str))
-                   (final-string ""))
+                    (final-string ""))
               (when (string-match-p (rx (or "AND" "OR")) matched-str)
                 (setq pure-token (if (string-match-p "AND" matched-str) "AND" "OR")))
               (setq final-string (concat " " pure-token " "))
