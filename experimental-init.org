@@ -1623,18 +1623,27 @@ Windows の検索パスは別途検討
 
 ** 日本語の範囲をNotoフォントに設定
 #+begin_src elisp :tangle yes
-;; 日本語の範囲をNotoフォントに設定
-(when (display-graphic-p)
-  ;; 句読点やひらがな・カタカナ（kana）にNotoフォントを適用
-  (set-fontset-font nil 'kana (font-spec :family "Noto Serif CJK JP"))
+(when (window-system)
+  ;; 1. デフォルトフォント（半角英数）の設定
+  ;; ここにお好みの英数フォント（例: "Courier New", "M+ 1mn" など）を指定します。
+  ;; :height の 120 は 12pt を意味します。
+  (set-face-attribute 'default nil :family "Iosevka" :height 140)
 
-  ;; 漢字や共通のCJK文字（han）にもNotoフォントを適用（これで句読点の中央寄りを防ぎます）
-  (set-fontset-font nil 'han (font-spec :family "Noto Serif CJK JP"))
+  ;; 2. 日本語（全角）フォントの個別割り当て
+  ;; 変更したい日本語フォントの正確な「フォントファミリー名」を fn に指定してください。
+  ;; 例: "M+ 1mn", "Noto Sans Japanese", "Klee One" など
+  (let ((fn "Noto Sans JP"))
+    (set-fontset-font nil 'japanese-jisx0208 (font-spec :family fn))
+    (set-fontset-font nil 'katakana-jisx0201 (font-spec :family fn))
+    (set-fontset-font nil 'japanese-jisx0212 (font-spec :family fn))
+    (set-fontset-font nil 'japanese-jisx0213-1 (font-spec :family fn))
+    (set-fontset-font nil 'japanese-jisx0213-2 (font-spec :family fn)))
 
-  ;; ※ゴシック体にしたい場合はこちら（コメントアウト中）
-  ;; (set-fontset-font nil 'kana (font-spec :family "Noto Sans CJK JP"))
-  ;; (set-fontset-font nil 'han (font-spec :family "Noto Sans CJK JP"))
-  )
+  ;; 3. 半角と全角の横幅比率（1:2）を美しく整えるためのスケール調整
+  ;; 英数フォントと日本語フォントの組み合わせによって、横幅がズレる場合に比率を調整します。
+  ;; 1.0 でピッタリ合わない場合は、0.9 や 1.05 など微調整してください。
+  (setq face-font-rescale-alist '((".*M\\+ 1mn.*" . 1.0)
+                                  (".*Noto Sans JP.*" . 1.05))))
 #+end_src
 
 ** 確認用テーブル
