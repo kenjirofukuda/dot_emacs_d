@@ -2135,7 +2135,7 @@
 ;; 2. バッファ内に指定のPROPERTYが存在するか判定する関数
 (defun kf:org-has-code-format-gdsii-p ()
   "現在のバッファのグローバルキーワードプロパティに CODE-FORMAT-GDSII が存在するか判定する。"
-  (message "[GUID: kf:org-has-code-format-gdsii-p-v20261031-init]")
+  ;; (message "[GUID: kf:org-has-code-format-gdsii-p-v20261031-init]")
   (let ((has-property nil))
     (save-excursion
       (goto-char (point-min))
@@ -2153,7 +2153,7 @@
 ;; 3. rx 構文を用いたフォント化拡張関数（バッファごとのPROPERTYチェック付き）
 (defun kf:org-fontify-blocks-per-lang (limit)
   "指定PROPERTYが存在する場合のみ、ソースブロックとexampleブロックにフォント設定をマージする。"
-  (message "[GUID: kf:org-fontify-blocks-per-lang-v20261031-conditional]")
+  ;; (message "[GUID: kf:org-fontify-blocks-per-lang-v20261031-conditional]")
   ;; バッファ内に指定のプロパティが存在する場合のみ処理を走らせる
   (when (kf:org-has-code-format-gdsii-p)
     (let ((case-fold-search t))
@@ -2190,7 +2190,7 @@
 ;; 4. Org-mode への Font Lock キーワード結合
 (defun kf:org-mode-font-lock-hook ()
   "Org-modeのフォントロック終了時に kf:org-fontify-blocks-per-lang を追加するフック。"
-  (message "[GUID: kf:org-mode-font-lock-hook-v20261031-conditional]")
+  ;; (message "[GUID: kf:org-mode-font-lock-hook-v20261031-conditional]")
   (font-lock-add-keywords nil '((kf:org-fontify-blocks-per-lang)) 'append))
 
 (add-hook 'org-mode-hook #'kf:org-mode-font-lock-hook)

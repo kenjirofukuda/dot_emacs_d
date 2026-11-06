@@ -15,25 +15,24 @@
 
 (defconst cgpl-keywords
   (append
-   '(NILADIC MONADIC DYADIC)
-   '(LOCAL GLOBAL EXTERNAL)
-   '(LOGICAL CHAR INTEGER REAL)
-   '(PROCEDURE FUNCTION ENDSUB)
-   '(AND OR NOT)
-   '(GOTO WHILE UNTIL DO ENDDO IF THEN ELSE ELIF ENDIF SWITCH OF CASE OUT ENDSWITCH))
+    '(NILADIC MONADIC DYADIC)
+    '(LOCAL GLOBAL EXTERNAL)
+    '(LOGICAL CHAR INTEGER REAL)
+    '(PROCEDURE FUNCTION ENDSUB)
+    '(GOTO WHILE UNTIL DO ENDDO IF THEN ELSE ELIF ENDIF SWITCH OF CASE OUT ENDSWITCH))
   "GPL II directives.")
 
 (defconst cgpl-font-lock-keywords
   (list (concat "\\_<" (regexp-opt (mapcar #'symbol-name cgpl-keywords))
-		"\\_>")))
+		      "\\_>")))
 
 (defconst cgpl-font-lock-defaults
   '(cgpl-font-lock-keywords
-    nil ; Syntactic fontification does apply.
-    nil ; Don't care about case since we don't use regexps to find tokens.
-    nil ; Syntax alists don't apply.
-    nil ; Syntax begin movement doesn't apply.
-    ))
+     nil ; Syntactic fontification does apply.
+     nil ; Don't care about case since we don't use regexps to find tokens.
+     nil ; Syntax alists don't apply.
+     nil ; Syntax begin movement doesn't apply.
+     ))
 
 (defvar cgpl-tab-width 2 "Width of a tab for CGPL mode.")
 
@@ -44,45 +43,44 @@
   "GPL II のための行ベースの精密インデント関数。空行をスキップして解析します。."
   (interactive)
   (let ((indent-offset cgpl-tab-width)
-        (current-indent 0))
-    save-excursion
-    (forward-line -1)
-    (while (and (not (bobp))
-             (looking-at (rx (and (zero-or-more (any " \t\r")) eol))))
-      (forward-line -1))
+         (current-indent 0))
+    (save-excursion
+      (forward-line -1)
+      (while (and (not (bobp))
+               (looking-at (rx (and (zero-or-more (any " \t\r")) eol))))
+        (forward-line -1))
 
-    (back-to-indentation)
-    (setq current-indent (current-indentation))
+      (back-to-indentation)
+      (setq current-indent (current-indentation))
 
-    (when (looking-at (rx (and (zero-or-more not-newline)
-                            word-start
-                            (or "THEN" "DO" "ELSE" "ELIF" "PROCEDURE" "FUNCTION" "OF")
-                            word-end
-                            (zero-or-more (any " \t"))
-                            (zero-or-more (and "|" (zero-or-more not-newline)))
-                            eol)))
+      (when (looking-at (rx (and (zero-or-more not-newline)
+                              word-start
+                              (or "THEN" "DO" "ELSE" "ELIF" "PROCEDURE" "FUNCTION" "OF")
+                              word-end
+                              (zero-or-more (any " \t"))
+                              (zero-or-more (and "|" (zero-or-more not-newline)))
+                              eol)))
 
-      (setq current-indent (+ current-indent indent-offset)))
+        (setq current-indent (+ current-indent indent-offset)))
 
-    (when (looking-at (rx (and (zero-or-more not-newline)
-                            word-start
-                            "OUT"
-                            word-end
-                            (zero-or-more (any " \t"))
-                            ":"
-                            )))
-      (setq current-indent (+ current-indent indent-offset)))
+      (when (looking-at (rx (and (zero-or-more not-newline)
+                              word-start
+                              "OUT"
+                              word-end
+                              (zero-or-more (any " \t"))
+                              ":"
+                              )))
+        (setq current-indent (+ current-indent indent-offset)))
 
-    (when (looking-at (rx "CASE" (+? nonl) ":"))
-      (setq current-indent (+ current-indent indent-offset))
-      )
+      (when (looking-at (rx "CASE" (+? nonl) ":"))
+        (setq current-indent (+ current-indent indent-offset))))
 
 
 
     (back-to-indentation)
     (when (looking-at (rx (and word-start
-                               (or "ELSE" "ELIF" "UNTIL" "ENDDO" "ENDIF" "ENDSWITCH")
-                               word-end)))
+                            (or "ELSE" "ELIF" "UNTIL" "ENDDO" "ENDIF" "ENDSWITCH")
+                            word-end)))
       (setq current-indent (max 0 (- current-indent indent-offset))))
 
     (when (looking-at (rx (and (zero-or-more not-newline)
@@ -96,10 +94,10 @@
 
     (when (looking-at (rx "CASE" (+? nonl) ":"))
       (setq current-indent (max 0 (- current-indent indent-offset)))
-        )
+      )
 
     (indent-line-to current-indent))
-)
+  )
 ;; ========================================================================
 ;; 構造化されたフォーマッタ実装群
 ;; ========================================================================
@@ -150,10 +148,10 @@
             ;; 1. 【パターンA: キーワードの直後に「\"」が「完全にスペース0個」で密着している箇所のみをキャッチ】
             ;; (例: TEXTINPUT" や )" のみ。すでにスペースがある `; "` などは検索段階で100%安全に弾かれます。
             (while (re-search-forward
-                    (rx (and (submatch (or (and word-start (one-or-more (any "A-Za-z0-9_")) word-end)
-                                           (any ")]")))
-                             (submatch "\"")))
-                    eol-pos t)
+                     (rx (and (submatch (or (and word-start (one-or-more (any "A-Za-z0-9_")) word-end)
+                                          (any ")]")))
+                           (submatch "\"")))
+                     eol-pos t)
               (let ((end-pos (match-end 0)))
                 (unless (syntax-ppss-context (syntax-ppss (match-beginning 0)))
                   ;; 💡 危うい判定文をすべて全廃。マッチした＝100%密着しているため、安全に1マス引き離します。
@@ -164,10 +162,10 @@
             ;; 2. 【パターンB: 閉じ「\"」の直後にキーワードや開き括弧が「完全にスペース0個」で密着している箇所のみをキャッチ】
             ;; (例: "THEN や "( のみ)
             (while (re-search-forward
-                    (rx (and (submatch "\"")
-                             (submatch (or (and word-start (one-or-more (any "A-Za-z0-9_")) word-end)
-                                           (any "([")))))
-                    eol-pos t)
+                     (rx (and (submatch "\"")
+                           (submatch (or (and word-start (one-or-more (any "A-Za-z0-9_")) word-end)
+                                       (any "([")))))
+                     eol-pos t)
               (let ((end-pos (match-end 0)))
                 (unless (syntax-ppss-context (syntax-ppss (match-beginning 0)))
                   (replace-match "\\1 \\2" t))
@@ -211,9 +209,9 @@
   (setq-local comment-end "")
 
   (setq-local comment-start-skip
-              (rx (and (or "|" "`") (zero-or-more (any " \t")))))
+    (rx (and (or "|" "`") (zero-or-more (any " \t")))))
   (setq-local comment-end-skip
-              (rx (and (zero-or-more (any " \t")) (or "\n" "'"))))
+    (rx (and (zero-or-more (any " \t")) (or "\n" "'"))))
   )
 
 (provide 'cgpl-mode)
