@@ -632,8 +632,15 @@
 
 ;; 日本語の範囲をNotoフォントに設定
 (when (display-graphic-p)
-  (set-fontset-font nil 'japanese-jisx0208 (font-spec :family "Noto Serif CJK JP"))
-  ;; (set-fontset-font nil 'japanese-jisx0208 (font-spec :family "Noto Sans CJK JP"))
+  ;; 句読点やひらがな・カタカナ（kana）にNotoフォントを適用
+  (set-fontset-font nil 'kana (font-spec :family "Noto Serif CJK JP"))
+
+  ;; 漢字や共通のCJK文字（han）にもNotoフォントを適用（これで句読点の中央寄りを防ぎます）
+  (set-fontset-font nil 'han (font-spec :family "Noto Serif CJK JP"))
+
+  ;; ※ゴシック体にしたい場合はこちら（コメントアウト中）
+  ;; (set-fontset-font nil 'kana (font-spec :family "Noto Sans CJK JP"))
+  ;; (set-fontset-font nil 'han (font-spec :family "Noto Sans CJK JP"))
   )
 
 (use-package flycheck
@@ -2102,6 +2109,79 @@
     ;; キーマップへの再登録
     (define-key inf-ruby-minor-mode-map (kbd "C-x C-e") #'kf:inf-ruby-ts-safe-send-last-sexp))
   )
+
+(require 'org)
+
+;; GUID: kf990b7c-1f5d-4e5f-b6b7-c8d9e0f1a2c6
+;; ========================================================================
+;; 特定PROPERTY（CODE-FORMAT-GDSII）連動型・バッファ個別フォント化構成
+;; ========================================================================
+
+;; 1. 対象ブロックとフォント属性の定義（カラーライズ維持のため :foreground はなし）
+(defvar kf:org-src-lang-fonts
+  `(("cgpl"    . (:font ,(font-spec :family "DotMatrix") :height 140 :weight bold))
+    ("example" . (:font ,(font-spec :family "DotMatrix") :height 140 :weight bold)))
+  "Orgのソースブロック（言語別）およびExampleブロックに適用するフォント属性。")
+
+;; 2. バッファ内に指定のPROPERTYが存在するか判定する関数
+(defun kf:org-has-code-format-gdsii-p ()
+  "現在のバッファのグローバルキーワードプロパティに CODE-FORMAT-GDSII が存在するか判定する。"
+  (message "[GUID: kf:org-has-code-format-gdsii-p-v20261031-init]")
+  (let ((has-property nil))
+    (save-excursion
+      (goto-char (point-min))
+      ;; rx構文による行頭の「#+PROPERTY: CODE-FORMAT-GDSII」または「#+PROPERTY: key CODE-FORMAT-GDSII」の安全な検知
+      (when (re-search-forward
+             (rx line-start
+                 (zero-or-more (any " \t"))
+                 "#+" (or "property:" "PROPERTY:")
+                 (zero-or-more (not (any "\n")))
+                 "CODE-FORMAT-GDSII")
+             nil t)
+        (setq has-property t)))
+    has-property))
+
+;; 3. rx 構文を用いたフォント化拡張関数（バッファごとのPROPERTYチェック付き）
+(defun kf:org-fontify-blocks-per-lang (limit)
+  "指定PROPERTYが存在する場合のみ、ソースブロックとexampleブロックにフォント設定をマージする。"
+  (message "[GUID: kf:org-fontify-blocks-per-lang-v20261031-conditional]")
+  ;; バッファ内に指定のプロパティが存在する場合のみ処理を走らせる
+  (when (kf:org-has-code-format-gdsii-p)
+    (let ((case-fold-search t))
+      ;; rx構文による #+begin_src <lang> または #+begin_example の安全な一括検知
+      (while (re-search-forward
+              (rx line-start
+                  (zero-or-more (any " \t"))
+                  "#+begin_"
+                  (or (seq "src" (one-or-more (any " \t")) (group (one-or-more (not (any " \t\n")))))
+                      (group "example")))
+              limit t)
+        (let* ((lang (or (match-string 1) (match-string 2)))
+               (is-example (match-string 2))
+               (font-setting (assoc (downcase lang) kf:org-src-lang-fonts))
+               (beg (match-end 0))
+               (end (save-excursion
+                      (if (re-search-forward
+                           (if is-example
+                               (rx line-start (zero-or-more (any " \t")) "#+end_example")
+                             (rx line-start (zero-or-more (any " \t")) "#+end_src"))
+                           limit t)
+                          (match-beginning 0)
+                        limit))))
+          ;; 登録されたブロック名（cgpl / example）にマッチする場合のみ属性を重ね書き
+          (when font-setting
+            (add-face-text-property beg end (cdr font-setting)))
+          (goto-char end)))))
+  nil)
+
+;; 4. Org-mode への Font Lock キーワード結合
+(defun kf:org-mode-font-lock-hook ()
+  "Org-modeのフォントロック終了時に kf:org-fontify-blocks-per-lang を追加するフック。"
+  (message "[GUID: kf:org-mode-font-lock-hook-v20261031-conditional]")
+  (font-lock-add-keywords nil '((kf:org-fontify-blocks-per-lang)) 'append))
+
+(add-hook 'org-mode-hook #'kf:org-mode-font-lock-hook)
+
 
 (setq org-startup-folded t)
 (setq org-agenda-files '("~/"))
