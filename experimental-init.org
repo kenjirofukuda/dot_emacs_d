@@ -1,3 +1,4 @@
+
 #+TITLE: Experimental init.el
 #+PROPERTY: header-args  :tangle "~/.emacs.d/experimental-init.el"
 #+STARTUP: content
@@ -88,6 +89,8 @@ document.querySelectorAll(qclasses).forEach((el) => {
 
 ;; 2. キーバインドの静的確定
 (global-set-key (kbd "\C-c <f3>") 'kf:open-file-thing)
+
+(autoload 'kf:sync-org-to-ai-context-on-save "kf-command" "Sync Org file to ai-context on save." t)
 #+end_src
 
 * Calma GPLIIモードの導入

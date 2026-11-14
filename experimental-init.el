@@ -36,6 +36,8 @@
 ;; 2. キーバインドの静的確定
 (global-set-key (kbd "\C-c <f3>") 'kf:open-file-thing)
 
+(autoload 'kf:sync-org-to-ai-context-on-save "kf-command" "Sync Org file to ai-context on save." t)
+
 ;; 自動ロードされないので強制ロードに変更
 (require 'cgpl-mode)
 ;; GUID: cg770d3e-9f1b-4d6a-8c2e-e3d4f5b6c8f5
