@@ -741,5 +741,113 @@ Org-modeのテーブルに変換して、確実に『1行目（ヘッダー）�
 ;; 例: C-c v にショートカットキーを割り当てる場合
 (global-set-key (kbd "C-c v") 'kf:replace-buffer-with-clipboard)
 
+;; GUID: kf12img-around-ironclad-20261110
+;; ========================================================================
+;; 画像モード：内部フック誤爆・型エラーを完全封殺する `around` アドバイス構成
+;; ========================================================================
+
+(defun kf:image-visit-ocr-safe-engine ()
+  "カレントバッファがJPEGの場合に、型エラーの余地を残さず安全に右画面へ同期します。"
+  (when (and buffer-file-name
+             (derived-mode-p 'image-mode)
+             (string-match-p (rx "." (or "jpeg" "jpg") eos) (downcase buffer-file-name)))
+    (let* ((original-window (selected-window))
+           (base-name (file-name-base buffer-file-name))
+           (dir (file-name-directory buffer-file-name))
+           (txt-file (file-name-concat dir "ocr_texts" (concat base-name ".txt")))
+           (right-window (window-in-direction 'right)))
+
+      (if (file-exists-p txt-file)
+          ;; 【パターン1】対応テキストが存在する場合
+          (progn
+            (if right-window
+                (select-window right-window)
+              (split-window-right)
+              (other-window 1))
+            (find-file txt-file)
+            (select-window original-window))
+
+        ;; 【パターン2】存在しない場合：右側の古い画面を完全にパージして安全を確保
+        (when right-window
+          (delete-window right-window)
+          (select-window original-window))))))
+
+(defun kf:image-file-move-around-advisor (orig-fun &rest args)
+  "画像移動コマンド（n / p）の実行中、不純な redisplay や内部フックの干渉を
+一時的に完全に隔離し、型エラー（Wrong type argument）を物理的に根絶します。"
+  ;; 実行された瞬間に、最新のGUIDを静かにエコー
+  (message "[GUID: kf:image-file-move-around-advisor-v20261110-perfect]")
+
+  ;; 内部の位置計算フック（post-command-hook 等）の悪影響を、実行中だけ完全にシャットアウト
+  (let ((inhibit-redisplay t)
+        (inhibit-modification-hooks t)
+        (post-command-hook nil)) ; post-command-hook の画像バッファでの暴走をリセット
+    (apply orig-fun args))
+
+  ;; 画像切り替えが完全に「着地」したあと、安全な隔離空間から同期関数をトリガー
+  (save-window-excursion
+    (run-with-idle-timer 0.01 nil #'kf:image-visit-ocr-safe-engine))
+  nil)
+
+;; --- アドバイススタックの完全クリーンアップと再結合 ---
+(with-eval-after-load 'image-mode
+  ;; 旧アドバイスの完全抹消
+  (advice-remove 'image-next-file #'kf:image-visit-ocr)
+  (advice-remove 'image-previous-file #'kf:image-visit-ocr)
+  ;; 新しい「包囲（around）ガード」の強制アタッチ
+  (advice-add 'image-next-file :around #'kf:image-file-move-around-advisor)
+  (advice-add 'image-previous-file :around #'kf:image-file-move-around-advisor))
+
+;; GUID: kf202611-ai-context-sync-hook-v20261114-collision-guard
+;; ========================================================================
+;; AI-CONTEXT 自動エクスポート（親ディレクトリ名付与・衝突防止ガード版）
+;; ========================================================================
+
+(defcustom kf:ai-context-dir "~/ai-context/"
+  "AI-CONTEXT プロパティを持つ Org ファイルのコピー先ディレクトリ。"
+  :type 'directory
+  :group 'kf-commands)
+
+(defun kf:org-has-ai-context-property-p ()
+  "現在のバッファに `#+PROPERTY: AI-CONTEXT'（大文字・小文字不問）が記述されているか判定します。"
+  (save-excursion
+    (goto-char (point-min))
+    (let ((case-fold-search t))
+      (re-search-forward
+       (rx line-start
+           (zero-or-more (any " \t"))
+           "#+property:"
+           (zero-or-more (not (any "\n")))
+           "AI-CONTEXT"
+           (or whitespace line-end))
+       nil t))))
+
+(defun kf:sync-org-to-ai-context-on-save ()
+  "Org-mode のファイル保存完了後、#+PROPERTY: AI-CONTEXT が存在すれば
+『親ディレクトリ名_ファイル名.txt』の形式で指定ディレクトリへ上書きコピーします。"
+  (when (and (featurep 'org)
+             (derived-mode-p 'org-mode)
+             buffer-file-name
+             (kf:org-has-ai-context-property-p))
+    (let* ((target-dir (file-name-as-directory (expand-file-name kf:ai-context-dir)))
+           (file-dir (directory-file-name (file-name-directory buffer-file-name)))
+           (parent-dir-name (file-name-nondirectory file-dir))
+           (base-name (file-name-base buffer-file-name))
+           ;; ルート直下などで親ディレクトリ名が空になる場合の安全フォールバック
+           (dest-filename (if (string-empty-p parent-dir-name)
+                              (concat base-name ".txt")
+                            (concat parent-dir-name "_" base-name ".txt")))
+           (dest-file (concat target-dir dest-filename)))
+      ;; コピー先ディレクトリが存在しない場合は自動作成
+      (unless (file-directory-p target-dir)
+        (make-directory target-dir t))
+      ;; 保存済みの物理ファイルを .txt として上書きコピー
+      (copy-file buffer-file-name dest-file t)
+      (message "[AI-CONTEXT] %s として同期コピーしました。" dest-filename))))
+
+;; Org-mode ロード後に保存完了フック（after-save-hook）へ登録
+(with-eval-after-load 'org
+  (add-hook 'after-save-hook #'kf:sync-org-to-ai-context-on-save))
+
 (message "kf-command loaded...")
 (provide 'kf-command)

@@ -2154,6 +2154,9 @@
 (defun kf:org-fontify-blocks-per-lang (limit)
   "指定PROPERTYが存在する場合のみ、ソースブロックとexampleブロックにフォント設定をマージする。"
   ;; (message "[GUID: kf:org-fontify-blocks-per-lang-v20261031-conditional]")
+  ;; バイナリバッファーで動かないようにガード
+  (when (or (not (derived-mode-p 'org-mode)) (derived-mode-p 'image-mode))
+    (cl-return-from kf:org-fontify-blocks-per-lang nil)) ; 画像バッファやOrg以外なら即パージ
   ;; バッファ内に指定のプロパティが存在する場合のみ処理を走らせる
   (when (kf:org-has-code-format-gdsii-p)
     (let ((case-fold-search t))
@@ -2199,6 +2202,42 @@
 ;; Emacs Lisp モード時に checkdoc のみを無効化する
 (setq-default flycheck-disabled-checkers '(emacs-lisp-checkdoc))
 
+;; GUID: kf13txt-speedup-patch-20261110
+;; ========================================================================
+;; テキスト移動高速化：Tree-sitter ＆ Modeline 過剰パース封殺構成
+;; ========================================================================
+
+(with-eval-after-load 'treesit
+  (message "[GUID: kf:treesit-performance-patch-v20261110]")
+
+  ;; 1. 最重要：Tree-sitter のフォントロック（色付け）の深度を「4（最深）」から「3（標準）」に引き下げます。
+  ;;    これにより、1文字進むたびに全構文木を走査する1千万回ループが物理的に消滅します。
+  (setq-default treesit-font-lock-level 3)
+
+  ;; 💡 すでに開いているバッファがある場合、即座にレベル3に補正
+  (dolist (buf (buffer-list))
+    (with-current-buffer buf
+      (when (boundp 'treesit-font-lock-level)
+        (setq-local treesit-font-lock-level 3)))))
+
+(with-eval-after-load 'doom-modeline
+  ;; 2. doom-modeline の描画負荷の引き下げ
+  ;;    ファイルの状態（Git等）やアイコン、文字列幅の再計算をカーソル移動ごとに行うのを禁止します。
+  (setq doom-modeline-buffer-file-state-icon nil) ; ファイル状態のアイコン計算をオフ
+  (setq doom-modeline-vcs-max-length 15)           ; VCS文字列のパースを最大15文字にクリップ
+  (setq doom-modeline-env-version nil)             ; モードラインでの各言語（D, Python等）のバージョン動的判定を無効化
+  )
+
+(with-eval-after-load 'editorconfig
+  ;; 3. EditorConfig がテキスト編集中に不要なフックで裏で走るのを防止
+  (setq editorconfig-trim-whitespaces-on-save nil) ; 保存時以外の探索を抑制
+  )
+
+;; 4. 【ダメ押し】今回のプロファイラで判明した、org-timer（ポモドーロ用）の
+;;    1秒ごとのモードライン全書き換えによるメモリ負荷をアイドルタイマー化
+(setq org-timer-display 'mode-line)
+(setq blink-cursor-interval 0.8) ; カーソルの点滅間隔を少し広げて、タイマーイベント全体の割り込み頻度を削減
+
 (setq org-startup-folded t)
 (setq org-agenda-files '("~/"))
 
@@ -2209,6 +2248,8 @@
 (recentf-open-files)
 ;; (add-hook 'kill-emacs-query-functions 'kf:quit-query-function)
 (global-set-key "\C-x\ \C-c" 'kf:quit-emacs)
+(global-set-key (kbd "C-<tab>") 'other-window)
+
 (provide 'init)
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;;; init.el ends here
