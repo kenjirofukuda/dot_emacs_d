@@ -5,16 +5,13 @@
 ;; before package and UI initialization happens.
 ;;
 ;;; Code:
-
 (with-current-buffer "*scratch*"
   (insert ";;; loading Experimental init.el\n")
   (insert ";;; Emacs " emacs-version "\n")
   (insert "\n")
   (insert "\n"))
-
 (setq gc-cons-threshold 200000000)
 (setq read-process-output-max (* 10 1024 1024)) ;; 8mb
-
 ;; 個別の拡張を配下のlispフォルダに入れている
 (when (file-directory-p "~/.emacs.d/lisp")
   (push (expand-file-name "~/.emacs.d/lisp") load-path))
@@ -23,7 +20,6 @@
 ;; ========================================================================
 ;; 私設カスタムコマンド（kf-command）の必要時自動ロード（autoload）構成
 ;; ========================================================================
-
 ;; 1. 主要な関数の autoload 登録（フォント判定関数をここに追加し、UI初期化時のクラッシュを防ぎます）
 (autoload 'kf:font-family-installed-p "kf-command" "Check if font family is installed." nil)
 (autoload 'kf:quit-emacs "kf-command" "Custom synchronized exit sequence." t)
@@ -371,6 +367,16 @@
   ;; Optionally make narrowing help available in the minibuffer.
   ;; You may want to use `embark-prefix-help-command' or which-key instead.
   ;; (keymap-set consult-narrow-map (concat consult-narrow-key " ?") #'consult-narrow-help)
+
+
+  ;; Consult でジャンプした先が折りたたまれていた場合に自動展開する関数
+  (defun my/consult-reveal-org-on-jump ()
+    (when (derived-mode-p 'org-mode)
+      (org-reveal)))
+
+  ;; ジャンプ系コマンドの実行後フックに登録
+  (add-hook 'consult-after-jump-hook #'my/consult-reveal-org-on-jump)
+  (add-hook 'consult-preview-at-point-mode-hook #'my/consult-reveal-org-on-jump)
   )
 
 ;; https://github.com/oantolin/embark/
@@ -523,9 +529,10 @@
 
 (use-package org-modern
   :if (display-graphic-p)
-
-  :hook ((org-mode . org-modern-mode)))
-(global-set-key "\C-cl" 'org-toggle-link-display)
+  :hook ((org-mode . org-modern-mode))
+  :bind (:map org-mode-map
+	      ("C-c c" . org-toggle-link-display)
+	      ("C-c a" . org-modern-mode)))
 
 (use-package org-journal
 
@@ -1566,6 +1573,13 @@
               ;; ついでに他言語のBabelでも4マス化を防ぎたい場合の保険
               (setq c-basic-offset 2)
               (setq css-indent-offset 2)))
+
+  ;; isearch やブックマークジャンプ時に見出し階層（lineage）を自動展開する
+  (setq org-show-context-detail '((isearch . lineage)
+                                  (bookmark-jump . lineage)
+                                  (default . canonical)))
+  ;; isearch 中も折りたたみ内部をリアルタイムに一時展開して検索する
+  (setq org-fold-core-isearch-open t)
   )
 
 ;; =====================================================================
@@ -2157,7 +2171,9 @@
   "指定PROPERTYが存在する場合のみ、ソースブロックとexampleブロックにフォント設定をマージする。"
   ;; (message "[GUID: kf:org-fontify-blocks-per-lang-v20261031-conditional]")
   ;; バイナリバッファーで動かないようにガード
-  (when (or (not (derived-mode-p 'org-mode)) (derived-mode-p 'image-mode))
+  (when (or (not (and (derived-mode-p 'org-mode)
+		      (bound-and-true-p org-modern-mode)))
+	    (derived-mode-p 'image-mode))
     (cl-return-from kf:org-fontify-blocks-per-lang nil)) ; 画像バッファやOrg以外なら即パージ
   ;; バッファ内に指定のプロパティが存在する場合のみ処理を走らせる
   (when (kf:org-has-code-format-gdsii-p)
@@ -2199,7 +2215,6 @@
   (font-lock-add-keywords nil '((kf:org-fontify-blocks-per-lang)) 'append))
 
 (add-hook 'org-mode-hook #'kf:org-mode-font-lock-hook)
-
 
 ;; Emacs Lisp モード時に checkdoc のみを無効化する
 (setq-default flycheck-disabled-checkers '(emacs-lisp-checkdoc))
