@@ -1,5 +1,6 @@
 #+TITLE: Experimental init.el
 #+PROPERTY: header-args  :tangle "~/.emacs.d/experimental-init.el"
+#+PROPERTY: AI-CONTEXT
 #+STARTUP: content
 * 参考
 - [[https://ayatakesi.github.io/emacs/29.4/html/index.html][Emacs Japanese]]
@@ -777,8 +778,14 @@ https://zenn.dev/ebang/articles/231106_emacs-markdown
 
 ** =<s <tab>= でブロック文のテンプレートを挿入
 #+BEGIN_SRC elisp :tangle yes
-;; <s <tab> でブロック文のテンプレートを挿入
-(require 'org-tempo)
+;; GUID: tp202611-org-tempo-yas-fix
+(with-eval-after-load 'org
+  (message "[GUID: kf:org-tempo-setup-v20261119]")
+  (require 'org-tempo)
+  ;; Orgバッファ内では yasnippet と org-tempo が衝突しないよう調整
+  (add-hook 'org-mode-hook
+            (lambda ()
+              (add-to-list 'org-tab-first-hook #'yas-expand))))
 #+END_SRC
 
 ** デフォルトのbabelではシェルは禁止されているの使えるようにする
@@ -2970,15 +2977,14 @@ https://github.com/hlissner/emacs-pug-mode
   :straight (projectile-laravel :type git :host github :repo "strikerlulu/projectile-laravel"))
 
 (use-package php-mode
-  :hook (php-mode-hook . lsp)
+  :hook (php-mode . lsp)
   :config
   ;; dap-php 自体を、LSPがPHPファイルを掴んで動き出した瞬間に初めてロードさせる遅延ガード
   (with-eval-after-load 'lsp-mode
     (use-package dap-php
       :ensure nil
       :straight nil
-      :config
-      (yas-global-mode 1))))
+      )))
 
 (setq gc-cons-threshold (* 100 1024 1024)
       read-process-output-max (* 10 1024 1024)
@@ -3869,26 +3875,19 @@ asdf reshim rust
     has-property))
 
 ;; 3. rx 構文を用いたフォント化拡張関数（バッファごとのPROPERTYチェック付き）
+;; GUID: kf990b7c-1f5d-4e5f-b6b7-c8d9e0f1a2c7
 (defun kf:org-fontify-blocks-per-lang (limit)
   "指定PROPERTYが存在する場合のみ、ソースブロックとexampleブロックにフォント設定をマージする。"
-  ;; (message "[GUID: kf:org-fontify-blocks-per-lang-v20261031-conditional]")
-  ;; バイナリバッファーで動かないようにガード
-  (when (or (not (and (derived-mode-p 'org-mode)
-		      (bound-and-true-p org-modern-mode)))
-	    (derived-mode-p 'image-mode))
-    (cl-return-from kf:org-fontify-blocks-per-lang nil)) ; 画像バッファやOrg以外なら即パージ
-  ;; バッファ内に指定のプロパティが存在する場合のみ処理を走らせる
-  (when (kf:org-has-code-format-gdsii-p)
+  (when (and (derived-mode-p 'org-mode)
+             (bound-and-true-p org-modern-mode)
+             (not (derived-mode-p 'image-mode))
+             (kf:org-has-code-format-gdsii-p))
     (let ((case-fold-search t))
-      ;; ソースブロック全体のフォントロックが途切れないよう、パースの挙動を安定させる
-      (setq org-src-fontify-natively t)       ; すでに入っている前提ですが明示
-      (setq font-lock-multiline t)            ; 複数行にわたるフォントロックの結合を強化
-      (setq jit-lock-defer-time 0.05)         ; 描画時のパース遅延をわずかに持たせて確実にする
-      ;; rx構文による #+begin_src <lang> または #+begin_example の安全な一括検知
+      (setq org-src-fontify-natively t
+            font-lock-multiline t
+            jit-lock-defer-time 0.05)
       (while (re-search-forward
-              (rx line-start
-                  (zero-or-more (any " \t"))
-                  "#+begin_"
+              (rx line-start (zero-or-more (any " \t")) "#+begin_"
                   (or (seq "src" (one-or-more (any " \t")) (group (one-or-more (not (any " \t\n")))))
                       (group "example")))
               limit t)
@@ -3904,11 +3903,11 @@ asdf reshim rust
                            limit t)
                           (match-beginning 0)
                         limit))))
-          ;; 登録されたブロック名（cgpl / example）にマッチする場合のみ属性を重ね書き
           (when font-setting
             (add-face-text-property beg end (cdr font-setting)))
           (goto-char end)))))
   nil)
+
 
 ;; 4. Org-mode への Font Lock キーワード結合
 (defun kf:org-mode-font-lock-hook ()

@@ -1,5 +1,6 @@
 #+TITLE: カスタムコマンド
 #+PROPERTY: tangle ~/.emacs.d/lisp/kf-command.el
+#+PROPERTY: AI-CONTEXT
 
 Elispのおさらいは
 - ~/.emacs.d/lisp/elisp-examples.org
