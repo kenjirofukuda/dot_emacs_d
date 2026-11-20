@@ -49,22 +49,6 @@
 (with-eval-after-load 'cgpl-mode
   (setq cgpl-tab-width 2))
 
-;; GUID: mp880e3e-1f5b-496a-b2c4-e3d1f5b6c8d2
-;; ========================================================================
-;; Mpascal モードの遅延評価（autoload）構成
-;; ========================================================================
-;; 重厚な mpascal.el を起動時から完全に隔離し、対象ファイル展開時に初めてロードします。
-
-;; 拡張子判定をトップレベルに配置（これによって require なしで自動遅延ロードが成立します）
-(add-to-list 'auto-mode-alist '("\\.\\(p\\|pas\\|dpr\\|dpk\\)\\'" . mpascal-mode))
-
-;; mpascal-mode がメモリに読み込まれた「後」に初めてフックを安全にバインド
-(with-eval-after-load 'mpascal
-  (add-hook 'mpascal-mode-hook
-            (lambda ()
-              (setq tab-width 4)
-              (setq c-basic-offset 4))))
-
 (setq inhibit-startup-message t)
 
 (scroll-bar-mode -1)        ; Disable visible scrollbar
@@ -2139,6 +2123,33 @@
     ;; キーマップへの再登録
     (define-key inf-ruby-minor-mode-map (kbd "C-x C-e") #'kf:inf-ruby-ts-safe-send-last-sexp))
   )
+
+;; GUID: ps202611-fpc-lazarus-ide-setup-v6
+(use-package pascal-ts-mode
+  :straight (:host github :repo "bolsen/pascal-ts-mode")
+  :mode (rx "." (or "p" "pas" "pp" "dpr" "dpk" "lpr" "inc") eos)
+  :hook (pascal-ts-mode . eglot-ensure)
+  :config
+  (message "[GUID: kf:pascal-ts-mode-eglot-v20261120-v6]")
+  (setq-local tab-width 2)
+
+  ;; 【不整合パッチ】最新 tree-sitter-pascal に存在しないノード名をクエリから動的にパージ
+  (when (boundp 'pascal-ts-mode--font-lock-settings)
+    (let ((invalid-nodes '("(kOtherwise)" "(kDispId)" "(kMs_abi_default)" "(kMs_abi_cdecl)" "(kMwpascal)")))
+      (setq pascal-ts-mode--font-lock-settings
+            (mapcar (lambda (setting)
+                      (let ((query (car setting)))
+                        (if (stringp query)
+                            (let ((cleaned query))
+                              (dolist (node invalid-nodes)
+                                (setq cleaned (replace-regexp-in-string (regexp-quote node) "" cleaned t t)))
+                              (cons cleaned (cdr setting)))
+                          setting)))
+                    pascal-ts-mode--font-lock-settings)))))
+
+(with-eval-after-load 'eglot
+  (add-to-list 'eglot-server-programs
+               '((pascal-ts-mode opascal-mode mpascal-mode) . ("pasls"))))
 
 (require 'org)
 

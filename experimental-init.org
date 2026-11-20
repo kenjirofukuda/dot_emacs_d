@@ -95,26 +95,6 @@ document.querySelectorAll(qclasses).forEach((el) => {
 (with-eval-after-load 'cgpl-mode
   (setq cgpl-tab-width 2))
 #+end_src
-
-* mpascal の導入
-#+begin_src elisp :tangle yes
-;; GUID: mp880e3e-1f5b-496a-b2c4-e3d1f5b6c8d2
-;; ========================================================================
-;; Mpascal モードの遅延評価（autoload）構成
-;; ========================================================================
-;; 重厚な mpascal.el を起動時から完全に隔離し、対象ファイル展開時に初めてロードします。
-
-;; 拡張子判定をトップレベルに配置（これによって require なしで自動遅延ロードが成立します）
-(add-to-list 'auto-mode-alist '("\\.\\(p\\|pas\\|dpr\\|dpk\\)\\'" . mpascal-mode))
-
-;; mpascal-mode がメモリに読み込まれた「後」に初めてフックを安全にバインド
-(with-eval-after-load 'mpascal
-  (add-hook 'mpascal-mode-hook
-            (lambda ()
-              (setq tab-width 4)
-              (setq c-basic-offset 4))))
-#+end_src
-
 * 基本設定
 #+begin_src elisp :tangle yes
 (setq inhibit-startup-message t)
@@ -3786,7 +3766,7 @@ asdf reshim rust
   (setq ruby-ts-mode-indent-offset 2))
 #+end_src
 
-* inf-ruby (Ruby 対話型評価環境)
+** inf-ruby (Ruby 対話型評価環境)
 #+begin_src elisp :tangle yes
 ;; GUID: ir202611-inf-ruby-ts-smie-ironclad-v20261103
 ;; ========================================================================
@@ -3841,6 +3821,159 @@ asdf reshim rust
     (define-key inf-ruby-minor-mode-map (kbd "C-x C-e") #'kf:inf-ruby-ts-safe-send-last-sexp))
   )
 #+end_src
+* Pascal 環境
+** 【停止】 +mpascal の導入+
+Free Pascal 優先のためMacintosh Pascalは現在中断
+#+begin_src elisp :tangle no
+;; GUID: mp880e3e-1f5b-496a-b2c4-e3d1f5b6c8d2
+;; ========================================================================
+;; Mpascal モードの遅延評価（autoload）構成
+;; ========================================================================
+;; 重厚な mpascal.el を起動時から完全に隔離し、対象ファイル展開時に初めてロードします。
+
+;; 拡張子判定をトップレベルに配置（これによって require なしで自動遅延ロードが成立します）
+(add-to-list 'auto-mode-alist '("\\.\\(p\\|pas\\|dpr\\|dpk\\)\\'" . mpascal-mode))
+
+;; mpascal-mode がメモリに読み込まれた「後」に初めてフックを安全にバインド
+(with-eval-after-load 'mpascal
+  (add-hook 'mpascal-mode-hook
+            (lambda ()
+              (setq tab-width 4)
+              (setq c-basic-offset 4))))
+#+end_src
+
+** 【停止】 +OPascalの導入+
+#+begin_src elisp :tangle no
+(use-package opascal)
+#+end_src
+
+** [Pas]cal [L]anguage [S]erver pasls の導入
+#+begin_src bash :tangle no :results raw :wrap src text
+mkdir -p ~/Documents/github/genericptr
+cd ~/Documents/github/genericptr
+HOST_NAME="github.com"
+REPO_PATH="genericptr/pascal-language-server.git"
+git clone "https://${HOST_NAME}/${REPO_PATH}"
+cd pascal-language-server
+# 1. 依存パッケージの場所を Lazarus の設定に登録する
+lazbuild --add-package-link src/protocol/lspprotocol.lpk
+lazbuild --add-package-link src/serverprotocol/lspserver.lpk
+# 2. pasls 本体をビルドする
+lazbuild src/standard/pasls.lpi
+mkdir -p ~/.local/bin
+# cp bin/$(uname -m)-linux/pasls ~/.local/bin/
+cp src/standard/pasls ~/.local/bin/
+#+end_src
+
+#+RESULTS:
+
+** libtree-sitter-pascal の独自ビルド
+#+begin_src bash :tangle no :results output :file "./tree-sitter-pascal.log" :prologue "exec 2>&1"
+# 1. 作業用ディレクトリを作成してクローン
+mkdir -p ~/Documents/github/Isopod
+cd ~/Documents/github/Isopod
+HOST_NAME="github.com"
+REPO_PATH="Isopod/tree-sitter-pascal.git"
+git clone "https://${HOST_NAME}/${REPO_PATH}"
+cd tree-sitter-pascal
+
+# 2. pascal-ts-mode が想定している時期のコミットへチェックアウト
+git checkout 2fd40f477d3e2794af152618ccfac8d92eb72a66
+
+# 3. Cコンパイラで共有ライブラリ（libtree-sitter-pascal.so）を直接ビルド
+gcc -fPIC -shared -I src src/parser.c -o libtree-sitter-pascal.so
+
+# 4. Emacs の tree-sitter ディレクトリへ配置（既存のものを上書き）
+mkdir -p ~/.emacs.d/tree-sitter
+cp libtree-sitter-pascal.so ~/.emacs.d/tree-sitter/
+#+end_src
+
+#+RESULTS:
+: fatal: destination path 'tree-sitter-pascal' already exists and is not an empty directory.
+: HEAD is now at 2fd40f4 Fix indentation
+
+** 補足：もし jcfbase などのエラーが続けて出た場合
+リポジトリの公式ビルド手順（README）によると、pasls は以下のパッケージにも依存しています。
+もし上記で Broken dependency: jcfbase と出た場合は、システム側の Lazarus ディレクトリにある
+jcfbase.lpk も同様にリンク登録してから再実行してください。
+
+#+begin_src bash :tangle no
+# Debian 標準パッケージ等で /usr/lib/lazarus 配下にある場合の例
+JCF_LPK=$(find /usr/lib/lazarus /usr/share/lazarus -name "jcfbase.lpk" 2>/dev/null | head -n 1)
+if [ -n "$JCF_LPK" ]; then
+  lazbuild --add-package-link "$JCF_LPK"
+fi
+
+# 再度ビルドを実行
+lazbuild src/standard/pasls.lpi
+#+end_src
+
+** pasls に FPC ソースと Lazarus パスを認識させる環境変数
+pasls が RTL（SysUtils や Classes）や LCL（Forms や Controls）の定義ジャンプ・補完を行うには、
+FPC のソースディレクトリなどの環境変数が必要です。
+
+~/.bashrc または direnv（.envrc）に以下を設定しておくと、Emacs（envrc 経由）からも自動で認識されます。
+#+begin_src bash :tangle no
+# Debian 標準パッケージで fpc-source / lazarus を入れている場合の典型例
+export FPCDIR="/usr/share/fpcsrc/$(fpc -iV)"
+export LAZARUSDIR="/usr/lib/lazarus/$(lazbuild --version)"
+export PP="/usr/bin/fpc"
+#+end_src
+
+*** direnv の確認
+.envrc を配置したら、必ず =direnv allow= を実行して認識させなければならない。
+
+#+begin_src text :tangle no
+$ z cgpl2-pas
+direnv: error /home/kenjiro/Nextcloud/LazarusProjects/cgpl2-pas/.envrc is blocked. Run `direnv allow` to approve its content
+$ direnv allow
+direnv: loading ~/Nextcloud/LazarusProjects/cgpl2-pas/.envrc
+direnv: export +FPCDIR +LAZARUSDIR +PP
+$
+#+end_src
+
+** pascal-ts-modeの導入
+
+#+begin_src elisp :tangle yes
+;; GUID: ps202611-fpc-lazarus-ide-setup-v6
+(use-package pascal-ts-mode
+  :straight (:host github :repo "bolsen/pascal-ts-mode")
+  :mode (rx "." (or "p" "pas" "pp" "dpr" "dpk" "lpr" "inc") eos)
+  :hook (pascal-ts-mode . eglot-ensure)
+  :config
+  (message "[GUID: kf:pascal-ts-mode-eglot-v20261120-v6]")
+  (setq-local tab-width 2)
+
+  ;; 【不整合パッチ】最新 tree-sitter-pascal に存在しないノード名をクエリから動的にパージ
+  (when (boundp 'pascal-ts-mode--font-lock-settings)
+    (let ((invalid-nodes '("(kOtherwise)" "(kDispId)" "(kMs_abi_default)" "(kMs_abi_cdecl)" "(kMwpascal)")))
+      (setq pascal-ts-mode--font-lock-settings
+            (mapcar (lambda (setting)
+                      (let ((query (car setting)))
+                        (if (stringp query)
+                            (let ((cleaned query))
+                              (dolist (node invalid-nodes)
+                                (setq cleaned (replace-regexp-in-string (regexp-quote node) "" cleaned t t)))
+                              (cons cleaned (cdr setting)))
+                          setting)))
+                    pascal-ts-mode--font-lock-settings)))))
+
+(with-eval-after-load 'eglot
+  (add-to-list 'eglot-server-programs
+               '((pascal-ts-mode opascal-mode mpascal-mode) . ("pasls"))))
+#+end_src
+
+*** 【保守メモ】Tree-sitter ノード不整合エラー再発時の復旧コマンド
+もし将来 straight-pull-all 等で上流の pascal-ts-mode を更新し、再び同じエラーが起きた場合に備える。
+
+上流の `pascal-ts-mode` を更新して `(kOtherwise)` 等のクエリエラーが再発した場合は、以下を実行してパッチを再適用します。
+
+#+begin_src bash :tangle no
+sed -i 's/(kOtherwise)//g' ~/.emacs.d/straight/repos/pascal-ts-mode/pascal-ts-mode.el
+rm -f ~/.emacs.d/straight/build/pascal-ts-mode/*.elc
+#+end_src
+
+
 * CGPL FONT
 #+begin_src elisp :tangle yes
 (require 'org)

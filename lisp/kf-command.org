@@ -1146,6 +1146,33 @@ Org-modeのテーブルに変換して、確実に『1行目（ヘッダー）�
 (with-eval-after-load 'org
   (add-hook 'after-save-hook #'kf:sync-org-to-ai-context-on-save))
 #+end_src
+
+* lazbuild 連携
+Lazarus のプロジェクトファイル（.lpi）があるディレクトリで、Emacs から直接 C-c C-c 等で
+コンパイルできるようにするためのヘルパーコマンド。
+
+#+begin_src elisp :tangle yes
+;; GUID: kf202611-lazarus-lazbuild-compile
+(defun kf:lazarus-build-project ()
+  "カレントディレクトリから上位へ .lpi ファイルを探し、lazbuild で非同期ビルドします。"
+  (interactive)
+  (message "[GUID: kf:lazarus-build-project-v20261120]")
+  (let* ((lpi-dir (locate-dominating-file
+                   default-directory
+                   (lambda (dir)
+                     (directory-files dir nil (rx ".lpi" eos)))))
+         (lpi-file (and lpi-dir
+                        (car (directory-files lpi-dir t (rx ".lpi" eos))))))
+    (if lpi-file
+        (let ((default-directory lpi-dir)
+              (compile-command (format "lazbuild %s" (shell-quote-argument lpi-file))))
+          (call-interactively 'compile))
+      (user-error "上位ディレクトリに .lpi プロジェクトファイルが見つかりません"))))
+
+(with-eval-after-load 'pascal-ts-mode
+  (define-key pascal-ts-mode-map (kbd "C-c C-c") #'kf:lazarus-build-project))
+#+end_src
+
 * フッタ
 #+BEGIN_SRC elisp :tangle yes
 (message "kf-command loaded...")

@@ -874,5 +874,25 @@ Org-modeのテーブルに変換して、確実に『1行目（ヘッダー）�
 (with-eval-after-load 'org
   (add-hook 'after-save-hook #'kf:sync-org-to-ai-context-on-save))
 
+;; GUID: kf202611-lazarus-lazbuild-compile
+(defun kf:lazarus-build-project ()
+  "カレントディレクトリから上位へ .lpi ファイルを探し、lazbuild で非同期ビルドします。"
+  (interactive)
+  (message "[GUID: kf:lazarus-build-project-v20261120]")
+  (let* ((lpi-dir (locate-dominating-file
+                   default-directory
+                   (lambda (dir)
+                     (directory-files dir nil (rx ".lpi" eos)))))
+         (lpi-file (and lpi-dir
+                        (car (directory-files lpi-dir t (rx ".lpi" eos))))))
+    (if lpi-file
+        (let ((default-directory lpi-dir)
+              (compile-command (format "lazbuild %s" (shell-quote-argument lpi-file))))
+          (call-interactively 'compile))
+      (user-error "上位ディレクトリに .lpi プロジェクトファイルが見つかりません"))))
+
+(with-eval-after-load 'pascal-ts-mode
+  (define-key pascal-ts-mode-map (kbd "C-c C-c") #'kf:lazarus-build-project))
+
 (message "kf-command loaded...")
 (provide 'kf-command)

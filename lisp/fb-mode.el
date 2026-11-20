@@ -174,7 +174,7 @@ of the previous, otherwise it returns nil."
               best
               initial-linenum
               initial-column)
-          (flet
+          (cl-flet
               ((-consider-point ()
                                 (if (< (current-column) (+ initial-column fb-max-continuation-indent))
                                     (setq best (point)))))
@@ -501,7 +501,7 @@ the mark if called interactively."
           (setq char (char-before))
           (cond ((eq (char-syntax char) ?\( ) (backward-char) (forward-sexp 1))
                 ;;((char-equal char ?\) ) (error "not enough arguments"))
-                ((char-equal char ?, ) (if (<= (incf argno) args) (set-mark (1- (point)))
+                ((char-equal char ?, ) (if (<= (cl-incf argno) args) (set-mark (1- (point)))
                                          (throw 'done nil)))
 					;I assume forward-sexp uses normal escape codes, not ideal
                 ((char-equal char ?\") (backward-char) (forward-sexp 1))))))
