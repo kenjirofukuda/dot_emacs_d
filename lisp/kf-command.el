@@ -894,5 +894,67 @@ Org-modeのテーブルに変換して、確実に『1行目（ヘッダー）�
 (with-eval-after-load 'pascal-ts-mode
   (define-key pascal-ts-mode-map (kbd "C-c C-c") #'kf:lazarus-build-project))
 
+;; GUID: kf202611-consult-ripgrep-at-point
+(defun kf:consult-ripgrep-at-point ()
+  "選択範囲、またはカーソル配下の識別子（シンボル）を初期クエリとして consult-ripgrep を起動します。"
+  (interactive)
+  (message "[GUID: kf:consult-ripgrep-at-point-v20261120]")
+  (let ((initial (if (use-region-p)
+                     (buffer-substring-no-properties (region-beginning) (region-end))
+                   (thing-at-point 'symbol t))))
+    (consult-ripgrep nil initial)))
+
+;; 既存の M-s r (consult-ripgrep) の隣、M-s R にバインド（お好みで変更可）
+(global-set-key (kbd "M-s R") #'kf:consult-ripgrep-at-point)
+
+
+;; GUID: kf202611-jedi-code-formatter-integration-v3
+(defun kf:pascal-jcf-format-buffer ()
+  "Lazarus の JEDI Code Formatter (jcf) を呼び出し、現在の Pascal バッファを整形します。"
+  (interactive)
+  (message "[GUID: kf:pascal-jcf-format-buffer-v20261120-v3]")
+  (if (not (executable-find "jcf"))
+      (user-error "jcf コマンドが見つかりません。~/.local/bin/jcf を確認してください")
+    (let* ((target-buf (current-buffer))
+           (orig-point (point))
+           (orig-window-start (window-start))
+           (tmp-file (make-temp-file "emacs-jcf-" nil ".pas"))
+           (cfg-file (expand-file-name "~/.lazarus/jcfsettings.cfg"))
+           (args (append
+                  (when (file-exists-p cfg-file)
+                    (list (concat "-config=" cfg-file)))
+                  (list "-clarify" "-inplace" "-y" tmp-file))))
+      (unwind-protect
+          (progn
+            (write-region (point-min) (point-max) tmp-file nil 'silent)
+            (let ((out-str "")
+                  (exit-code nil))
+              (with-temp-buffer
+                (setq exit-code (apply #'call-process "jcf" nil t nil args))
+                (setq out-str (string-trim (buffer-string))))
+              (if (eq exit-code 0)
+                  (let ((fmt-buf (generate-new-buffer " *jcf-fmt*")))
+                    (unwind-protect
+                        (progn
+                          (with-current-buffer fmt-buf
+                            (insert-file-contents tmp-file))
+                          (with-current-buffer target-buf
+                            (if (string= (buffer-string)
+                                         (with-current-buffer fmt-buf (buffer-string)))
+                                (message "JCF: すでに整形済みです。")
+                              (replace-buffer-contents fmt-buf)
+                              (goto-char (min orig-point (point-max)))
+                              (set-window-start (selected-window) orig-window-start)
+                              (message "JEDI Code Formatter で整形しました。"))))
+                      (when (buffer-live-p fmt-buf)
+                        (kill-buffer fmt-buf))))
+                (message "JCF 整形エラー (終了コード %s): %s" exit-code out-str))))
+        (when (file-exists-p tmp-file)
+          (delete-file tmp-file))))))
+;; pascal-ts-mode に Emacs 流のフォーマットキーをバインド
+(with-eval-after-load 'pascal-ts-mode
+  (define-key pascal-ts-mode-map (kbd "C-c C-f") #'kf:pascal-jcf-format-buffer)
+  (define-key pascal-ts-mode-map (kbd "C-M-\\")  #'kf:pascal-jcf-format-buffer))
+
 (message "kf-command loaded...")
 (provide 'kf-command)

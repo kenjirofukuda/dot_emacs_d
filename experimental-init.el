@@ -857,6 +857,12 @@
   (add-to-list 'eglot-server-programs '((dylan-mode) "dylan-lsp-server"))
   )
 
+;; GUID: eg202611-eglot-decl-impl-keybinds
+(with-eval-after-load 'eglot
+  (message "[GUID: kf:eglot-decl-impl-keybinds-v20261120]")
+  (define-key eglot-mode-map (kbd "M-<down>") #'eglot-find-implementation)
+  (define-key eglot-mode-map (kbd "M-<up>")   #'eglot-find-declaration))
+
 (use-package tree-sitter
   :if (version< emacs-version "29.0")
   )

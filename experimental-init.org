@@ -2097,6 +2097,15 @@ lspサーバーとの比較のため導入してみる
   (add-to-list 'eglot-server-programs '((dylan-mode) "dylan-lsp-server"))
   )
 #+end_src
+
+#+begin_src elisp :tangle yes
+;; GUID: eg202611-eglot-decl-impl-keybinds
+(with-eval-after-load 'eglot
+  (message "[GUID: kf:eglot-decl-impl-keybinds-v20261120]")
+  (define-key eglot-mode-map (kbd "M-<down>") #'eglot-find-implementation)
+  (define-key eglot-mode-map (kbd "M-<up>")   #'eglot-find-declaration))
+#+end_src
+
 * Tree sitter
 - https://joppot.info/posts/c05e989a-e642-4c84-a5b8-a0e0c3178941
 
@@ -3973,7 +3982,78 @@ sed -i 's/(kOtherwise)//g' ~/.emacs.d/straight/repos/pascal-ts-mode/pascal-ts-mo
 rm -f ~/.emacs.d/straight/build/pascal-ts-mode/*.elc
 #+end_src
 
+** CLI 版 JEDI Code Formatter (jcf) のビルドと配置
+システムにある Lazarus ソースから CLI 版 jcf をビルドして ~/.local/bin/jcf に配置します。
+#+begin_src bash :tangle no :results output :file "./jcf2-build.log" :prologue "exec 2>&1"
+# 1. 作業用ディレクトリへソースをコピー（権限保護のため）
+mkdir -p ~/Documents/src/jcf-cli
+LAZ_SRC=$(find /usr/lib/lazarus /usr/share/lazarus -maxdepth 2 -name "components" 2>/dev/null | head -n 1)
+cp -r "${LAZ_SRC}/jcf2" ~/Documents/src/jcf-cli/
 
+# 2. コマンドライン版プロジェクトをビルド
+cd ~/Documents/src/jcf-cli/jcf2/CommandLine/Lazarus
+# ファイル名の大文字・小文字差異がある場合の保険リンク
+[ -f JCF.lpr ] && [ ! -f jcf.lpr ] && ln -s JCF.lpr jcf.lpr
+lazbuild jcf.lpi
+
+# 3. 生成されたバイナリを PATH の通った場所へコピー
+JCF_BIN=$(find ~/Documents/src/jcf-cli/jcf2 -type f -iname "jcf" -executable | head -n 1)
+mkdir -p ~/.local/bin
+cp "$JCF_BIN" ~/.local/bin/jcf
+which jcf
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Hint: (lazbuild) Primary config path: "/home/kenjiro/.lazarus"
+Hint: (lazarus) [TBuildManager.SetBuildTarget] Old=x86_64-linux--gtk2 New=x86_64-linux--gtk2 Changed: OS/CPU=True LCL=False
+Hint: (lazarus) [TBuildManager.SetBuildTarget] Old=x86_64-linux--gtk2 New=x86_64-linux--gtk2 Changed: OS/CPU=True LCL=False
+TProject.DoLoadStateFile Statefile not found: /home/kenjiro/Documents/src/jcf-cli/jcf2/lib/CommandLine-x86_64-linux/jcf.compiled
+Hint: (lazarus) Project needs building: No state file for Project
+Info: (lazarus) Execute Title="Compile Project, Target: /home/kenjiro/Documents/src/jcf-cli/jcf2/lib/CommandLine-x86_64-linux/jcf"
+Info: (lazarus) Working Directory="/home/kenjiro/Documents/src/jcf-cli/jcf2/CommandLine/Lazarus/"
+Info: (lazarus) Executable="/usr/bin/fpc"
+Info: (lazarus) Param[0]="-MObjFPC"
+Info: (lazarus) Param[1]="-Scghi"
+Info: (lazarus) Param[2]="-Cg"
+Info: (lazarus) Param[3]="-O1"
+Info: (lazarus) Param[4]="-gw3"
+Info: (lazarus) Param[5]="-gl"
+Info: (lazarus) Param[6]="-l"
+Info: (lazarus) Param[7]="-vewnhibq"
+Info: (lazarus) Param[8]="-Fi/home/kenjiro/Documents/src/jcf-cli/jcf2/lib/CommandLine-x86_64-linux"
+Info: (lazarus) Param[9]="-Fu/home/kenjiro/Documents/src/jcf-cli/jcf2/CommandLine/Lazarus/"
+Info: (lazarus) Param[10]="-Fu/home/kenjiro/Documents/src/jcf-cli/jcf2/CommandLine"
+Info: (lazarus) Param[11]="-Fu/home/kenjiro/Documents/src/jcf-cli/jcf2/UiNoGui"
+Info: (lazarus) Param[12]="-Fu/usr/share/lazarus/4.8.0/components/jcf2/lib/x86_64-linux"
+Info: (lazarus) Param[13]="-Fu/usr/share/lazarus/4.8.0/components/lazutils/lib/x86_64-linux"
+Info: (lazarus) Param[14]="-Fu/usr/share/lazarus/4.8.0/packager/units/x86_64-linux"
+Info: (lazarus) Param[15]="-FE/home/kenjiro/Documents/src/jcf-cli/jcf2/lib/CommandLine-x86_64-linux/"
+Info: (lazarus) Param[16]="-o/home/kenjiro/Documents/src/jcf-cli/jcf2/lib/CommandLine-x86_64-linux/jcf"
+Info: (lazarus) Param[17]="jcf.lpr"
+Info: (lazarus) Param[18]="-B"
+Hint: (11030) Start of reading config file /etc/fpc.cfg
+Hint: (11031) End of reading config file /etc/fpc.cfg
+Free Pascal Compiler version 3.2.2 [2021/07/09] for x86_64
+Copyright (c) 1993-2021 by Florian Klaempfl and others
+(1002) Target OS: Linux for x86-64
+(3104) Compiling jcf.lpr
+(3104) Compiling /home/kenjiro/Documents/src/jcf-cli/jcf2/CommandLine/StatusMessageReceiver.pas
+(3104) Compiling /home/kenjiro/Documents/src/jcf-cli/jcf2/UiNoGui/jcfuitoolsnogui.pas
+/home/kenjiro/Documents/src/jcf-cli/jcf2/UiNoGui/jcfuitoolsnogui.pas(14,23) Hint: (5024) Parameter "aCounter" not used
+/home/kenjiro/Documents/src/jcf-cli/jcf2/UiNoGui/jcfuitoolsnogui.pas(14,42) Hint: (5024) Parameter "aUpdateInterval" not used
+/home/kenjiro/Documents/src/jcf-cli/jcf2/UiNoGui/jcfuitoolsnogui.pas(19,35) Hint: (5024) Parameter "pcRoot" not used
+/home/kenjiro/Documents/src/jcf-cli/jcf2/UiNoGui/jcfuitoolsnogui.pas(20,34) Hint: (5024) Parameter "aPath" not used
+(3104) Compiling /home/kenjiro/Documents/src/jcf-cli/jcf2/CommandLine/CommandLineReturnCode.pas
+(3104) Compiling /home/kenjiro/Documents/src/jcf-cli/jcf2/CommandLine/CommandLineConstants.pas
+/home/kenjiro/Documents/src/jcf-cli/jcf2/CommandLine/Lazarus/jcf.lpr(30,42) Hint: (5023) Unit "SettingsStream" not used in JCF
+/home/kenjiro/Documents/src/jcf-cli/jcf2/CommandLine/Lazarus/jcf.lpr(31,37) Hint: (5023) Unit "WarnImbalancedComment" not used in JCF
+(9015) Linking /home/kenjiro/Documents/src/jcf-cli/jcf2/lib/CommandLine-x86_64-linux/jcf
+(1008) 708 lines compiled, 0.4 sec
+(1022) 8 hint(s) issued
+Info: (lazarus) [TCompiler.Compile] end
+/home/kenjiro/.local/bin/jcf
+#+end_example
 * CGPL FONT
 #+begin_src elisp :tangle yes
 (require 'org)
