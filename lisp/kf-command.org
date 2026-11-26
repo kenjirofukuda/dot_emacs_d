@@ -1238,7 +1238,229 @@ Lazarus のプロジェクトファイル（.lpi）があるディレクトリ�
   (define-key pascal-ts-mode-map (kbd "C-c C-f") #'kf:pascal-jcf-format-buffer)
   (define-key pascal-ts-mode-map (kbd "C-M-\\")  #'kf:pascal-jcf-format-buffer))
 #+end_src
+** コンパイルエラー対応
+#+begin_src elisp :tangle yes
+;; GUID: kf202611-fpc-lazbuild-compilation-error-rx
+(defun kf:setup-fpc-compilation-parser ()
+  "Free Pascal / lazbuild の出力形式 (path(line,col) Error/Warning/Note:) を
+`compilation-mode' および `consult-compile-error' に認識させます。"
+  (message "[GUID: kf:setup-fpc-compilation-parser-v20261126]")
+  (with-eval-after-load 'compile
+    ;; 1. Free Pascal / lazbuild 用エラー正規表現（rx構文）
+    ;; 形式例: /path/to/unit1.pas(42,15) Error: Identifier not found "Foo"
+    (let ((fpc-error-rx
+           (rx line-start
+               ;; グループ1: ファイルパス（括弧の前まで。先頭の空白は除外）
+               (group (not (any " \t\n("))
+                      (zero-or-more (not (any "\n("))))
+               "("
+               ;; グループ2: 行番号
+               (group (one-or-more digit))
+               ","
+               ;; グループ3: 列番号
+               (group (one-or-more digit))
+               ")"
+               (one-or-more space)
+               (or
+                ;; グループ4: Fatal / Error（エラー扱い）
+                (group (or "Fatal" "Error"))
+                ;; グループ5: Warning（警告扱い）
+                (group "Warning")
+                ;; グループ6: Note / Hint（情報扱い）
+                (group (or "Note" "Hint")))
+               ":")))
+      ;; 既存の同名エントリがあれば削除してから先頭へ登録（最優先マッチ）
+      (setq compilation-error-regexp-alist-alist
+            (assq-delete-all 'fpc-lazbuild compilation-error-regexp-alist-alist))
+      (add-to-list 'compilation-error-regexp-alist-alist
+                   `(fpc-lazbuild ,fpc-error-rx 1 2 3 (5 . 6)))
+      (add-to-list 'compilation-error-regexp-alist 'fpc-lazbuild))
 
+    ;; 2. M-n / M-p で Hint/Note/Warning を飛ばし、Error/Fatal のみを巡回する設定
+    ;; (0 = すべて移動, 1 = Info/Hintをスキップ, 2 = WarningもスキップしErrorのみ)
+    (setq compilation-skip-threshold 2)))
+
+;; 起動時（または compile ロード時）に有効化
+(kf:setup-fpc-compilation-parser)
+#+end_src
+
+** 未登録ユニットの登録
+#+begin_src elisp :tangle yes
+;; GUID: kf202611-lazarus-register-unit-to-lpi
+(defun kf:lazarus-extract-unit-name (pas-file)
+  "PAS-FILE の先頭付近から `unit <UnitName>;' 宣言を抽出し、正確な大文字・小文字のユニット名を返します。
+見つからない場合はファイル名（拡張子なし）を返します。"
+  (let ((fallback (file-name-base pas-file)))
+    (if (not (file-exists-p pas-file))
+        fallback
+      (with-temp-buffer
+        (insert-file-contents pas-file nil 0 4096)
+        (goto-char (point-min))
+        (let ((case-fold-search t))
+          (if (re-search-forward
+               (rx line-start
+                   (zero-or-more space)
+                   "unit"
+                   (one-or-more space)
+                   (group (one-or-more (any alnum "_.")))
+                   (zero-or-more space)
+                   ";")
+               nil t)
+              (match-string-no-properties 1)
+            fallback))))))
+
+(defun kf:lazarus-register-unit-to-lpi ()
+  "現在アクティブな Pascal ファイルをプロジェクトの .lpi ファイルに登録します。
+すでに同じ相対パスが登録されている場合は何もせず通知します。"
+  (interactive)
+  (message "[GUID: kf:lazarus-register-unit-to-lpi-v20261126]")
+  (let ((pas-file (buffer-file-name)))
+    (unless pas-file
+      (user-error "現在のバッファはファイルに関連付けられていません"))
+    (unless (string-match-p (rx "." (or "pas" "pp" "p" "inc") eos) (downcase pas-file))
+      (user-error "現在のバッファは登録対象の Pascal ユニットファイル (.pas/.pp/.inc) ではありません"))
+    (let* ((lpi-dir (locate-dominating-file
+                     default-directory
+                     (lambda (dir)
+                       (directory-files dir nil (rx ".lpi" eos)))))
+           (lpi-file (and lpi-dir
+                          (car (directory-files lpi-dir t (rx ".lpi" eos))))))
+      (unless lpi-file
+        (user-error "上位ディレクトリに .lpi プロジェクトファイルが見つかりません"))
+      ;; .lpi からの相対パス（Windows互換の / 区切り）と unit 名を取得
+      (let* ((rel-path (file-relative-name pas-file lpi-dir))
+             (unit-name (kf:lazarus-extract-unit-name pas-file))
+             (is-inc (string-match-p (rx ".inc" eos) (downcase pas-file)))
+             (already-registered nil))
+        (with-temp-buffer
+          (insert-file-contents lpi-file)
+          (goto-char (point-min))
+          ;; 1. すでに登録済みかチェック（大文字・小文字を区別せず比較）
+          (let ((case-fold-search t))
+            (when (re-search-forward
+                   (rx "<Filename"
+                       (one-or-more space)
+                       "Value=\""
+                       (literal rel-path)
+                       "\"")
+                   nil t)
+              (setq already-registered t)))
+          (if already-registered
+              (message "LPI確認: '%s' はすでに %s に登録されています。"
+                       rel-path (file-name-nondirectory lpi-file))
+            ;; 2. <Units> セクションを探して新規 <Unit> エントリを挿入
+            (goto-char (point-min))
+            (unless (search-forward "</Units>" nil t)
+              (user-error "%s 内に </Units> タグが見つかりません"
+                          (file-name-nondirectory lpi-file)))
+            (let ((insert-pos (match-beginning 0)))
+              ;; 直前の行のインデント幅を取得して合わせる
+              (save-excursion
+                (goto-char insert-pos)
+                (beginning-of-line)
+                (let* ((units-indent (if (looking-at (rx (group (zero-or-more (any " \t")))))
+                                         (match-string 1)
+                                       "    "))
+                       (unit-indent (concat units-indent "  "))
+                       (prop-indent (concat unit-indent "  ")))
+                  (goto-char insert-pos)
+                  (insert (format "%s<Unit>\n" unit-indent))
+                  (insert (format "%s<Filename Value=\"%s\"/>\n" prop-indent rel-path))
+                  (insert (format "%s<IsPartOfProject Value=\"True\"/>\n" prop-indent))
+                  (unless is-inc
+                    (insert (format "%s<UnitName Value=\"%s\"/>\n" prop-indent unit-name)))
+                  (insert (format "%s</Unit>\n" unit-indent))))
+              ;; 3. もし <Units> 直下に <Count Value="N"/> があれば N+1 に更新
+              (save-excursion
+                (goto-char (point-min))
+                (when (re-search-forward
+                       (rx "<Units>"
+                           (zero-or-more (any " \t\n\r"))
+                           "<Count"
+                           (one-or-more space)
+                           "Value=\""
+                           (group (one-or-more digit))
+                           "\"/>")
+                       nil t)
+                  (let ((new-count (1+ (string-to-number (match-string 1)))))
+                    (replace-match (number-to-string new-count) t t nil 1))))
+              ;; 4. .lpi ファイルを上書き保存（開いているバッファがあれば revert 連携）
+              (write-region (point-min) (point-max) lpi-file nil 'silent)
+              (let ((lpi-buf (find-buffer-visiting lpi-file)))
+                (when (and lpi-buf (not (buffer-modified-p lpi-buf)))
+                  (with-current-buffer lpi-buf
+                    (revert-buffer t t t))))
+              (message "LPI登録完了: '%s' (UnitName: %s) を %s に追加しました。"
+                       rel-path unit-name (file-name-nondirectory lpi-file)))))))))
+
+;; pascal-ts-mode にキーバインドを割り当て（例: C-c C-a でプロジェクトへ追加）
+(with-eval-after-load 'pascal-ts-mode
+  (define-key pascal-ts-mode-map (kbd "C-c C-a") #'kf:lazarus-register-unit-to-lpi))
+#+end_src
+
+** プロジェクトのAIコンテキストJSON生成
+#+begin_src elisp :tangle yes
+;; GUID: kf202611-repomix-project-runner
+(defun kf:repomix-project-root ()
+  "現在のバッファからプロジェクトルートディレクトリを取得します。"
+  (or (and (fboundp 'projectile-project-root)
+           (projectile-project-root))
+      (locate-dominating-file
+       default-directory
+       (lambda (dir)
+         (or (file-exists-p (expand-file-name ".git" dir))
+             (directory-files dir nil (rx ".lpi" eos)))))
+      default-directory))
+
+(defun kf:save-project-modified-buffers (proj-root)
+  "PROJ-ROOT 配下に属する未保存のファイルバッファをすべて保存します。"
+  (let ((root-expanded (file-name-as-directory (expand-file-name proj-root))))
+    (dolist (buf (buffer-list))
+      (let ((file (buffer-file-name buf)))
+        (when (and file
+                   (buffer-modified-p buf)
+                   (string-prefix-p root-expanded (expand-file-name file)))
+          (with-current-buffer buf
+            (save-buffer)))))))
+
+;; GUID: kf202611-repomix-project-runner-v2
+(defcustom kf:repomix-default-style "json"
+  "引数なしで `kf:repomix-project' を実行した際のデフォルト出力フォーマット。"
+  :type '(choice (const "json")
+                 (const "markdown")
+                 (const "xml")
+                 (const "plain"))
+  :group 'kf-commands)
+
+(defun kf:repomix-read-style ()
+  "ミニバッファで repomix の出力フォーマットを選択して返します。"
+  (completing-read
+   "Repomix output style: "
+   '("json" "markdown" "xml" "plain")
+   nil t nil nil kf:repomix-default-style))
+
+(defun kf:repomix-project (&optional style)
+  "カレントプロジェクト内の未保存バッファを保存後、プロジェクトルートで repomix を実行します。
+前置引数（C-u）付きで呼び出した場合はミニバッファからフォーマットを選択できます。"
+  (interactive
+   (list (when current-prefix-arg
+           (kf:repomix-read-style))))
+  (message "[GUID: kf:repomix-project-v20261126-v2]")
+  (let* ((fmt (or style kf:repomix-default-style))
+         (proj-root (kf:repomix-project-root))
+         (default-directory (file-name-as-directory (expand-file-name proj-root)))
+         (proj-name (file-name-nondirectory (directory-file-name default-directory)))
+         (out-file (format "./repomix-%s.%s" proj-name fmt))
+         (compile-command
+          (format "npx repomix@latest --style %s --top-files-len 40 -o %s"
+                  fmt (shell-quote-argument out-file))))
+    (kf:save-project-modified-buffers default-directory)
+    (compile compile-command)))
+
+;; グローバルキーへの割り当て（例: C-c p r でプロジェクト全体の repomix を実行）
+(global-set-key (kbd "C-c p r") #'kf:repomix-project)
+
+#+end_src
 * フッタ
 #+BEGIN_SRC elisp :tangle yes
 (message "kf-command loaded...")
